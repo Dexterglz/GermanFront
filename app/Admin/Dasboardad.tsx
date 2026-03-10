@@ -25,7 +25,6 @@ import {
   Bell,
   BellOff,
 } from "lucide-react";
-import LogoutButton from "@/components/LogoutButton";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -1098,7 +1097,6 @@ export default function Page() {
           <span className="text-sidebar-foreground font-semibold text-sm tracking-tight">Expediente Clínico</span>
         </div>
         <span className="text-xs text-sidebar-foreground/50">ID: {paciente.id}</span>
-        <LogoutButton/>
       </header>
 
       {/* Patient banner + tabs */}
