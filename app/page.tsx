@@ -1,8 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Login() {
+
+  const router = useRouter()
 
   const [form, setForm] = useState({
     nombre: "",
@@ -50,11 +53,21 @@ export default function Login() {
     if (Object.keys(erroresValidacion).length > 0) {
       setErrores(erroresValidacion)
     } else {
+
       setErrores({})
       console.log("Datos enviados:", form)
 
-      // aquí puedes hacer tu fetch a la API
-      // fetch("/api/login", { method:"POST", body: JSON.stringify(form) })
+      // ejemplo de redirección por rol
+      if (form.correo === "doctor@test.com") {
+        router.push("/doctor")
+      } 
+      else if (form.correo === "admin@test.com") {
+        router.push("/admin")
+      } 
+      else {
+        router.push("/doctor")
+      }
+
     }
   }
 
@@ -70,8 +83,6 @@ export default function Login() {
           Iniciar Sesión
         </h2>
 
-        {/* nombre */}
-
         <input
           type="text"
           name="nombre"
@@ -85,8 +96,6 @@ export default function Login() {
           <p className="text-red-500 text-sm mb-2">{errores.nombre}</p>
         )}
 
-        {/* correo */}
-
         <input
           type="email"
           name="correo"
@@ -99,8 +108,6 @@ export default function Login() {
         {errores.correo && (
           <p className="text-red-500 text-sm mb-2">{errores.correo}</p>
         )}
-
-        {/* password */}
 
         <input
           type="password"
