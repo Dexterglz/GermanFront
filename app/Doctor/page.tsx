@@ -25,6 +25,29 @@ import {
   Bell,
   BellOff,
   FolderOpen,
+  FileUp,
+  Upload,
+  Folder,
+  Filter,
+  X,
+  Plus,
+  Search,
+  Wind,
+  Droplets,
+  Trash2,
+  Save,
+  FileEdit,
+  ChevronLeft,
+  ChevronRight,
+  CalendarPlus,
+  FileCheck,
+  DollarSign,
+  Tag,
+  Building2,
+  Shield,
+  UserPlus,
+  UserCheck,
+  BadgePercent,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -908,8 +931,18 @@ function DiagnosticosContent({ diagnosticos }: { diagnosticos: Diagnostico[] }) 
   );
 }
 
-// Acordeón interno del Expediente
-type SubSection = "diagnosticos" | "citas" | "notas";
+// Agrupa registros por fecha (YYYY-MM-DD)
+function agruparPorFecha<T extends { fecha: string }>(items: T[]): { fecha: string; items: T[] }[] {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const key = item.fecha.substring(0, 10);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([fecha, items]) => ({ fecha, items }));
+}
 
 function ExpedienteTab({
   diagnosticos, citas, notas,
@@ -918,123 +951,938 @@ function ExpedienteTab({
   citas: Cita[];
   notas: NotaMedica[];
 }) {
-  const [openSection, setOpenSection] = useState<SubSection | null>(null);
+  const [fechaFiltro, setFechaFiltro] = useState("");
 
-  const toggle = (s: SubSection) => setOpenSection((prev) => (prev === s ? null : s));
+  // Unir todos los registros en una línea de tiempo única por fecha
+  type EntradaExpediente =
+    | { tipo: "diagnostico"; fecha: string; data: Diagnostico }
+    | { tipo: "cita";        fecha: string; data: Cita }
+    | { tipo: "nota";        fecha: string; data: NotaMedica };
 
-  const sections: { id: SubSection; label: string; icon: React.ReactNode; count: number; content: React.ReactNode }[] = [
-    {
-      id: "diagnosticos",
-      label: "Diagnósticos",
-      icon: <ClipboardList className="w-4 h-4" />,
-      count: diagnosticos.length,
-      content: <DiagnosticosContent diagnosticos={diagnosticos} />,
-    },
-    {
-      id: "citas",
-      label: "Citas",
-      icon: <Calendar className="w-4 h-4" />,
-      count: citas.length,
-      content: <CitasContent citas={citas} />,
-    },
-    {
-      id: "notas",
-      label: "Notas médicas",
-      icon: <FileText className="w-4 h-4" />,
-      count: notas.length,
-      content: <NotasContent notas={notas} />,
-    },
+  const todasLasEntradas: EntradaExpediente[] = [
+    ...diagnosticos.map((d) => ({ tipo: "diagnostico" as const, fecha: d.fecha.substring(0, 10), data: d })),
+    ...citas.map((c)       => ({ tipo: "cita" as const,         fecha: c.fecha.substring(0, 10), data: c })),
+    ...notas.map((n)       => ({ tipo: "nota" as const,         fecha: n.fecha.substring(0, 10), data: n })),
   ];
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 mb-2">
-        <FolderOpen className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Expediente clínico</h3>
-      </div>
-      {sections.map((sec) => {
-        const isOpen = openSection === sec.id;
-        return (
-          <div
-            key={sec.id}
-            className={`bg-card border rounded-lg overflow-hidden transition-all ${isOpen ? "border-primary/40 shadow-sm" : "border-border"}`}
-          >
-            <button
-              onClick={() => toggle(sec.id)}
-              className="w-full text-left flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/30 transition-colors"
-              aria-expanded={isOpen}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`p-2 rounded-md ${isOpen ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {sec.icon}
-                </span>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground text-sm">{sec.label}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{sec.count} registro{sec.count !== 1 ? "s" : ""}</p>
-                </div>
-              </div>
-              <span className={`transition-transform duration-200 text-muted-foreground ${isOpen ? "rotate-180" : ""}`}>
-                <ChevronDown className="w-4 h-4" />
+  const fechasFiltradas = fechaFiltro
+    ? todasLasEntradas.filter((e) => e.fecha === fechaFiltro)
+    : todasLasEntradas;
+
+  // Agrupar por fecha
+  const gruposFecha = new Map<string, EntradaExpediente[]>();
+  for (const entrada of fechasFiltradas) {
+    if (!gruposFecha.has(entrada.fecha)) gruposFecha.set(entrada.fecha, []);
+    gruposFecha.get(entrada.fecha)!.push(entrada);
+  }
+  const grupos = Array.from(gruposFecha.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([fecha, entradas]) => ({ fecha, entradas }));
+
+  // Fechas únicas disponibles para el filtro
+  const fechasDisponibles = Array.from(
+    new Set(todasLasEntradas.map((e) => e.fecha))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
+  const toggleGrupo = (fecha: string) =>
+    setGruposAbiertos((prev) => {
+      const next = new Set(prev);
+      next.has(fecha) ? next.delete(fecha) : next.add(fecha);
+      return next;
+    });
+
+  const renderEntrada = (entrada: EntradaExpediente) => {
+    if (entrada.tipo === "diagnostico") {
+      const dx = entrada.data;
+      const cfg = dx.severidad ? (severidadConfig[dx.severidad] ?? severidadConfig.Leve) : null;
+      return (
+        <div key={dx.id} className="bg-background border border-border rounded-lg p-4 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="p-1.5 rounded bg-primary/10 shrink-0">
+                <ClipboardList className="w-3.5 h-3.5 text-primary" />
               </span>
-            </button>
-            {isOpen && (
-              <div className="px-5 pb-5 border-t border-border pt-4">
-                {sec.content}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Diagnóstico</p>
+                <p className="font-semibold text-foreground text-sm text-balance">{dx.descripcion}</p>
               </div>
+            </div>
+            {cfg && (
+              <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${cfg.cls}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{dx.severidad}
+              </span>
             )}
           </div>
-        );
-      })}
+          {dx.tratamiento && (
+            <div className="bg-muted/40 rounded-md px-3 py-2 ml-8">
+              <div className="flex items-center gap-1.5 mb-1">
+                <AlertCircle className="w-3 h-3 text-primary shrink-0" />
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Plan de tratamiento</p>
+              </div>
+              <p className="text-sm text-foreground leading-relaxed">{dx.tratamiento}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (entrada.tipo === "cita") {
+      const cita = entrada.data;
+      const cfg = estadoConfig[cita.estado] ?? estadoConfig.Pendiente;
+      return (
+        <div key={cita.id} className="bg-background border border-border rounded-lg p-4 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="p-1.5 rounded bg-blue-50 shrink-0">
+                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cita — {cita.hora}</p>
+                <p className="font-semibold text-foreground text-sm text-balance">{cita.motivo}</p>
+              </div>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${cfg.cls}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{cita.estado}
+            </span>
+          </div>
+          {cita.notas && (
+            <div className="flex gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2 ml-8">
+              <FileText className="w-3 h-3 mt-0.5 shrink-0" />
+              <span className="leading-relaxed">{cita.notas}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // nota
+    const nota = entrada.data as NotaMedica;
+    return (
+      <div key={nota.id} className="bg-background border border-border rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="p-1.5 rounded bg-amber-50 shrink-0">
+            <FileText className="w-3.5 h-3.5 text-amber-600" />
+          </span>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nota médica — {fmtFechaHora(nota.fecha).split(", ")[1]}</p>
+        </div>
+        <p className="text-sm text-foreground leading-relaxed ml-8">{nota.contenido}</p>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header + filtro */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <FolderOpen className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Expediente clínico</h3>
+          <span className="text-xs text-muted-foreground">— {todasLasEntradas.length} registro(s)</span>
+        </div>
+
+        {/* Filtro por fecha */}
+        <div className="flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <select
+            value={fechaFiltro}
+            onChange={(e) => setFechaFiltro(e.target.value)}
+            className="text-xs border border-border rounded-md px-2 py-1.5 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            aria-label="Filtrar por fecha"
+          >
+            <option value="">Todas las fechas</option>
+            {fechasDisponibles.map((f) => (
+              <option key={f} value={f}>{fmtFecha(f)}</option>
+            ))}
+          </select>
+          {fechaFiltro && (
+            <button
+              onClick={() => setFechaFiltro("")}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Quitar filtro"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Grupos por fecha */}
+      {grupos.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No hay registros para la fecha seleccionada</p>
+        </div>
+      ) : (
+        grupos.map(({ fecha, entradas }) => {
+          const isOpen = gruposAbiertos.has(fecha);
+          const badges = {
+            diagnostico: entradas.filter((e) => e.tipo === "diagnostico").length,
+            cita:        entradas.filter((e) => e.tipo === "cita").length,
+            nota:        entradas.filter((e) => e.tipo === "nota").length,
+          };
+          return (
+            <div
+              key={fecha}
+              className={`border rounded-lg overflow-hidden transition-all ${isOpen ? "border-primary/40 shadow-sm" : "border-border"}`}
+            >
+              {/* Cabecera de carpeta */}
+              <button
+                onClick={() => toggleGrupo(fecha)}
+                className="w-full text-left flex items-center justify-between gap-4 px-5 py-4 bg-card hover:bg-muted/30 transition-colors"
+                aria-expanded={isOpen}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`p-2 rounded-md ${isOpen ? "bg-primary/10" : "bg-muted"}`}>
+                    <Folder className={`w-4 h-4 ${isOpen ? "text-primary" : "text-muted-foreground"}`} />
+                  </span>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground text-sm">{fmtFecha(fecha, { weekday: true })}</p>
+                    <div className="flex flex-wrap gap-2 mt-0.5">
+                      {badges.diagnostico > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <ClipboardList className="w-3 h-3" />{badges.diagnostico} diagnóstico{badges.diagnostico !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {badges.cita > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3" />{badges.cita} cita{badges.cita !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {badges.nota > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <FileText className="w-3 h-3" />{badges.nota} nota{badges.nota !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* Contenido de la carpeta */}
+              {isOpen && (
+                <div className="px-5 pb-5 pt-4 border-t border-border bg-card space-y-3">
+                  {entradas.map((e) => renderEntrada(e))}
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────
-// TAB: VISITAS
+// TAB: VISITAS (Agendar citas)
 // ─────────────────────────────────────────────
 
-function VisitaCard({ visita }: { visita: Visita }) {
-  const [open, setOpen] = useState(false);
-  const sv = visita.signosVitales;
+// Especialidades médicas
+const especialidades = [
+  "Medicina General",
+  "Cardiología",
+  "Dermatología",
+  "Endocrinología",
+  "Gastroenterología",
+  "Ginecología",
+  "Neurología",
+  "Oftalmología",
+  "Ortopedia",
+  "Otorrinolaringología",
+  "Pediatría",
+  "Psiquiatría",
+  "Urología",
+];
+
+// Tipos de seguro
+const tiposSeguros = [
+  "Sin seguro (Particular)",
+  "IMSS",
+  "ISSSTE",
+  "Seguro Popular",
+  "GNP Seguros",
+  "AXA Seguros",
+  "Metlife",
+  "Mapfre",
+  "Allianz",
+  "Otro",
+];
+
+// Servicios disponibles
+const serviciosDisponibles = [
+  { id: "consulta", nombre: "Consulta médica", precio: 800 },
+  { id: "revision", nombre: "Revisión general", precio: 600 },
+  { id: "laboratorio", nombre: "Estudios de laboratorio", precio: 1200 },
+  { id: "rayosx", nombre: "Rayos X", precio: 500 },
+  { id: "ultrasonido", nombre: "Ultrasonido", precio: 900 },
+  { id: "electrocardiograma", nombre: "Electrocardiograma", precio: 450 },
+  { id: "curacion", nombre: "Curación", precio: 350 },
+  { id: "vacunacion", nombre: "Vacunación", precio: 250 },
+];
+
+// Cupones de descuento mock
+const cuponesValidos: Record<string, number> = {
+  "DESC10": 10,
+  "DESC20": 20,
+  "NUEVO25": 25,
+  "VIP30": 30,
+  "PROMO15": 15,
+};
+
+interface CitaAgendada {
+  id: string;
+  fecha: string;
+  horaInicio: string;
+  horaCierre: string;
+  tipo: "disponible" | "cita" | "urgencia";
+  primeraVez: boolean;
+  tipoConsulta: string;
+  especialidad: string;
+  seguro: string;
+  servicios: string[];
+  cupon: string;
+  descuento: number;
+  precioBase: number;
+  precioFinal: number;
+}
+
+// Datos mock de citas existentes
+const citasExistentesMock: CitaAgendada[] = [
+  {
+    id: "CITA-001",
+    fecha: "2024-02-15",
+    horaInicio: "10:00",
+    horaCierre: "10:30",
+    tipo: "cita",
+    primeraVez: false,
+    tipoConsulta: "Consulta de seguimiento",
+    especialidad: "Cardiología",
+    seguro: "IMSS",
+    servicios: ["consulta"],
+    cupon: "",
+    descuento: 0,
+    precioBase: 800,
+    precioFinal: 800,
+  },
+  {
+    id: "CITA-002",
+    fecha: "2024-02-18",
+    horaInicio: "14:00",
+    horaCierre: "14:30",
+    tipo: "urgencia",
+    primeraVez: false,
+    tipoConsulta: "Urgencia",
+    especialidad: "Medicina General",
+    seguro: "Sin seguro (Particular)",
+    servicios: ["consulta", "laboratorio"],
+    cupon: "DESC10",
+    descuento: 10,
+    precioBase: 2000,
+    precioFinal: 1800,
+  },
+];
+
+function VisitasTab({ visitas }: { visitas: Visita[] }) {
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [citasAgendadas, setCitasAgendadas] = useState<CitaAgendada[]>(citasExistentesMock);
+  
+  // Estado del calendario
+  const [mesActual, setMesActual] = useState(new Date());
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<string>("");
+  
+  // Estado del formulario
+  const [formCita, setFormCita] = useState({
+    primeraVez: true,
+    tipoConsulta: "Consulta general",
+    especialidad: "Medicina General",
+    seguro: "Sin seguro (Particular)",
+    servicios: ["consulta"] as string[],
+    cupon: "",
+    horaInicio: "09:00",
+    horaCierre: "09:30",
+  });
+  const [descuentoAplicado, setDescuentoAplicado] = useState(0);
+  const [cuponValido, setCuponValido] = useState<boolean | null>(null);
+
+  // Generar días del mes
+  const generarDiasMes = (fecha: Date) => {
+    const año = fecha.getFullYear();
+    const mes = fecha.getMonth();
+    const primerDia = new Date(año, mes, 1);
+    const ultimoDia = new Date(año, mes + 1, 0);
+    const diasEnMes = ultimoDia.getDate();
+    const diaInicioSemana = primerDia.getDay();
+    
+    const dias: Array<{ fecha: string; dia: number; esOtroMes: boolean }> = [];
+    
+    // Días del mes anterior
+    const mesAnterior = new Date(año, mes, 0);
+    const diasMesAnterior = mesAnterior.getDate();
+    for (let i = diaInicioSemana - 1; i >= 0; i--) {
+      const diaNum = diasMesAnterior - i;
+      const fechaStr = `${año}-${String(mes).padStart(2, "0")}-${String(diaNum).padStart(2, "0")}`;
+      dias.push({ fecha: fechaStr, dia: diaNum, esOtroMes: true });
+    }
+    
+    // Días del mes actual
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+      const fechaStr = `${año}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+      dias.push({ fecha: fechaStr, dia, esOtroMes: false });
+    }
+    
+    // Días del mes siguiente para completar la grilla
+    const diasRestantes = 42 - dias.length;
+    for (let dia = 1; dia <= diasRestantes; dia++) {
+      const fechaStr = `${año}-${String(mes + 2).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+      dias.push({ fecha: fechaStr, dia, esOtroMes: true });
+    }
+    
+    return dias;
+  };
+
+  const diasMes = generarDiasMes(mesActual);
+  const nombresMeses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const nombresDias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+  // Obtener estado del día
+  const obtenerEstadoDia = (fechaStr: string): "disponible" | "cita" | "urgencia" | null => {
+    const cita = citasAgendadas.find((c) => c.fecha === fechaStr);
+    if (cita) return cita.tipo;
+    return "disponible";
+  };
+
+  // Navegación del calendario
+  const mesAnterior = () => {
+    setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1));
+  };
+
+  const mesSiguiente = () => {
+    setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 1));
+  };
+
+  // Validar cupón
+  const validarCupon = (codigo: string) => {
+    const descuento = cuponesValidos[codigo.toUpperCase()];
+    if (descuento) {
+      setDescuentoAplicado(descuento);
+      setCuponValido(true);
+    } else {
+      setDescuentoAplicado(0);
+      setCuponValido(codigo.length > 0 ? false : null);
+    }
+  };
+
+  // Calcular precio
+  const calcularPrecioBase = () => {
+    return formCita.servicios.reduce((total, servId) => {
+      const servicio = serviciosDisponibles.find((s) => s.id === servId);
+      return total + (servicio?.precio || 0);
+    }, 0);
+  };
+
+  const precioBase = calcularPrecioBase();
+  const precioConDescuento = precioBase * (1 - descuentoAplicado / 100);
+
+  // Manejar servicios
+  const toggleServicio = (servicioId: string) => {
+    setFormCita((prev) => ({
+      ...prev,
+      servicios: prev.servicios.includes(servicioId)
+        ? prev.servicios.filter((s) => s !== servicioId)
+        : [...prev.servicios, servicioId],
+    }));
+  };
+
+  // Guardar cita
+  const guardarCita = () => {
+    if (!fechaSeleccionada) return;
+    
+    const nuevaCita: CitaAgendada = {
+      id: `CITA-${Date.now()}`,
+      fecha: fechaSeleccionada,
+      horaInicio: formCita.horaInicio,
+      horaCierre: formCita.horaCierre,
+      tipo: "cita",
+      primeraVez: formCita.primeraVez,
+      tipoConsulta: formCita.tipoConsulta,
+      especialidad: formCita.especialidad,
+      seguro: formCita.seguro,
+      servicios: formCita.servicios,
+      cupon: formCita.cupon,
+      descuento: descuentoAplicado,
+      precioBase: precioBase,
+      precioFinal: precioConDescuento,
+    };
+    
+    setCitasAgendadas([...citasAgendadas, nuevaCita]);
+    setMostrarFormulario(false);
+    setFechaSeleccionada("");
+    setFormCita({
+      primeraVez: true,
+      tipoConsulta: "Consulta general",
+      especialidad: "Medicina General",
+      seguro: "Sin seguro (Particular)",
+      servicios: ["consulta"],
+      cupon: "",
+      horaInicio: "09:00",
+      horaCierre: "09:30",
+    });
+    setDescuentoAplicado(0);
+    setCuponValido(null);
+  };
+
+  // Horas disponibles
+  const horasDisponibles = [
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+  ];
+
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="w-full text-left flex items-start justify-between gap-4 p-5 hover:bg-muted/30 transition-colors"
-      >
-        <div className="space-y-1 flex-1">
-          <p className="font-semibold text-foreground text-balance">{visita.motivo}</p>
-          <p className="text-sm text-muted-foreground leading-relaxed">{fmtFechaHora(visita.fecha)}</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Agenda de Citas</h2>
         </div>
-        <span className="mt-1 text-muted-foreground shrink-0">
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </span>
-      </button>
-      {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-border pt-4">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Observaciones</p>
-            <p className="text-sm text-foreground leading-relaxed">{visita.observaciones}</p>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Activity className="w-3.5 h-3.5 text-primary" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Signos vitales registrados</p>
+        <button
+          onClick={() => setMostrarFormulario(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          <CalendarPlus className="w-4 h-4" />
+          Agregar Cita
+        </button>
+      </div>
+
+      {/* Leyenda de colores */}
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-lg">
+        <span className="text-sm font-medium text-foreground">Leyenda:</span>
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-4 rounded bg-emerald-500"></span>
+          <span className="text-sm text-muted-foreground">Disponible</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-4 rounded bg-amber-500"></span>
+          <span className="text-sm text-muted-foreground">Cita programada</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-4 h-4 rounded bg-red-500"></span>
+          <span className="text-sm text-muted-foreground">Urgencia</span>
+        </div>
+      </div>
+
+      {/* Calendario */}
+      <div className="bg-card border border-border rounded-lg p-5">
+        {/* Navegación del mes */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={mesAnterior}
+            className="p-2 hover:bg-muted rounded-md transition-colors"
+            aria-label="Mes anterior"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h3 className="text-lg font-semibold text-foreground">
+            {nombresMeses[mesActual.getMonth()]} {mesActual.getFullYear()}
+          </h3>
+          <button
+            onClick={mesSiguiente}
+            className="p-2 hover:bg-muted rounded-md transition-colors"
+            aria-label="Mes siguiente"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Días de la semana */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {nombresDias.map((dia) => (
+            <div key={dia} className="text-center text-xs font-semibold text-muted-foreground py-2">
+              {dia}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {[
-                { label: "Peso",             value: `${sv.peso} kg` },
-                { label: "Estatura",         value: `${sv.estatura} cm` },
-                { label: "Temperatura",      value: `${sv.temperatura} °C` },
-                { label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica} mmHg` },
-                { label: "Frec. cardíaca",   value: `${sv.frecuenciaCardiaca} bpm` },
-                ...(sv.indiceMasaCorporal ? [{ label: "IMC", value: sv.indiceMasaCorporal.toFixed(1) }] : []),
-              ].map((item) => (
-                <div key={item.label} className="bg-muted/40 rounded-md px-3 py-2">
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.label}</p>
-                  <p className="text-sm font-semibold text-foreground">{item.value}</p>
+          ))}
+        </div>
+
+        {/* Días del mes */}
+        <div className="grid grid-cols-7 gap-1">
+          {diasMes.map(({ fecha, dia, esOtroMes }, index) => {
+            const estado = !esOtroMes ? obtenerEstadoDia(fecha) : null;
+            const esHoy = fecha === new Date().toISOString().substring(0, 10);
+            const estaSeleccionado = fecha === fechaSeleccionada;
+            
+            let colorFondo = "";
+            if (!esOtroMes && estado) {
+              switch (estado) {
+                case "disponible":
+                  colorFondo = "bg-emerald-100 hover:bg-emerald-200 text-emerald-800";
+                  break;
+                case "cita":
+                  colorFondo = "bg-amber-100 hover:bg-amber-200 text-amber-800";
+                  break;
+                case "urgencia":
+                  colorFondo = "bg-red-100 hover:bg-red-200 text-red-800";
+                  break;
+              }
+            }
+            
+            return (
+              <button
+                key={index}
+                onClick={() => {
+                  if (!esOtroMes) {
+                    setFechaSeleccionada(fecha);
+                    setMostrarFormulario(true);
+                  }
+                }}
+                disabled={esOtroMes}
+                className={`
+                  aspect-square flex items-center justify-center text-sm font-medium rounded-md transition-all
+                  ${esOtroMes ? "text-muted-foreground/30 cursor-not-allowed" : "cursor-pointer"}
+                  ${!esOtroMes && colorFondo}
+                  ${esHoy && !esOtroMes ? "ring-2 ring-primary ring-offset-1" : ""}
+                  ${estaSeleccionado ? "ring-2 ring-primary bg-primary/20" : ""}
+                `}
+              >
+                {dia}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Lista de citas agendadas */}
+      {citasAgendadas.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
+            <Clock className="w-4 h-4 text-primary" />
+            Citas Programadas ({citasAgendadas.length})
+          </h3>
+          <div className="space-y-2">
+            {citasAgendadas.map((cita) => (
+              <div
+                key={cita.id}
+                className={`bg-card border rounded-lg p-4 ${
+                  cita.tipo === "urgencia" ? "border-red-300" : "border-border"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        cita.tipo === "urgencia" 
+                          ? "bg-red-100 text-red-700" 
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {cita.tipo === "urgencia" ? "URGENCIA" : "CITA"}
+                      </span>
+                      {cita.primeraVez && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                          Primera vez
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-semibold text-foreground">{cita.tipoConsulta}</p>
+                    <p className="text-sm text-muted-foreground">{cita.especialidad}</p>
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {fmtFecha(cita.fecha)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {cita.horaInicio} - {cita.horaCierre}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Shield className="w-3 h-3" />
+                        {cita.seguro}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {cita.descuento > 0 && (
+                      <p className="text-xs text-muted-foreground line-through">
+                        ${cita.precioBase.toLocaleString()} MXN
+                      </p>
+                    )}
+                    <p className="text-lg font-bold text-primary">
+                      ${cita.precioFinal.toLocaleString()} MXN
+                    </p>
+                    {cita.cupon && (
+                      <span className="text-xs text-emerald-600">-{cita.descuento}%</span>
+                    )}
+                  </div>
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal formulario de cita */}
+      {mostrarFormulario && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Agendar Nueva Cita</h3>
+                {fechaSeleccionada && (
+                  <p className="text-sm text-muted-foreground">
+                    Fecha: {fmtFecha(fechaSeleccionada, { weekday: true })}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setMostrarFormulario(false);
+                  setFechaSeleccionada("");
+                }}
+                className="p-2 hover:bg-muted rounded-md transition-colors"
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Tipo de paciente */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <UserPlus className="w-4 h-4 text-primary" />
+                  Tipo de paciente
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setFormCita({ ...formCita, primeraVez: true })}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                      formCita.primeraVez
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Primera vez
+                  </button>
+                  <button
+                    onClick={() => setFormCita({ ...formCita, primeraVez: false })}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                      !formCita.primeraVez
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    Seguimiento
+                  </button>
+                </div>
+              </div>
+
+              {/* Tipo de consulta */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-primary" />
+                  Tipo de consulta
+                </label>
+                <select
+                  value={formCita.tipoConsulta}
+                  onChange={(e) => setFormCita({ ...formCita, tipoConsulta: e.target.value })}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option>Consulta general</option>
+                  <option>Consulta de seguimiento</option>
+                  <option>Consulta de especialidad</option>
+                  <option>Chequeo preventivo</option>
+                  <option>Urgencia</option>
+                </select>
+              </div>
+
+              {/* Especialidad */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  Especialidad
+                </label>
+                <select
+                  value={formCita.especialidad}
+                  onChange={(e) => setFormCita({ ...formCita, especialidad: e.target.value })}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  {especialidades.map((esp) => (
+                    <option key={esp}>{esp}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tipo de seguro */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  Tipo de seguro
+                </label>
+                <select
+                  value={formCita.seguro}
+                  onChange={(e) => setFormCita({ ...formCita, seguro: e.target.value })}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  {tiposSeguros.map((seg) => (
+                    <option key={seg}>{seg}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Servicios */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
+                  Servicios
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {serviciosDisponibles.map((servicio) => (
+                    <button
+                      key={servicio.id}
+                      onClick={() => toggleServicio(servicio.id)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm transition-colors ${
+                        formCita.servicios.includes(servicio.id)
+                          ? "bg-primary/10 border-primary text-foreground"
+                          : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <span className="truncate">{servicio.nombre}</span>
+                      <span className="text-xs font-semibold shrink-0 ml-2">
+                        ${servicio.precio}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cupón de descuento */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <BadgePercent className="w-4 h-4 text-primary" />
+                  Cupón de descuento
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formCita.cupon}
+                    onChange={(e) => {
+                      setFormCita({ ...formCita, cupon: e.target.value });
+                      validarCupon(e.target.value);
+                    }}
+                    className={`flex-1 border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase ${
+                      cuponValido === true ? "border-emerald-500" : cuponValido === false ? "border-red-500" : "border-border"
+                    }`}
+                    placeholder="Ingresa tu cupón"
+                  />
+                  {cuponValido === true && (
+                    <span className="flex items-center px-3 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-md">
+                      -{descuentoAplicado}%
+                    </span>
+                  )}
+                </div>
+                {cuponValido === false && (
+                  <p className="text-xs text-red-500">Cupón no válido</p>
+                )}
+              </div>
+
+              {/* Fecha y hora */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaSeleccionada}
+                    onChange={(e) => setFechaSeleccionada(e.target.value)}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Hora inicio
+                  </label>
+                  <select
+                    value={formCita.horaInicio}
+                    onChange={(e) => setFormCita({ ...formCita, horaInicio: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {horasDisponibles.map((h) => (
+                      <option key={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Hora cierre
+                  </label>
+                  <select
+                    value={formCita.horaCierre}
+                    onChange={(e) => setFormCita({ ...formCita, horaCierre: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {horasDisponibles.map((h) => (
+                      <option key={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Precio total */}
+              <div className="bg-muted/30 border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Servicios seleccionados:</span>
+                  <span className="font-medium text-foreground">{formCita.servicios.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="font-medium text-foreground">${precioBase.toLocaleString()} MXN</span>
+                </div>
+                {descuentoAplicado > 0 && (
+                  <div className="flex items-center justify-between text-sm text-emerald-600">
+                    <span>Descuento ({descuentoAplicado}%):</span>
+                    <span>-${(precioBase - precioConDescuento).toLocaleString()} MXN</span>
+                  </div>
+                )}
+                <div className="border-t border-border pt-2 flex items-center justify-between">
+                  <span className="font-semibold text-foreground flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-primary" />
+                    Precio Total:
+                  </span>
+                  <span className="text-2xl font-bold text-primary">
+                    ${precioConDescuento.toLocaleString()} MXN
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer del modal */}
+            <div className="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setMostrarFormulario(false);
+                  setFechaSeleccionada("");
+                }}
+                className="px-4 py-2 border border-border rounded-md text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarCita}
+                disabled={!fechaSeleccionada || formCita.servicios.length === 0}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Guardar Cita
+              </button>
             </div>
           </div>
         </div>
@@ -1043,19 +1891,1087 @@ function VisitaCard({ visita }: { visita: Visita }) {
   );
 }
 
-function VisitasTab({ visitas }: { visitas: Visita[] }) {
-  const ordenadas = [...visitas].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Stethoscope className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Historial de visitas médicas</h3>
-        <span className="ml-auto text-xs text-muted-foreground">{ordenadas.length} registro(s)</span>
-      </div>
-      {ordenadas.length === 0
-        ? <div className="text-center py-12 text-muted-foreground"><Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No hay visitas registradas</p></div>
-        : ordenadas.map((v) => <VisitaCard key={v.id} visita={v} />)
+// ─────────────────────────────────────────────
+// TAB: CONSULTA (antes DOCUMENTOS)
+// Con sub-tabs: Datos Clínicos, Diagnóstico, Notas, Prescripción
+// ─────────────────────────────────────────────
+
+// Catálogo de enfermedades CIE-10 (OMS) para autocompletado
+const catalogoCIE10: Record<string, string> = {
+  "A00": "Cólera",
+  "A01": "Fiebres tifoidea y paratifoidea",
+  "A09": "Diarrea y gastroenteritis de presunto origen infeccioso",
+  "B15": "Hepatitis aguda tipo A",
+  "B16": "Hepatitis aguda tipo B",
+  "B17": "Otras hepatitis virales agudas",
+  "E10": "Diabetes mellitus tipo 1",
+  "E11": "Diabetes mellitus tipo 2",
+  "E66": "Obesidad",
+  "E78": "Trastornos del metabolismo de las lipoproteínas y otras lipidemias",
+  "G43": "Migraña",
+  "G44": "Otros síndromes de cefalea",
+  "I10": "Hipertensión esencial (primaria)",
+  "I11": "Enfermedad cardíaca hipertensiva",
+  "I20": "Angina de pecho",
+  "I21": "Infarto agudo de miocardio",
+  "I25": "Enfermedad isquémica crónica del corazón",
+  "I50": "Insuficiencia cardíaca",
+  "J00": "Rinofaringitis aguda (resfriado común)",
+  "J02": "Faringitis aguda",
+  "J03": "Amigdalitis aguda",
+  "J06": "Infecciones agudas de las vías respiratorias superiores",
+  "J18": "Neumonía, organismo no especificado",
+  "J20": "Bronquitis aguda",
+  "J45": "Asma",
+  "K21": "Enfermedad por reflujo gastroesofágico",
+  "K25": "Úlcera gástrica",
+  "K29": "Gastritis y duodenitis",
+  "K30": "Dispepsia funcional",
+  "K59": "Otros trastornos funcionales del intestino",
+  "M54": "Dorsalgia",
+  "M79": "Otros trastornos de los tejidos blandos, no clasificados en otra parte",
+  "N39": "Otros trastornos del sistema urinario",
+  "R10": "Dolor abdominal y pélvico",
+  "R50": "Fiebre de origen desconocido",
+  "R51": "Cefalea",
+  "Z00": "Examen general e investigación de personas sin quejas o diagnóstico informado",
+};
+
+// Catálogo de medicamentos para prescripción
+const catalogoMedicamentos = [
+  { nombre: "Paracetamol", presentaciones: ["500mg", "1g"], vias: ["Oral"] },
+  { nombre: "Ibuprofeno", presentaciones: ["200mg", "400mg", "600mg"], vias: ["Oral"] },
+  { nombre: "Omeprazol", presentaciones: ["20mg", "40mg"], vias: ["Oral"] },
+  { nombre: "Losartán", presentaciones: ["25mg", "50mg", "100mg"], vias: ["Oral"] },
+  { nombre: "Metformina", presentaciones: ["500mg", "850mg", "1000mg"], vias: ["Oral"] },
+  { nombre: "Atorvastatina", presentaciones: ["10mg", "20mg", "40mg"], vias: ["Oral"] },
+  { nombre: "Amoxicilina", presentaciones: ["250mg", "500mg", "875mg"], vias: ["Oral"] },
+  { nombre: "Azitromicina", presentaciones: ["250mg", "500mg"], vias: ["Oral"] },
+  { nombre: "Ciprofloxacino", presentaciones: ["250mg", "500mg"], vias: ["Oral"] },
+  { nombre: "Salbutamol", presentaciones: ["100mcg/dosis"], vias: ["Inhalada"] },
+  { nombre: "Prednisona", presentaciones: ["5mg", "20mg", "50mg"], vias: ["Oral"] },
+  { nombre: "Diclofenaco", presentaciones: ["50mg", "75mg", "100mg"], vias: ["Oral", "Intramuscular"] },
+  { nombre: "Ketorolaco", presentaciones: ["10mg", "30mg"], vias: ["Oral", "Intramuscular"] },
+  { nombre: "Ranitidina", presentaciones: ["150mg", "300mg"], vias: ["Oral"] },
+  { nombre: "Loratadina", presentaciones: ["10mg"], vias: ["Oral"] },
+  { nombre: "Vitamina D3", presentaciones: ["400UI", "1000UI", "2000UI"], vias: ["Oral"] },
+  { nombre: "Ácido fólico", presentaciones: ["400mcg", "5mg"], vias: ["Oral"] },
+];
+
+interface DatosClinicosForm {
+  peso: string;
+  estatura: string;
+  frecuenciaCardiaca: string;
+  presionSistolica: string;
+  presionDiastolica: string;
+  imc: string;
+  masaCorporal: string;
+  grasaCorporal: string;
+  frecuenciaRespiratoria: string;
+  temperatura: string;
+}
+
+interface DiagnosticoItem {
+  id: string;
+  clave: string;
+  descripcion: string;
+  fecha: string;
+}
+
+interface NotaItem {
+  id: string;
+  contenido: string;
+  fecha: string;
+}
+
+interface PrescripcionItem {
+  id: string;
+  medicamento: string;
+  dosis: string;
+  frecuencia: string;
+  duracion: string;
+  via: string;
+  indicaciones: string;
+}
+
+const subTabsConsulta = [
+  { id: "datosclinicos", label: "Datos Clínicos", icon: Activity },
+  { id: "diagnostico", label: "Diagnóstico", icon: Stethoscope },
+  { id: "notas", label: "Notas", icon: FileEdit },
+  { id: "prescripcion", label: "Prescripción", icon: Pill },
+  { id: "resumen", label: "Resumen", icon: FileCheck },
+] as const;
+
+type SubTabConsultaId = (typeof subTabsConsulta)[number]["id"];
+
+function ConsultaTab() {
+  const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("datosclinicos");
+  
+  // Estados para Datos Clínicos
+  const [datosClinicosForm, setDatosClinicosForm] = useState<DatosClinicosForm>({
+    peso: "",
+    estatura: "",
+    frecuenciaCardiaca: "",
+    presionSistolica: "",
+    presionDiastolica: "",
+    imc: "",
+    masaCorporal: "",
+    grasaCorporal: "",
+    frecuenciaRespiratoria: "",
+    temperatura: "",
+  });
+  
+  // Estados para Diagnóstico
+  const [diagnosticos, setDiagnosticos] = useState<DiagnosticoItem[]>([]);
+  const [nuevaClave, setNuevaClave] = useState("");
+  const [nuevoDiagnostico, setNuevoDiagnostico] = useState("");
+  const [sugerenciasCIE, setSugerenciasCIE] = useState<Array<{clave: string; descripcion: string}>>([]);
+  
+  // Estados para Notas
+  const [notas, setNotas] = useState<NotaItem[]>([]);
+  const [nuevaNota, setNuevaNota] = useState("");
+  
+  // Estados para Prescripción
+  const [prescripciones, setPrescripciones] = useState<PrescripcionItem[]>([]);
+  const [prescripcionForm, setPrescripcionForm] = useState({
+    medicamento: "",
+    dosis: "",
+    frecuencia: "",
+    duracion: "",
+    via: "",
+    indicaciones: "",
+  });
+  const [busquedaMedicamento, setBusquedaMedicamento] = useState("");
+  const [sugerenciasMedicamento, setSugerenciasMedicamento] = useState<typeof catalogoMedicamentos>([]);
+
+  // Calcular IMC automáticamente
+  const calcularIMC = (peso: string, estatura: string) => {
+    const pesoNum = parseFloat(peso);
+    const estaturaNum = parseFloat(estatura) / 100; // convertir cm a m
+    if (pesoNum > 0 && estaturaNum > 0) {
+      const imc = pesoNum / (estaturaNum * estaturaNum);
+      return imc.toFixed(1);
+    }
+    return "";
+  };
+
+  const handleDatosClinicosChange = (field: keyof DatosClinicosForm, value: string) => {
+    const newForm = { ...datosClinicosForm, [field]: value };
+    
+    // Calcular IMC cuando cambia peso o estatura
+    if (field === "peso" || field === "estatura") {
+      newForm.imc = calcularIMC(
+        field === "peso" ? value : newForm.peso,
+        field === "estatura" ? value : newForm.estatura
+      );
+    }
+    
+    setDatosClinicosForm(newForm);
+  };
+
+  // Buscar CIE-10 mientras escribe
+  const handleClaveChange = (value: string) => {
+    setNuevaClave(value.toUpperCase());
+    
+    if (value.length >= 1) {
+      const coincidencias = Object.entries(catalogoCIE10)
+        .filter(([clave]) => clave.startsWith(value.toUpperCase()))
+        .map(([clave, descripcion]) => ({ clave, descripcion }))
+        .slice(0, 5);
+      setSugerenciasCIE(coincidencias);
+      
+      // Autocompletar diagnóstico si hay coincidencia exacta
+      const exacta = catalogoCIE10[value.toUpperCase()];
+      if (exacta) {
+        setNuevoDiagnostico(exacta);
       }
+    } else {
+      setSugerenciasCIE([]);
+      setNuevoDiagnostico("");
+    }
+  };
+
+  const seleccionarCIE = (clave: string, descripcion: string) => {
+    setNuevaClave(clave);
+    setNuevoDiagnostico(descripcion);
+    setSugerenciasCIE([]);
+  };
+
+  const agregarDiagnostico = () => {
+    if (nuevaClave && nuevoDiagnostico) {
+      setDiagnosticos([
+        ...diagnosticos,
+        {
+          id: `DX-${Date.now()}`,
+          clave: nuevaClave,
+          descripcion: nuevoDiagnostico,
+          fecha: new Date().toISOString(),
+        },
+      ]);
+      setNuevaClave("");
+      setNuevoDiagnostico("");
+    }
+  };
+
+  const eliminarDiagnostico = (id: string) => {
+    setDiagnosticos(diagnosticos.filter((d) => d.id !== id));
+  };
+
+  // Agregar nota
+  const agregarNota = () => {
+    if (nuevaNota.trim()) {
+      setNotas([
+        ...notas,
+        {
+          id: `NOTA-${Date.now()}`,
+          contenido: nuevaNota.trim(),
+          fecha: new Date().toISOString(),
+        },
+      ]);
+      setNuevaNota("");
+    }
+  };
+
+  const eliminarNota = (id: string) => {
+    setNotas(notas.filter((n) => n.id !== id));
+  };
+
+  // Buscar medicamentos
+  const handleBusquedaMedicamento = (value: string) => {
+    setBusquedaMedicamento(value);
+    setPrescripcionForm({ ...prescripcionForm, medicamento: value });
+    
+    if (value.length >= 2) {
+      const coincidencias = catalogoMedicamentos.filter((m) =>
+        m.nombre.toLowerCase().includes(value.toLowerCase())
+      );
+      setSugerenciasMedicamento(coincidencias);
+    } else {
+      setSugerenciasMedicamento([]);
+    }
+  };
+
+  const seleccionarMedicamento = (med: typeof catalogoMedicamentos[0]) => {
+    setPrescripcionForm({
+      ...prescripcionForm,
+      medicamento: med.nombre,
+      dosis: med.presentaciones[0] || "",
+      via: med.vias[0] || "",
+    });
+    setBusquedaMedicamento(med.nombre);
+    setSugerenciasMedicamento([]);
+  };
+
+  const agregarPrescripcion = () => {
+    if (prescripcionForm.medicamento && prescripcionForm.dosis) {
+      setPrescripciones([
+        ...prescripciones,
+        {
+          id: `RX-${Date.now()}`,
+          ...prescripcionForm,
+        },
+      ]);
+      setPrescripcionForm({
+        medicamento: "",
+        dosis: "",
+        frecuencia: "",
+        duracion: "",
+        via: "",
+        indicaciones: "",
+      });
+      setBusquedaMedicamento("");
+    }
+  };
+
+  const eliminarPrescripcion = (id: string) => {
+    setPrescripciones(prescripciones.filter((p) => p.id !== id));
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Sub-tabs */}
+      <div className="border-b border-border">
+        <nav className="flex gap-1 overflow-x-auto pb-px" aria-label="Secciones de consulta">
+          {subTabsConsulta.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSubTab(id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                activeSubTab === id
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Contenido de sub-tabs */}
+      <div className="pt-2">
+        {/* DATOS CLÍNICOS */}
+        {activeSubTab === "datosclinicos" && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Datos Clínicos</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {/* Peso */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5" /> Peso (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={datosClinicosForm.peso}
+                  onChange={(e) => handleDatosClinicosChange("peso", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="70.5"
+                />
+              </div>
+              
+              {/* Estatura */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Ruler className="w-3.5 h-3.5" /> Estatura (cm)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={datosClinicosForm.estatura}
+                  onChange={(e) => handleDatosClinicosChange("estatura", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="175"
+                />
+              </div>
+
+              {/* Frecuencia Cardíaca */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Heart className="w-3.5 h-3.5" /> Frec. Cardíaca (bpm)
+                </label>
+                <input
+                  type="number"
+                  value={datosClinicosForm.frecuenciaCardiaca}
+                  onChange={(e) => handleDatosClinicosChange("frecuenciaCardiaca", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="72"
+                />
+              </div>
+
+              {/* Presión Sistólica */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Droplets className="w-3.5 h-3.5" /> Presión Sistólica (mmHg)
+                </label>
+                <input
+                  type="number"
+                  value={datosClinicosForm.presionSistolica}
+                  onChange={(e) => handleDatosClinicosChange("presionSistolica", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="120"
+                />
+              </div>
+
+              {/* Presión Diastólica */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Droplets className="w-3.5 h-3.5" /> Presión Diastólica (mmHg)
+                </label>
+                <input
+                  type="number"
+                  value={datosClinicosForm.presionDiastolica}
+                  onChange={(e) => handleDatosClinicosChange("presionDiastolica", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="80"
+                />
+              </div>
+
+              {/* IMC (calculado automáticamente) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <TrendingDown className="w-3.5 h-3.5" /> IMC
+                </label>
+                <input
+                  type="text"
+                  value={datosClinicosForm.imc}
+                  readOnly
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-muted/50 text-foreground cursor-not-allowed"
+                  placeholder="Calculado"
+                />
+              </div>
+
+              {/* % Masa Corporal */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5" /> % Masa Corporal
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={datosClinicosForm.masaCorporal}
+                  onChange={(e) => handleDatosClinicosChange("masaCorporal", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="45.5"
+                />
+              </div>
+
+              {/* Grasa Corporal */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5" /> Grasa Corporal (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={datosClinicosForm.grasaCorporal}
+                  onChange={(e) => handleDatosClinicosChange("grasaCorporal", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="18.5"
+                />
+              </div>
+
+              {/* Frecuencia Respiratoria */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Wind className="w-3.5 h-3.5" /> Frec. Respiratoria (rpm)
+                </label>
+                <input
+                  type="number"
+                  value={datosClinicosForm.frecuenciaRespiratoria}
+                  onChange={(e) => handleDatosClinicosChange("frecuenciaRespiratoria", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="16"
+                />
+              </div>
+
+              {/* Temperatura */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Thermometer className="w-3.5 h-3.5" /> Temperatura (°C)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={datosClinicosForm.temperatura}
+                  onChange={(e) => handleDatosClinicosChange("temperatura", e.target.value)}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="36.5"
+                />
+              </div>
+            </div>
+
+            {/* Resumen de presión arterial */}
+            {datosClinicosForm.presionSistolica && datosClinicosForm.presionDiastolica && (
+              <div className="mt-4 p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm font-medium text-foreground">
+                  Presión Arterial: {datosClinicosForm.presionSistolica}/{datosClinicosForm.presionDiastolica} mmHg
+                  <span className={`ml-2 text-xs font-medium ${presionCategoria(
+                    parseInt(datosClinicosForm.presionSistolica),
+                    parseInt(datosClinicosForm.presionDiastolica)
+                  ).cls}`}>
+                    ({presionCategoria(
+                      parseInt(datosClinicosForm.presionSistolica),
+                      parseInt(datosClinicosForm.presionDiastolica)
+                    ).label})
+                  </span>
+                </p>
+              </div>
+            )}
+
+            {/* Resumen de IMC */}
+            {datosClinicosForm.imc && (
+              <div className="p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm font-medium text-foreground">
+                  IMC: {datosClinicosForm.imc}
+                  <span className={`ml-2 text-xs font-medium ${imcCategoria(parseFloat(datosClinicosForm.imc)).cls}`}>
+                    ({imcCategoria(parseFloat(datosClinicosForm.imc)).label})
+                  </span>
+                </p>
+              </div>
+            )}
+
+            <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Save className="w-4 h-4" />
+              Guardar Datos Clínicos
+            </button>
+          </div>
+        )}
+
+        {/* DIAGNÓSTICO */}
+        {activeSubTab === "diagnostico" && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Stethoscope className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Diagnóstico</h3>
+            </div>
+
+            {/* Formulario de nuevo diagnóstico */}
+            <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+              <p className="text-sm font-medium text-foreground">Agregar diagnóstico (CIE-10)</p>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Campo de clave CIE-10 */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Search className="w-3.5 h-3.5" /> Clave CIE-10
+                  </label>
+                  <input
+                    type="text"
+                    value={nuevaClave}
+                    onChange={(e) => handleClaveChange(e.target.value)}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase"
+                    placeholder="Ej: I10, J45, E11..."
+                  />
+                  {/* Sugerencias */}
+                  {sugerenciasCIE.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {sugerenciasCIE.map(({ clave, descripcion }) => (
+                        <button
+                          key={clave}
+                          type="button"
+                          onClick={() => seleccionarCIE(clave, descripcion)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+                        >
+                          <span className="font-mono font-semibold text-primary">{clave}</span>
+                          <span className="text-foreground truncate">{descripcion}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Campo de diagnóstico (autocompletado) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <ClipboardList className="w-3.5 h-3.5" /> Diagnóstico
+                  </label>
+                  <input
+                    type="text"
+                    value={nuevoDiagnostico}
+                    onChange={(e) => setNuevoDiagnostico(e.target.value)}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Se autocompleta al ingresar clave"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={agregarDiagnostico}
+                disabled={!nuevaClave || !nuevoDiagnostico}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Diagnóstico
+              </button>
+            </div>
+
+            {/* Lista de diagnósticos agregados */}
+            {diagnosticos.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Diagnósticos agregados ({diagnosticos.length})</p>
+                <div className="space-y-2">
+                  {diagnosticos.map((dx) => (
+                    <div key={dx.id} className="flex items-center justify-between gap-3 bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded font-mono text-sm font-semibold shrink-0">
+                          {dx.clave}
+                        </span>
+                        <span className="text-sm text-foreground truncate">{dx.descripcion}</span>
+                      </div>
+                      <button
+                        onClick={() => eliminarDiagnostico(dx.id)}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors shrink-0"
+                        aria-label="Eliminar diagnóstico"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {diagnosticos.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No hay diagnósticos agregados</p>
+                <p className="text-xs mt-1">Ingresa una clave CIE-10 para comenzar</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NOTAS */}
+        {activeSubTab === "notas" && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 mb-4">
+              <FileEdit className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Notas Médicas</h3>
+            </div>
+
+            {/* Formulario de nueva nota */}
+            <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+              <label className="text-sm font-medium text-foreground">Nueva nota</label>
+              <textarea
+                value={nuevaNota}
+                onChange={(e) => setNuevaNota(e.target.value)}
+                rows={4}
+                className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                placeholder="Escriba sus observaciones, indicaciones o notas clínicas aquí..."
+              />
+              <button
+                onClick={agregarNota}
+                disabled={!nuevaNota.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Nota
+              </button>
+            </div>
+
+            {/* Lista de notas */}
+            {notas.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Notas guardadas ({notas.length})</p>
+                <div className="space-y-2">
+                  {notas.map((nota, index) => (
+                    <div key={nota.id} className="bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-primary">{notas.length - index}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {fmtFechaHora(nota.fecha)}
+                            </p>
+                            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                              {nota.contenido}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => eliminarNota(nota.id)}
+                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors shrink-0"
+                          aria-label="Eliminar nota"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {notas.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No hay notas registradas</p>
+                <p className="text-xs mt-1">Agregue notas clínicas para este paciente</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PRESCRIPCIÓN */}
+        {activeSubTab === "prescripcion" && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Pill className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Prescripción de Medicamentos</h3>
+            </div>
+
+            {/* Formulario de nueva prescripción */}
+            <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+              <p className="text-sm font-medium text-foreground">Agregar medicamento</p>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Medicamento con búsqueda */}
+                <div className="space-y-1.5 relative md:col-span-2 lg:col-span-1">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Pill className="w-3.5 h-3.5" /> Medicamento
+                  </label>
+                  <input
+                    type="text"
+                    value={busquedaMedicamento}
+                    onChange={(e) => handleBusquedaMedicamento(e.target.value)}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Buscar medicamento..."
+                  />
+                  {sugerenciasMedicamento.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {sugerenciasMedicamento.map((med) => (
+                        <button
+                          key={med.nombre}
+                          type="button"
+                          onClick={() => seleccionarMedicamento(med)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="font-medium text-foreground">{med.nombre}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {med.presentaciones.join(", ")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Dosis */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Dosis</label>
+                  <input
+                    type="text"
+                    value={prescripcionForm.dosis}
+                    onChange={(e) => setPrescripcionForm({ ...prescripcionForm, dosis: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="500mg"
+                  />
+                </div>
+
+                {/* Vía */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Vía</label>
+                  <select
+                    value={prescripcionForm.via}
+                    onChange={(e) => setPrescripcionForm({ ...prescripcionForm, via: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="Oral">Oral</option>
+                    <option value="Intramuscular">Intramuscular</option>
+                    <option value="Intravenosa">Intravenosa</option>
+                    <option value="Subcutánea">Subcutánea</option>
+                    <option value="Tópica">Tópica</option>
+                    <option value="Inhalada">Inhalada</option>
+                    <option value="Sublingual">Sublingual</option>
+                  </select>
+                </div>
+
+                {/* Frecuencia */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Frecuencia</label>
+                  <select
+                    value={prescripcionForm.frecuencia}
+                    onChange={(e) => setPrescripcionForm({ ...prescripcionForm, frecuencia: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="Cada 4 horas">Cada 4 horas</option>
+                    <option value="Cada 6 horas">Cada 6 horas</option>
+                    <option value="Cada 8 horas">Cada 8 horas</option>
+                    <option value="Cada 12 horas">Cada 12 horas</option>
+                    <option value="Cada 24 horas">Cada 24 horas</option>
+                    <option value="Dosis única">Dosis única</option>
+                    <option value="PRN (según necesidad)">PRN (según necesidad)</option>
+                  </select>
+                </div>
+
+                {/* Duración */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Duración</label>
+                  <select
+                    value={prescripcionForm.duracion}
+                    onChange={(e) => setPrescripcionForm({ ...prescripcionForm, duracion: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="3 días">3 días</option>
+                    <option value="5 días">5 días</option>
+                    <option value="7 días">7 días</option>
+                    <option value="10 días">10 días</option>
+                    <option value="14 días">14 días</option>
+                    <option value="30 días">30 días</option>
+                    <option value="Indefinido">Indefinido</option>
+                  </select>
+                </div>
+
+                {/* Indicaciones */}
+                <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
+                  <label className="text-xs font-medium text-muted-foreground">Indicaciones adicionales</label>
+                  <input
+                    type="text"
+                    value={prescripcionForm.indicaciones}
+                    onChange={(e) => setPrescripcionForm({ ...prescripcionForm, indicaciones: e.target.value })}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Tomar con alimentos, no mezclar con alcohol, etc."
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={agregarPrescripcion}
+                disabled={!prescripcionForm.medicamento || !prescripcionForm.dosis}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Medicamento
+              </button>
+            </div>
+
+            {/* Lista de prescripciones */}
+            {prescripciones.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Medicamentos prescritos ({prescripciones.length})</p>
+                <div className="space-y-2">
+                  {prescripciones.map((rx) => (
+                    <div key={rx.id} className="bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <Pill className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground">{rx.medicamento}</p>
+                            <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
+                              <span className="px-2 py-0.5 bg-muted rounded-full">{rx.dosis}</span>
+                              {rx.via && <span className="px-2 py-0.5 bg-muted rounded-full">{rx.via}</span>}
+                              {rx.frecuencia && <span className="px-2 py-0.5 bg-muted rounded-full">{rx.frecuencia}</span>}
+                              {rx.duracion && <span className="px-2 py-0.5 bg-muted rounded-full">{rx.duracion}</span>}
+                            </div>
+                            {rx.indicaciones && (
+                              <p className="text-xs text-muted-foreground mt-2 italic">
+                                {rx.indicaciones}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => eliminarPrescripcion(rx.id)}
+                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors shrink-0"
+                          aria-label="Eliminar prescripción"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                  <Save className="w-4 h-4" />
+                  Guardar Receta
+                </button>
+              </div>
+            )}
+
+            {prescripciones.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Pill className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No hay medicamentos prescritos</p>
+                <p className="text-xs mt-1">Busque un medicamento para agregarlo a la receta</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* RESUMEN */}
+        {activeSubTab === "resumen" && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <FileCheck className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Resumen de la Consulta</h3>
+            </div>
+
+            {/* Resumen de Datos Clínicos */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-5 py-3 border-b border-border">
+                <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Activity className="w-4 h-4 text-primary" />
+                  Datos Clínicos
+                </h4>
+              </div>
+              <div className="p-5">
+                {(datosClinicosForm.peso || datosClinicosForm.estatura || datosClinicosForm.frecuenciaCardiaca || datosClinicosForm.temperatura) ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {datosClinicosForm.peso && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Peso</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.peso} kg</p>
+                      </div>
+                    )}
+                    {datosClinicosForm.estatura && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Estatura</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.estatura} cm</p>
+                      </div>
+                    )}
+                    {datosClinicosForm.imc && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">IMC</p>
+                        <p className="font-semibold text-foreground">
+                          {datosClinicosForm.imc}
+                          <span className={`ml-2 text-xs ${imcCategoria(parseFloat(datosClinicosForm.imc)).cls}`}>
+                            ({imcCategoria(parseFloat(datosClinicosForm.imc)).label})
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                    {datosClinicosForm.frecuenciaCardiaca && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Frec. Cardíaca</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.frecuenciaCardiaca} bpm</p>
+                      </div>
+                    )}
+                    {(datosClinicosForm.presionSistolica && datosClinicosForm.presionDiastolica) && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Presión Arterial</p>
+                        <p className="font-semibold text-foreground">
+                          {datosClinicosForm.presionSistolica}/{datosClinicosForm.presionDiastolica} mmHg
+                          <span className={`ml-2 text-xs ${presionCategoria(
+                            parseInt(datosClinicosForm.presionSistolica),
+                            parseInt(datosClinicosForm.presionDiastolica)
+                          ).cls}`}>
+                            ({presionCategoria(
+                              parseInt(datosClinicosForm.presionSistolica),
+                              parseInt(datosClinicosForm.presionDiastolica)
+                            ).label})
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                    {datosClinicosForm.frecuenciaRespiratoria && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Frec. Respiratoria</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.frecuenciaRespiratoria} rpm</p>
+                      </div>
+                    )}
+                    {datosClinicosForm.temperatura && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Temperatura</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.temperatura} °C</p>
+                      </div>
+                    )}
+                    {datosClinicosForm.masaCorporal && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">% Masa Corporal</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.masaCorporal}%</p>
+                      </div>
+                    )}
+                    {datosClinicosForm.grasaCorporal && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Grasa Corporal</p>
+                        <p className="font-semibold text-foreground">{datosClinicosForm.grasaCorporal}%</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No se han registrado datos clínicos</p>
+                )}
+              </div>
+            </div>
+
+            {/* Resumen de Diagnósticos */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-5 py-3 border-b border-border">
+                <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Stethoscope className="w-4 h-4 text-primary" />
+                  Diagnósticos ({diagnosticos.length})
+                </h4>
+              </div>
+              <div className="p-5">
+                {diagnosticos.length > 0 ? (
+                  <div className="space-y-2">
+                    {diagnosticos.map((dx) => (
+                      <div key={dx.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded font-mono text-sm font-semibold shrink-0">
+                          {dx.clave}
+                        </span>
+                        <span className="text-sm text-foreground">{dx.descripcion}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No se han registrado diagnósticos</p>
+                )}
+              </div>
+            </div>
+
+            {/* Resumen de Notas */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-5 py-3 border-b border-border">
+                <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <FileEdit className="w-4 h-4 text-primary" />
+                  Notas Médicas ({notas.length})
+                </h4>
+              </div>
+              <div className="p-5">
+                {notas.length > 0 ? (
+                  <div className="space-y-3">
+                    {notas.map((nota) => (
+                      <div key={nota.id} className="p-3 bg-muted/30 rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">{fmtFechaHora(nota.fecha)}</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{nota.contenido}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No se han registrado notas médicas</p>
+                )}
+              </div>
+            </div>
+
+            {/* Resumen de Prescripciones */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-5 py-3 border-b border-border">
+                <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Pill className="w-4 h-4 text-primary" />
+                  Prescripciones ({prescripciones.length})
+                </h4>
+              </div>
+              <div className="p-5">
+                {prescripciones.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase">Medicamento</th>
+                          <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase">Dosis</th>
+                          <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase">Vía</th>
+                          <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase">Frecuencia</th>
+                          <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase">Duración</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {prescripciones.map((rx) => (
+                          <tr key={rx.id} className="border-b border-border last:border-0">
+                            <td className="py-2 px-3 font-medium text-foreground">{rx.medicamento}</td>
+                            <td className="py-2 px-3 text-foreground">{rx.dosis}</td>
+                            <td className="py-2 px-3 text-foreground">{rx.via || "-"}</td>
+                            <td className="py-2 px-3 text-foreground">{rx.frecuencia || "-"}</td>
+                            <td className="py-2 px-3 text-foreground">{rx.duracion || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No se han prescrito medicamentos</p>
+                )}
+              </div>
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+              <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                <Save className="w-4 h-4" />
+                Guardar Consulta
+              </button>
+              <button className="inline-flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-md text-sm font-medium hover:bg-muted transition-colors">
+                <FileText className="w-4 h-4" />
+                Imprimir Resumen
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1145,9 +3061,10 @@ const tabs = [
   { id: "dashboard",    label: "Resumen",         icon: LayoutDashboard },
   { id: "datos",        label: "Datos generales", icon: User },
   { id: "signos",       label: "Signos vitales",  icon: Activity },
-  { id: "expediente",   label: "Expediente",       icon: FolderOpen },
-  { id: "visitas",      label: "Visitas",          icon: Stethoscope },
-  { id: "medicamentos", label: "Medicamentos",     icon: Pill },
+  { id: "expediente",   label: "Expediente",      icon: FolderOpen },
+  { id: "visitas",      label: "Visitas",         icon: Stethoscope },
+  { id: "medicamentos", label: "Medicamentos",    icon: Pill },
+  { id: "consulta",     label: "Consulta",        icon: ClipboardList },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -1179,11 +3096,9 @@ export default function Page() {
       {/* Patient banner + tabs */}
       <div className="bg-sidebar border-b border-sidebar-border px-4 md:px-8 pt-5">
         <div className="flex items-center gap-4">
-          {/* Iniciales / ícono de perfil */}
-          <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <span className="text-base font-bold text-primary">
-              {dp.nombre[0]}{dp.apellidoPaterno[0]}
-            </span>
+          {/* Avatar SVG al lado del nombre */}
+          <div className="shrink-0">
+            <AvatarPaciente edad={edad} sexo={dp.sexo} />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -1195,11 +3110,6 @@ export default function Page() {
               <span className="hidden sm:inline">·</span>
               {dp.curp && <span className="font-mono text-xs">{dp.curp}</span>}
             </div>
-          </div>
-
-          {/* Avatar por edad y sexo (reemplaza al teléfono) */}
-          <div className="hidden md:block shrink-0">
-            <AvatarPaciente edad={edad} sexo={dp.sexo} />
           </div>
         </div>
 
@@ -1233,6 +3143,7 @@ export default function Page() {
         {activeTab === "expediente"   && <ExpedienteTab     diagnosticos={paciente.diagnosticos} citas={paciente.citas} notas={paciente.notas} />}
         {activeTab === "visitas"      && <VisitasTab        visitas={paciente.visitas} />}
         {activeTab === "medicamentos" && <MedicamentosTab   medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
+        {activeTab === "consulta"     && <ConsultaTab />}
       </main>
     </div>
   );
