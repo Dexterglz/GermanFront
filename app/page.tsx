@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Login() {
 
@@ -15,6 +16,9 @@ export default function Login() {
 
   const [errores, setErrores] = useState<any>({})
 
+  const [loading, setLoading] = useState(false)
+  const [errorLogin, setErrorLogin] = useState("")
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
@@ -25,10 +29,6 @@ export default function Login() {
   const validar = () => {
 
     let errores: any = {}
-
-    if (!form.nombre.trim()) {
-      errores.nombre = "El nombre es obligatorio"
-    }
 
     if (!form.correo) {
       errores.correo = "El correo es obligatorio"
@@ -45,7 +45,41 @@ export default function Login() {
     return errores
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const login = async () => {
+
+  setLoading(true)
+  setErrorLogin("")
+
+  try {
+
+    // Simulación de API
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    if (form.correo === "doctor@test.com" && form.password === "123456") {
+      localStorage.setItem("rol", "doctor")
+      router.push("/doctor")
+    } 
+    else if (form.correo === "admin@test.com" && form.password === "123456") {
+      localStorage.setItem("rol", "asistente")
+      router.push("/asistente")
+    } 
+    else if (form.correo === "asistente@test.com" && form.password === "123456") {
+      localStorage.setItem("rol", "asistente")
+      router.push("/asistente")
+    } 
+    else {
+      setErrorLogin("Credenciales incorrectas")
+    }
+
+  } catch (error) {
+    setErrorLogin("Error al iniciar sesión")
+  }
+
+  setLoading(false)
+
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const erroresValidacion = validar()
@@ -53,83 +87,89 @@ export default function Login() {
     if (Object.keys(erroresValidacion).length > 0) {
       setErrores(erroresValidacion)
     } else {
-
       setErrores({})
-      console.log("Datos enviados:", form)
-
-      // ejemplo de redirección por rol
-      if (form.correo === "doctor@test.com") {
-        router.push("/doctor")
-      } 
-      else if (form.correo === "admin@test.com") {
-        router.push("/admin")
-      } 
-      else {
-        router.push("/doctor")
-      }
-
+      await login()
     }
   }
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+  useEffect(() => {
 
+    const rol = localStorage.getItem("rol")
+
+    if (rol === "doctor") router.push("/doctor")
+    if (rol === "admin") router.push("/admin")
+    if (rol === "asistente") router.push("/asistente")
+
+  }, [])
+
+
+return (
+  
+<div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 via-white to-green-200">
+      
       <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-xl shadow-md w-96"
-      >
+      onSubmit={handleSubmit}
+      className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/30 animate-fadeIn"
+    >
 
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Iniciar Sesión
-        </h2>
+      <h2 className="text-3xl font-bold mb-2 text-center text-gray-800 tracking-tight">
+        Bienvenido
+      </h2>
+      
 
-        <input
-          type="text"
-          name="nombre"
-          placeholder="Nombre"
-          value={form.nombre}
-          onChange={handleChange}
-          className="w-full p-2 border rounded mb-2"
-        />
+      <p className="text-center text-gray-500 mb-6">
+        Inicia sesión para continuar
+      </p>
 
-        {errores.nombre && (
-          <p className="text-red-500 text-sm mb-2">{errores.nombre}</p>
-        )}
-
+      {/* Correo */}
+      <div className="mb-4">
         <input
           type="email"
           name="correo"
           placeholder="Correo"
           value={form.correo}
           onChange={handleChange}
-          className="w-full p-2 border rounded mb-2"
+          className="w-full p-3 border border-gray-300 rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
         />
-
         {errores.correo && (
-          <p className="text-red-500 text-sm mb-2">{errores.correo}</p>
+          <p className="text-red-500 text-sm mt-1">{errores.correo}</p>
         )}
+      </div>
 
+      {/* Password */}
+      <div className="mb-4">
         <input
           type="password"
           name="password"
           placeholder="Contraseña"
           value={form.password}
           onChange={handleChange}
-          className="w-full p-2 border rounded mb-2"
+          className="w-full p-3 border border-gray-300 rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
         />
-
         {errores.password && (
-          <p className="text-red-500 text-sm mb-4">{errores.password}</p>
+          <p className="text-red-500 text-sm mt-1">{errores.password}</p>
         )}
+      </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-        >
-          Entrar
-        </button>
+      {/* Error login */}
+      {errorLogin && (
+        <p className="text-red-500 text-sm mb-4 text-center">
+          {errorLogin}
+        </p>
+      )}
 
-      </form>
-    </div>
-  )
+      {/* Botón */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-lg font-semibold hover:scale-105 transition duration-200 shadow-md"
+      >
+        {loading ? "Ingresando..." : "Entrar"}
+      </button>
+
+    </form>
+  </div>
+)
+
+
 }
