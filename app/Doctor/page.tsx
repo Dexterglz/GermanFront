@@ -49,6 +49,7 @@ import {
   UserCheck,
   BadgePercent,
 } from "lucide-react";
+import { LogOutButton } from "@/components/ui/logoutButton";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -3091,6 +3092,9 @@ export default function Page() {
           <span className="text-sidebar-foreground font-semibold text-sm tracking-tight">Expediente Clínico</span>
         </div>
         <span />
+        <div className="w-30">
+          <LogOutButton/>
+        </div>
       </header>
 
       {/* Patient banner + tabs */}

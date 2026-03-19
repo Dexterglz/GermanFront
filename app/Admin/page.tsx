@@ -25,6 +25,8 @@ import {
   XCircle,
   Menu,
 } from "lucide-react"
+import { LogOutButton } from "@/components/ui/logoutButton"
+
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -253,7 +255,7 @@ function Sidebar({
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           {!collapsed && <span></span>}
         </button>
-        <button
+        {/* <button
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive transition-colors",
             collapsed && "justify-center px-0"
@@ -262,7 +264,10 @@ function Sidebar({
         >
           <LogOut className="w-4 h-4 shrink-0" />
           {!collapsed && <span>Cerrar sesión</span>}
-        </button>
+        </button> */}
+        <div className="w-full">
+          <LogOutButton/>
+        </div>
       </div>
     </aside>
   )
@@ -1363,6 +1368,7 @@ function PermissionsView({
 // ─────────────────────────────────────────────
 
 export default function AdminPage() {
+
   const [activeTab, setActiveTab]           = useState("dashboard")
   const [collapsed, setCollapsed]           = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
