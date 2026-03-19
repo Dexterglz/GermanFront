@@ -57,15 +57,15 @@ export default function Login() {
 
     if (form.correo === "doctor@test.com" && form.password === "123456") {
       localStorage.setItem("rol", "doctor")
-      router.push("/doctor")
+      router.push("/Doctor")
     } 
     else if (form.correo === "admin@test.com" && form.password === "123456") {
       localStorage.setItem("rol", "admin")
-      router.push("/admin")
+      router.push("/Admin")
     } 
     else if (form.correo === "asistente@test.com" && form.password === "123456") {
       localStorage.setItem("rol", "asistente")
-      router.push("/asistente")
+      router.push("/Asistente")
     } 
     else {
       setErrorLogin("Credenciales incorrectas")
