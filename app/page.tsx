@@ -105,7 +105,7 @@ export default function Login() {
 
 return (
   
-<div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 via-white to-green-200">
+<div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 via-white to-green-200 animate-gradient">
       
       <form
       onSubmit={handleSubmit}

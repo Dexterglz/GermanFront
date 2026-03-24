@@ -265,9 +265,9 @@ function Sidebar({
           <LogOut className="w-4 h-4 shrink-0" />
           {!collapsed && <span>Cerrar sesión</span>}
         </button> */}
-        <div className="w-full">
-          <LogOutButton/>
-        </div>
+      <div className="w-full">
+        <LogOutButton collapsed={collapsed} />
+      </div>
       </div>
     </aside>
   )
