@@ -93,6 +93,7 @@ const translations = {
     appointments: "Citas",
     consultation: "Consulta",
     medicalRecord: "Expediente",
+    visits: "Visitas",
     medications: "Medicamentos",
     gynecology: "Ginecología",
     
@@ -294,6 +295,7 @@ const translations = {
     appointments: "Appointments",
     consultation: "Consultation",
     medicalRecord: "Medical Record",
+    visits: "Visits",
     medications: "Medications",
     gynecology: "Gynecology",
     
@@ -1233,32 +1235,78 @@ function presionCategoria(sis: number, dia: number) {
   return { label: "Alta", cls: "text-red-600" };
 }
 
-// ───���─────────────────────────────────────────
-// AVATAR COMPONENT
+// ─────────────────────────────────────────────
+// AVATAR COMPONENT (ANIMATED)
 // ─────────────────────────────────────────────
 
-function AvatarPaciente({ nombre, sexo, size = 48 }: { nombre: string; sexo: "Masculino" | "Femenino" | "Otro"; size?: number }) {
+function AvatarPaciente({ nombre, sexo, size = 48, animated = true }: { nombre: string; sexo: "Masculino" | "Femenino" | "Otro"; size?: number; animated?: boolean }) {
   const initials = nombre.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const bgColor = sexo === "Femenino" ? "from-rose-400 to-pink-500" : sexo === "Masculino" ? "from-sky-400 to-blue-500" : "from-slate-400 to-slate-500";
   const sizeClass = size >= 56 ? "w-14 h-14 rounded-2xl text-xl" : "w-10 h-10 rounded-xl text-sm";
 
-  if (sexo === "Femenino") {
-    return (
-      <div className={`${sizeClass} overflow-hidden shadow-lg shadow-primary/20 shrink-0 border-2 border-white/30`}>
-        <Image
-          src="/avatar-paciente.jpg"
-          alt={`Foto de ${nombre}`}
-          width={size}
-          height={size}
-          className="w-full h-full object-cover"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`${sizeClass} bg-gradient-to-br ${bgColor} flex items-center justify-center shadow-lg shadow-primary/20 shrink-0`}>
-      <span className={`font-bold text-white tracking-tight`}>{initials}</span>
+    <div className="relative group">
+      {/* Animated ring around avatar */}
+      {animated && (
+        <div 
+          className={`absolute -inset-1 bg-gradient-to-r from-primary via-pink-500 to-primary rounded-2xl opacity-0 group-hover:opacity-75 blur transition-all duration-500`}
+          style={{ animation: animated ? 'spin 3s linear infinite' : 'none' }}
+        />
+      )}
+      
+      <div 
+        className={`${sizeClass} bg-gradient-to-br ${bgColor} flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 relative overflow-hidden border-2 border-white/30 transition-all duration-300 group-hover:scale-105`}
+        style={{ animation: animated ? 'pulse 2s ease-in-out infinite' : 'none' }}
+      >
+        {/* Animated background shimmer */}
+        {animated && (
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            style={{ animation: 'shimmer 2s ease-in-out infinite', transform: 'translateX(-100%)' }}
+          />
+        )}
+        
+        {/* Face emoji based on sex with subtle animation */}
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          <span 
+            className={`${size >= 56 ? 'text-2xl' : 'text-lg'}`}
+            style={{ animation: animated ? 'bounce 1s ease-in-out infinite' : 'none' }}
+          >
+            {sexo === "Femenino" ? "👩" : sexo === "Masculino" ? "👨" : "🧑"}
+          </span>
+        </div>
+        
+        {/* Subtle floating particles */}
+        {animated && (
+          <>
+            <span className="absolute w-1 h-1 bg-white/40 rounded-full top-1 left-2" style={{ animation: 'float 3s ease-in-out infinite' }} />
+            <span className="absolute w-0.5 h-0.5 bg-white/30 rounded-full bottom-2 right-1" style={{ animation: 'float 4s ease-in-out infinite 0.5s' }} />
+            <span className="absolute w-1 h-1 bg-white/20 rounded-full top-3 right-2" style={{ animation: 'float 5s ease-in-out infinite 1s' }} />
+          </>
+        )}
+      </div>
+      
+      {/* Online indicator pulse */}
+      {animated && (
+        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-lg">
+          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+        </span>
+      )}
+      
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.4; }
+          50% { transform: translateY(-4px) translateX(2px); opacity: 0.8; }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -2703,7 +2751,9 @@ interface PrescripcionItem {
 }
 
 const subTabsConsulta = [
+  { id: "visitas", label: "Visitas Clínicas", icon: UserCheck },
   { id: "datosclinicos", label: "Datos Clínicos", icon: Activity },
+  { id: "soap", label: "SOAP", icon: ClipboardList },
   { id: "alergias", label: "Alergias", icon: AlertTriangle },
   { id: "diagnostico", label: "Diagnóstico", icon: Stethoscope },
   { id: "notas", label: "Notas", icon: FileEdit },
@@ -2711,10 +2761,52 @@ const subTabsConsulta = [
   { id: "resumen", label: "Resumen", icon: FileCheck },
 ] as const;
 
+// SOAP interface
+interface SOAPNote {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+}
+
+// Visita clínica status
+type VisitaClinicaEstatus = "esperando" | "llegó" | "en_consulta" | "atendido";
+
+interface VisitaClinica {
+  id: string;
+  pacienteNombre: string;
+  pacienteSexo: "Masculino" | "Femenino" | "Otro";
+  horaLlegada?: string;
+  horaCita: string;
+  motivo: string;
+  estatus: VisitaClinicaEstatus;
+  especialidad: string;
+}
+
 type SubTabConsultaId = (typeof subTabsConsulta)[number]["id"];
 
+// Mock visitas clínicas (pacientes esperando/llegados)
+const visitasClinicasMock: VisitaClinica[] = [
+  { id: "VC-001", pacienteNombre: "María Fernanda González", pacienteSexo: "Femenino", horaCita: "09:00", horaLlegada: "08:45", motivo: "Control prenatal", estatus: "llegó", especialidad: "Ginecología" },
+  { id: "VC-002", pacienteNombre: "Ana García López", pacienteSexo: "Femenino", horaCita: "09:30", motivo: "Revisión ginecológica", estatus: "esperando", especialidad: "Ginecología" },
+  { id: "VC-003", pacienteNombre: "Carlos Méndez", pacienteSexo: "Masculino", horaCita: "10:00", horaLlegada: "09:50", motivo: "Consulta general", estatus: "en_consulta", especialidad: "Medicina General" },
+  { id: "VC-004", pacienteNombre: "Laura Sánchez", pacienteSexo: "Femenino", horaCita: "10:30", horaLlegada: "10:15", motivo: "Seguimiento", estatus: "atendido", especialidad: "Ginecología" },
+  { id: "VC-005", pacienteNombre: "Roberto Torres", pacienteSexo: "Masculino", horaCita: "11:00", motivo: "Primera vez", estatus: "esperando", especialidad: "Cardiología" },
+];
+
 function ConsultaTab() {
-  const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("datosclinicos");
+  const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("visitas");
+  
+  // Estado para visitas clínicas
+  const [visitasClinicas, setVisitasClinicas] = useState<VisitaClinica[]>(visitasClinicasMock);
+  
+  // Estado para SOAP
+  const [soapNote, setSoapNote] = useState<SOAPNote>({
+    subjective: "",
+    objective: "",
+    assessment: "",
+    plan: "",
+  });
 
   const [datosClinicosForm, setDatosClinicosForm] = useState<DatosClinicosForm>({
     peso: "", estatura: "", frecuenciaCardiaca: "", presionSistolica: "", presionDiastolica: "",
@@ -2725,6 +2817,25 @@ function ConsultaTab() {
   const [nuevaClave, setNuevaClave] = useState("");
   const [nuevoDiagnostico, setNuevoDiagnostico] = useState("");
   const [sugerenciasCIE, setSugerenciasCIE] = useState<Array<{clave: string; descripcion: string}>>([]);
+  const [busquedaDiagPor, setBusquedaDiagPor] = useState<"clave" | "nombre">("clave");
+  const [sugerenciasNombre, setSugerenciasNombre] = useState<Array<{clave: string; descripcion: string}>>([]);
+  
+  // Búsqueda por nombre de diagnóstico
+  const handleNombreChange = (value: string) => {
+    setNuevoDiagnostico(value);
+    if (value.length >= 2) {
+      const coincidencias = Object.entries(catalogoCIE10)
+        .filter(([, descripcion]) => descripcion.toLowerCase().includes(value.toLowerCase()))
+        .map(([clave, descripcion]) => ({ clave, descripcion }))
+        .slice(0, 8);
+      setSugerenciasNombre(coincidencias);
+    } else {
+      setSugerenciasNombre([]);
+    }
+  };
+  
+  // Estado para tipo de medicamento: comercial vs principio activo
+  const [tipoMedicamento, setTipoMedicamento] = useState<"comercial" | "principioActivo">("comercial");
   
   const [notas, setNotas] = useState<NotaItem[]>([]);
   const [nuevaNota, setNuevaNota] = useState("");
@@ -2861,6 +2972,215 @@ function ConsultaTab() {
       </div>
 
       <div className="pt-2">
+        {/* VISITAS CLÍNICAS - Pacientes antes/durante consulta */}
+        {activeSubTab === "visitas" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <UserCheck className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Visitas Clínicas del Día</h3>
+                  <p className="text-xs text-muted-foreground">{visitasClinicas.length} paciente(s) programados</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumen de estados */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { estatus: "esperando" as const, label: "Esperando", color: "bg-amber-50 border-amber-200 text-amber-700", icon: Clock },
+                { estatus: "llegó" as const, label: "Llegó", color: "bg-blue-50 border-blue-200 text-blue-700", icon: UserCheck },
+                { estatus: "en_consulta" as const, label: "En Consulta", color: "bg-primary/10 border-primary/20 text-primary", icon: Stethoscope },
+                { estatus: "atendido" as const, label: "Atendido", color: "bg-emerald-50 border-emerald-200 text-emerald-700", icon: CheckCircle2 },
+              ].map(({ estatus, label, color, icon: Icon }) => (
+                <div key={estatus} className={`p-4 rounded-xl border ${color}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-semibold">{label}</span>
+                  </div>
+                  <p className="text-2xl font-bold">{visitasClinicas.filter(v => v.estatus === estatus).length}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Lista de pacientes */}
+            <div className="space-y-3">
+              {visitasClinicas.map((visita) => {
+                const estatusConfig: Record<VisitaClinicaEstatus, { bg: string; text: string; label: string }> = {
+                  esperando: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", label: "Esperando" },
+                  "llegó": { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", label: "Llegó" },
+                  en_consulta: { bg: "bg-primary/10 border-primary/20", text: "text-primary", label: "En Consulta" },
+                  atendido: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", label: "Atendido" },
+                };
+                const cfg = estatusConfig[visita.estatus];
+                
+                return (
+                  <div key={visita.id} className={`p-4 rounded-2xl border ${cfg.bg} transition-all hover:shadow-md`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <AvatarPaciente nombre={visita.pacienteNombre} sexo={visita.pacienteSexo} size={48} />
+                        <div>
+                          <p className="font-semibold text-foreground">{visita.pacienteNombre}</p>
+                          <p className="text-sm text-muted-foreground">{visita.motivo}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Cita: {visita.horaCita}
+                            </span>
+                            {visita.horaLlegada && (
+                              <span className="flex items-center gap-1 text-blue-600">
+                                <UserCheck className="w-3 h-3" />
+                                Llegó: {visita.horaLlegada}
+                              </span>
+                            )}
+                            <span className="px-2 py-0.5 bg-muted rounded-full text-xs">{visita.especialidad}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text}`}>
+                          {cfg.label}
+                        </span>
+                        
+                        {/* Acciones según estado */}
+                        <div className="flex gap-1">
+                          {visita.estatus === "esperando" && (
+                            <button
+                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                                v.id === visita.id ? { ...v, estatus: "llegó" as const, horaLlegada: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) } : v
+                              ))}
+                              className="px-3 py-1.5 bg-blue-500 text-white rounded-xl text-xs font-medium hover:bg-blue-600 transition-colors"
+                            >
+                              Marcar Llegó
+                            </button>
+                          )}
+                          {visita.estatus === "llegó" && (
+                            <button
+                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                                v.id === visita.id ? { ...v, estatus: "en_consulta" as const } : v
+                              ))}
+                              className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-medium hover:bg-primary/90 transition-colors"
+                            >
+                              Iniciar Consulta
+                            </button>
+                          )}
+                          {visita.estatus === "en_consulta" && (
+                            <button
+                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                                v.id === visita.id ? { ...v, estatus: "atendido" as const } : v
+                              ))}
+                              className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-xs font-medium hover:bg-emerald-600 transition-colors"
+                            >
+                              Finalizar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* SOAP - Notas médicas estructuradas */}
+        {activeSubTab === "soap" && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Nota SOAP</h3>
+                <p className="text-xs text-muted-foreground">Subjetivo, Objetivo, Análisis, Plan</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {/* Subjetivo */}
+              <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">S</span>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Subjetivo</h4>
+                    <p className="text-xs text-muted-foreground">Síntomas, motivo de consulta, historia del paciente</p>
+                  </div>
+                </div>
+                <textarea
+                  value={soapNote.subjective}
+                  onChange={(e) => setSoapNote({ ...soapNote, subjective: e.target.value })}
+                  rows={4}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="¿Qué refiere el paciente? Síntomas principales, duración, factores agravantes..."
+                />
+              </div>
+
+              {/* Objetivo */}
+              <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">O</span>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Objetivo</h4>
+                    <p className="text-xs text-muted-foreground">Hallazgos del examen físico, signos vitales, resultados de laboratorio</p>
+                  </div>
+                </div>
+                <textarea
+                  value={soapNote.objective}
+                  onChange={(e) => setSoapNote({ ...soapNote, objective: e.target.value })}
+                  rows={4}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Signos vitales, exploración física, resultados de estudios..."
+                />
+              </div>
+
+              {/* Análisis/Assessment */}
+              <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">A</span>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Análisis</h4>
+                    <p className="text-xs text-muted-foreground">Diagnóstico, diagnósticos diferenciales, interpretación</p>
+                  </div>
+                </div>
+                <textarea
+                  value={soapNote.assessment}
+                  onChange={(e) => setSoapNote({ ...soapNote, assessment: e.target.value })}
+                  rows={4}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Impresión diagnóstica, diagnósticos diferenciales, severidad..."
+                />
+              </div>
+
+              {/* Plan */}
+              <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">P</span>
+                  <div>
+                    <h4 className="font-semibold text-foreground">Plan</h4>
+                    <p className="text-xs text-muted-foreground">Tratamiento, estudios a solicitar, seguimiento</p>
+                  </div>
+                </div>
+                <textarea
+                  value={soapNote.plan}
+                  onChange={(e) => setSoapNote({ ...soapNote, plan: e.target.value })}
+                  rows={4}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Tratamiento indicado, estudios solicitados, próxima cita..."
+                />
+              </div>
+            </div>
+
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+              <Save className="w-4 h-4" />
+              Guardar Nota SOAP
+            </button>
+          </div>
+        )}
+
         {activeSubTab === "datosclinicos" && (
           <div className="space-y-5">
             <div className="flex items-center gap-3 mb-4">
@@ -3066,47 +3386,103 @@ function ConsultaTab() {
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-              <p className="text-sm font-medium text-foreground">Agregar diagnóstico (CIE-10)</p>
+              {/* Selector de modo: Clave o Nombre */}
+              <div className="flex items-center gap-3 mb-4">
+                <p className="text-sm font-medium text-foreground">Buscar por:</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setBusquedaDiagPor("clave")}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      busquedaDiagPor === "clave"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    Clave CIE-10
+                  </button>
+                  <button
+                    onClick={() => setBusquedaDiagPor("nombre")}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      busquedaDiagPor === "nombre"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    Nombre
+                  </button>
+                </div>
+              </div>
               
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5 relative">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Search className="w-3.5 h-3.5" /> Clave CIE-10
-                  </label>
-                  <input
-                    type="text"
-                    value={nuevaClave}
-                    onChange={(e) => handleClaveChange(e.target.value)}
-                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase"
-                    placeholder="Ej: I10, J45, E11..."
-                  />
-                  {sugerenciasCIE.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {sugerenciasCIE.map(({ clave, descripcion }) => (
-                        <button
-                          key={clave}
-                          type="button"
-                          onClick={() => seleccionarCIE(clave, descripcion)}
-                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
-                        >
-                          <span className="font-mono font-semibold text-primary">{clave}</span>
-                          <span className="text-foreground truncate">{descripcion}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {busquedaDiagPor === "clave" ? (
+                  <div className="space-y-1.5 relative">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Search className="w-3.5 h-3.5" /> Clave CIE-10
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevaClave}
+                      onChange={(e) => handleClaveChange(e.target.value)}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase"
+                      placeholder="Ej: I10, J45, E11..."
+                    />
+                    {sugerenciasCIE.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {sugerenciasCIE.map(({ clave, descripcion }) => (
+                          <button
+                            key={clave}
+                            type="button"
+                            onClick={() => seleccionarCIE(clave, descripcion)}
+                            className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+                          >
+                            <span className="font-mono font-semibold text-primary">{clave}</span>
+                            <span className="text-foreground truncate">{descripcion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 relative">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Search className="w-3.5 h-3.5" /> Buscar por nombre
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoDiagnostico}
+                      onChange={(e) => handleNombreChange(e.target.value)}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Ej: Diabetes, Hipertensión, Endometriosis..."
+                    />
+                    {sugerenciasNombre.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {sugerenciasNombre.map(({ clave, descripcion }) => (
+                          <button
+                            key={clave}
+                            type="button"
+                            onClick={() => seleccionarCIE(clave, descripcion)}
+                            className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+                          >
+                            <span className="font-mono font-semibold text-primary">{clave}</span>
+                            <span className="text-foreground truncate">{descripcion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <ClipboardList className="w-3.5 h-3.5" /> Diagnóstico
+                    <ClipboardList className="w-3.5 h-3.5" /> {busquedaDiagPor === "clave" ? "Diagnóstico" : "Clave CIE-10"}
                   </label>
                   <input
                     type="text"
-                    value={nuevoDiagnostico}
-                    onChange={(e) => setNuevoDiagnostico(e.target.value)}
+                    value={busquedaDiagPor === "clave" ? nuevoDiagnostico : nuevaClave}
+                    onChange={(e) => busquedaDiagPor === "clave" ? setNuevoDiagnostico(e.target.value) : setNuevaClave(e.target.value)}
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="Se autocompleta al ingresar clave"
+                    placeholder={busquedaDiagPor === "clave" ? "Se autocompleta al ingresar clave" : "Se autocompleta al buscar nombre"}
+                    readOnly={busquedaDiagPor === "nombre"}
                   />
                 </div>
               </div>
@@ -3161,12 +3537,52 @@ function ConsultaTab() {
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <FileEdit className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Notas Médicas</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Historia Clínica</h3>
+                <p className="text-xs text-muted-foreground">Notas médicas con historial de citas y especialidades</p>
+              </div>
             </div>
 
+            {/* Historia clínica resumida - Citas pasadas por especialidad */}
+            <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 border border-primary/20 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold text-foreground">Historial de Citas por Especialidad</h4>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { especialidad: "Ginecología y Obstetricia", citas: 12, ultimaCita: "2026-04-10", medico: "Dr. Carlos Rodríguez" },
+                  { especialidad: "Medicina General", citas: 3, ultimaCita: "2024-02-20", medico: "Dra. Ana María López" },
+                  { especialidad: "Nutrición", citas: 2, ultimaCita: "2024-06-05", medico: "Lic. Martha Jiménez" },
+                ].map((hist) => (
+                  <div key={hist.especialidad} className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Stethoscope className="w-4 h-4 text-primary" />
+                      <span className="font-semibold text-foreground text-sm">{hist.especialidad}</span>
+                    </div>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <p className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {hist.citas} citas totales
+                      </p>
+                      <p className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Última: {fmtFecha(hist.ultimaCita, { corto: true })}
+                      </p>
+                      <p className="flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        {hist.medico}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Nueva nota */}
             <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Nueva nota</label>
+                <label className="text-xs font-medium text-muted-foreground">Nueva nota clínica</label>
                 <textarea
                   value={nuevaNota}
                   onChange={(e) => setNuevaNota(e.target.value)}
@@ -3186,9 +3602,10 @@ function ConsultaTab() {
               </button>
             </div>
 
+            {/* Notas registradas */}
             {notas.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Notas registradas ({notas.length})</p>
+                <p className="text-sm font-medium text-muted-foreground">Notas de esta consulta ({notas.length})</p>
                 <div className="space-y-2">
                   {notas.map((nota) => (
                     <div key={nota.id} className="bg-card border border-border rounded-xl p-4">
@@ -3214,7 +3631,7 @@ function ConsultaTab() {
             {notas.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <FileEdit className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No hay notas registradas</p>
+                <p className="text-sm">No hay notas registradas en esta consulta</p>
               </div>
             )}
           </div>
@@ -3222,23 +3639,54 @@ function ConsultaTab() {
 
         {activeSubTab === "prescripcion" && (
           <div className="space-y-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Pill className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Pill className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Prescripción Médica</h3>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Prescripción Médica</h3>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              {/* Selector de tipo de medicamento */}
+              <div className="flex items-center gap-3 mb-4">
+                <p className="text-sm font-medium text-foreground">Tipo:</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTipoMedicamento("comercial")}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      tipoMedicamento === "comercial"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    Nombre Comercial
+                  </button>
+                  <button
+                    onClick={() => setTipoMedicamento("principioActivo")}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      tipoMedicamento === "principioActivo"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    Principio Activo
+                  </button>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-1.5 relative md:col-span-2 lg:col-span-1">
-                  <label className="text-xs font-medium text-muted-foreground">Medicamento</label>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {tipoMedicamento === "comercial" ? "Nombre Comercial" : "Principio Activo"}
+                  </label>
                   <input
                     type="text"
                     value={busquedaMedicamento}
                     onChange={(e) => handleBusquedaMedicamento(e.target.value)}
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="Buscar medicamento..."
+                    placeholder={tipoMedicamento === "comercial" ? "Ej: Microgynon, Omeprazol..." : "Ej: Levonorgestrel, Omeprazol..."}
                   />
                   {sugerenciasMedicamento.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
@@ -3309,12 +3757,17 @@ function ConsultaTab() {
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
                     <option value="">Seleccionar</option>
+                    <option value="Dosis única">Dosis única</option>
+                    <option value="1 día">1 día</option>
                     <option value="3 días">3 días</option>
                     <option value="5 días">5 días</option>
                     <option value="7 días">7 días</option>
                     <option value="10 días">10 días</option>
                     <option value="14 días">14 días</option>
+                    <option value="21 días">21 días</option>
                     <option value="30 días">30 días</option>
+                    <option value="60 días">60 días</option>
+                    <option value="90 días">90 días</option>
                     <option value="Indefinido">Indefinido</option>
                   </select>
                 </div>
@@ -3716,6 +4169,202 @@ function ExpedienteTab({
             </div>
           );
         })
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// TAB: VISITAS DEL PACIENTE
+// ─────────────────────────────────────────────
+
+function VisitasTab({ visitas }: { visitas: Visita[] }) {
+  const [fechaFiltro, setFechaFiltro] = useState("");
+  const [visitaExpandida, setVisitaExpandida] = useState<string | null>(null);
+
+  const visitasOrdenadas = [...visitas].sort((a, b) => 
+    new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+  );
+
+  const visitasFiltradas = fechaFiltro
+    ? visitasOrdenadas.filter((v) => v.fecha.substring(0, 10) === fechaFiltro)
+    : visitasOrdenadas;
+
+  const fechasDisponibles = Array.from(
+    new Set(visitas.map((v) => v.fecha.substring(0, 10)))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const toggleVisita = (id: string) => {
+    setVisitaExpandida(visitaExpandida === id ? null : id);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Historial de Visitas</h3>
+            <p className="text-sm text-muted-foreground">{visitas.length} visita(s) registrada(s)</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+          <select
+            value={fechaFiltro}
+            onChange={(e) => setFechaFiltro(e.target.value)}
+            className="text-sm border border-border rounded-xl px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            aria-label="Filtrar por fecha"
+          >
+            <option value="">Todas las visitas</option>
+            {fechasDisponibles.map((f) => (
+              <option key={f} value={f}>{fmtFecha(f)}</option>
+            ))}
+          </select>
+          {fechaFiltro && (
+            <button
+              onClick={() => setFechaFiltro("")}
+              className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Quitar filtro"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Lista de visitas */}
+      {visitasFiltradas.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p className="text-base font-medium">No hay visitas registradas</p>
+          {fechaFiltro && (
+            <p className="text-sm mt-2">Prueba quitando el filtro de fecha</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {visitasFiltradas.map((visita) => {
+            const isExpanded = visitaExpandida === visita.id;
+            const sv = visita.signosVitales;
+            
+            return (
+              <div
+                key={visita.id}
+                className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+                  isExpanded ? "border-primary/40 shadow-md" : "border-border"
+                }`}
+              >
+                {/* Header de la visita */}
+                <button
+                  onClick={() => toggleVisita(visita.id)}
+                  className="w-full text-left flex items-center justify-between gap-4 px-6 py-5 bg-card hover:bg-muted/30 transition-colors"
+                  aria-expanded={isExpanded}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      isExpanded ? "bg-primary/10" : "bg-muted"
+                    }`}>
+                      <Stethoscope className={`w-5 h-5 ${isExpanded ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-foreground">{visita.motivo}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {fmtFecha(visita.fecha, { weekday: true })}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`} />
+                </button>
+
+                {/* Contenido expandido */}
+                {isExpanded && (
+                  <div className="px-6 pb-6 pt-4 border-t border-border bg-card space-y-5">
+                    {/* Observaciones */}
+                    <div className="bg-muted/30 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="w-4 h-4 text-primary" />
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Observaciones
+                        </p>
+                      </div>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {visita.observaciones}
+                      </p>
+                    </div>
+
+                    {/* Signos vitales de la visita */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Activity className="w-4 h-4 text-primary" />
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Signos Vitales Registrados
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div className="bg-background border border-border rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Peso</p>
+                          <p className="text-lg font-semibold text-foreground">{sv.peso} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                        </div>
+                        <div className="bg-background border border-border rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Estatura</p>
+                          <p className="text-lg font-semibold text-foreground">{sv.estatura} <span className="text-sm font-normal text-muted-foreground">cm</span></p>
+                        </div>
+                        <div className="bg-background border border-border rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Temperatura</p>
+                          <p className="text-lg font-semibold text-foreground">{sv.temperatura} <span className="text-sm font-normal text-muted-foreground">°C</span></p>
+                        </div>
+                        <div className="bg-background border border-border rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Frec. Cardíaca</p>
+                          <p className="text-lg font-semibold text-foreground">{sv.frecuenciaCardiaca} <span className="text-sm font-normal text-muted-foreground">bpm</span></p>
+                        </div>
+                        <div className="bg-background border border-border rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Presión Arterial</p>
+                          <p className="text-lg font-semibold text-foreground">
+                            {sv.presionSistolica}/{sv.presionDiastolica} 
+                            <span className="text-sm font-normal text-muted-foreground ml-1">mmHg</span>
+                          </p>
+                          <p className={`text-xs mt-1 ${presionCategoria(sv.presionSistolica, sv.presionDiastolica).cls}`}>
+                            {presionCategoria(sv.presionSistolica, sv.presionDiastolica).label}
+                          </p>
+                        </div>
+                        {sv.indiceMasaCorporal && (
+                          <div className="bg-background border border-border rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">IMC</p>
+                            <p className="text-lg font-semibold text-foreground">{sv.indiceMasaCorporal.toFixed(1)}</p>
+                            <p className={`text-xs mt-1 ${imcCategoria(sv.indiceMasaCorporal).cls}`}>
+                              {imcCategoria(sv.indiceMasaCorporal).label}
+                            </p>
+                          </div>
+                        )}
+                        {sv.grasaCorporal && (
+                          <div className="bg-background border border-border rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Grasa Corporal</p>
+                            <p className="text-lg font-semibold text-foreground">{sv.grasaCorporal} <span className="text-sm font-normal text-muted-foreground">%</span></p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Botón de imprimir */}
+                    <div className="flex justify-end pt-2">
+                      <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-border text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-colors">
+                        <Printer className="w-4 h-4" />
+                        Imprimir Visita
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -4791,7 +5440,7 @@ function ConfiguracionPanel({
 // TABS CONFIG
 // ─────────────────────────────────────────────
 
-const tabIds = ["dashboard", "datos", "signos", "citas", "consulta", "expediente", "medicamentos", "ginecologia"] as const;
+const tabIds = ["dashboard", "datos", "signos", "citas", "consulta", "expediente", "visitas", "medicamentos", "ginecologia"] as const;
 type TabId = (typeof tabIds)[number];
 
 const tabIcons = {
@@ -4801,6 +5450,7 @@ const tabIcons = {
   citas: Calendar,
   consulta: Stethoscope,
   expediente: FolderOpen,
+  visitas: ClipboardList,
   medicamentos: Pill,
   ginecologia: Heart,
 };
@@ -4813,6 +5463,7 @@ function useLocalizedTabs(t: (key: TranslationKey) => string) {
     { id: "citas" as const, label: t("appointments"), icon: Calendar },
     { id: "consulta" as const, label: t("consultation"), icon: Stethoscope },
     { id: "expediente" as const, label: t("medicalRecord"), icon: FolderOpen },
+    { id: "visitas" as const, label: t("visits"), icon: ClipboardList },
     { id: "medicamentos" as const, label: t("medications"), icon: Pill },
     { id: "ginecologia" as const, label: t("gynecology"), icon: Heart },
   ];
@@ -5148,6 +5799,7 @@ export default function Page() {
           {activeTab === "citas" && <CitasTab />}
           {activeTab === "consulta" && <ConsultaTab />}
           {activeTab === "expediente" && <ExpedienteTab diagnosticos={paciente.diagnosticos} citas={paciente.citas} notas={paciente.notas} />}
+          {activeTab === "visitas" && <VisitasTab visitas={paciente.visitas} />}
           {activeTab === "medicamentos" && <MedicamentosTab medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
           {activeTab === "ginecologia" && <GinecologiaTab />}
         </main>
