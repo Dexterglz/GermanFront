@@ -21,6 +21,7 @@ import {
   Receipt,
   Clock,
   AlertCircle,
+  AlertTriangle,
   ChevronDown,
   Bell,
   BellOff,
@@ -66,6 +67,8 @@ import {
   Volume2,
   VolumeX,
   Laptop,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 
 const ChevronRightIcon = ChevronRight;
@@ -503,6 +506,14 @@ function useTranslation() {
 type ID = string;
 type FechaISO = string;
 
+interface Alergia {
+  id: ID;
+  tipo: "Medicamento" | "Alimento" | "Ambiental" | "Material" | "Otro";
+  descripcion: string;
+  reaccion: string;
+  severidad: "Leve" | "Moderada" | "Grave";
+}
+
 interface DatosPersonales {
   id: ID;
   nombre: string;
@@ -512,6 +523,10 @@ interface DatosPersonales {
   sexo: "Masculino" | "Femenino" | "Otro";
   curp?: string;
   rfc?: string;
+}
+
+interface PacienteAlergias {
+  alergias: Alergia[];
 }
 
 interface Direccion {
@@ -629,21 +644,25 @@ interface Paciente {
   dashboard?: MiniDashboard;
 }
 
+type EstatusCita = "pendiente" | "confirmada" | "llego" | "cancelada";
+
 interface CitaAgendada {
   id: string;
   fecha: string;
   horaInicio: string;
   horaCierre: string;
   tipo: "cita" | "urgencia";
-  primeraVez: boolean;
-  tipoConsulta: string;
+  tipoConsultaId: string;
+  tipoConsultaNombre: string;
   especialidad: string;
+  medicoEspecialista: string;
   seguro: string;
   servicios: string[];
   cupon: string;
   descuento: number;
   precioBase: number;
   precioFinal: number;
+  estatus: EstatusCita;
 }
 
 // ─────────────────────────────────────────────
@@ -849,15 +868,30 @@ const especialidades = [
 
 const tiposSeguros = [
   "Sin seguro (Particular)",
-  "IMSS",
-  "ISSSTE",
-  "Seguro Popular",
   "GNP Seguros",
   "Metlife",
   "AXA Seguros",
   "Allianz",
   "Mapfre",
+  "Seguros Monterrey",
+  "Qualitas",
   "Otro",
+];
+
+// Catálogo de médicos especialistas
+const medicosEspecialistas = [
+  { nombre: "Dr. Carlos Rodríguez", especialidad: "Ginecología y Obstetricia", cedula: "12345678" },
+  { nombre: "Dra. Ana María López", especialidad: "Medicina General", cedula: "23456789" },
+  { nombre: "Dr. Roberto Martínez", especialidad: "Cardiología", cedula: "34567890" },
+  { nombre: "Dra. Patricia Hernández", especialidad: "Pediatría", cedula: "45678901" },
+  { nombre: "Dr. Eduardo Sánchez", especialidad: "Neurología", cedula: "56789012" },
+  { nombre: "Dra. Sofía Ramírez", especialidad: "Dermatología", cedula: "67890123" },
+  { nombre: "Dr. Javier Torres", especialidad: "Traumatología", cedula: "78901234" },
+  { nombre: "Dra. Laura Medina", especialidad: "Oftalmología", cedula: "89012345" },
+  { nombre: "Dr. Miguel Ángel Flores", especialidad: "Otorrinolaringología", cedula: "90123456" },
+  { nombre: "Dra. Isabel Vega", especialidad: "Psiquiatría", cedula: "01234567" },
+  { nombre: "Dr. Fernando Gutiérrez", especialidad: "Endocrinología", cedula: "11223344" },
+  { nombre: "Dra. Carmen Ortiz", especialidad: "Reumatología", cedula: "22334455" },
 ];
 
 const serviciosDisponibles = [
@@ -874,6 +908,107 @@ const serviciosDisponibles = [
   { id: "biopsia", nombre: "Biopsia endometrial", precio: 1600 },
   { id: "insercion_diu", nombre: "Inserción de DIU", precio: 2200 },
 ];
+
+// Catálogo de tipos de consulta con precio base
+const catalogoTiposConsulta = [
+  { id: "consulta_general", nombre: "Consulta general", precio: 800 },
+  { id: "consulta_seguimiento", nombre: "Consulta de seguimiento", precio: 650 },
+  { id: "consulta_especialidad", nombre: "Consulta de especialidad", precio: 1200 },
+  { id: "consulta_prenatal", nombre: "Control prenatal", precio: 950 },
+  { id: "chequeo_preventivo", nombre: "Chequeo preventivo", precio: 700 },
+  { id: "urgencia", nombre: "Urgencia", precio: 1500 },
+  { id: "consulta_virtual", nombre: "Consulta virtual / Telemedicina", precio: 500 },
+  { id: "segunda_opinion", nombre: "Segunda opinión", precio: 1000 },
+];
+
+// Catálogo de servicios por especialidad
+const serviciosPorEspecialidad: Record<string, Array<{ id: string; nombre: string; precio: number }>> = {
+  "Medicina General": [
+    { id: "laboratorio_general", nombre: "Estudios de laboratorio básicos", precio: 600 },
+    { id: "analisis_sangre", nombre: "Análisis de sangre completo", precio: 800 },
+    { id: "rayos_x", nombre: "Radiografía simple", precio: 400 },
+    { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
+    { id: "presion", nombre: "Monitoreo de presión arterial", precio: 200 },
+  ],
+  "Ginecología y Obstetricia": [
+    { id: "consulta", nombre: "Consulta ginecológica", precio: 900 },
+    { id: "ultrasonido_tv", nombre: "Ultrasonido transvaginal", precio: 1400 },
+    { id: "ultrasonido_obs", nombre: "Ultrasonido obstétrico", precio: 1500 },
+    { id: "papanicolaou", nombre: "Papanicolaou", precio: 500 },
+    { id: "colposcopia", nombre: "Colposcopía + biopsia", precio: 1800 },
+    { id: "perfil_hormonal", nombre: "Perfil hormonal completo", precio: 1200 },
+    { id: "amh", nombre: "Hormona Antimülleriana (AMH)", precio: 900 },
+    { id: "vph", nombre: "Prueba VPH + genotipificación", precio: 1100 },
+    { id: "biopsia", nombre: "Biopsia endometrial", precio: 1600 },
+    { id: "insercion_diu", nombre: "Inserción de DIU", precio: 2200 },
+  ],
+  "Cardiología": [
+    { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
+    { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
+    { id: "prueba_esfuerzo", nombre: "Prueba de esfuerzo", precio: 1200 },
+    { id: "holter", nombre: "Monitor Holter (24h)", precio: 800 },
+    { id: "analisis_lipidos", nombre: "Análisis de lípidos", precio: 600 },
+  ],
+  "Pediatría": [
+    { id: "vacunas", nombre: "Administración de vacunas", precio: 300 },
+    { id: "desarrollo", nombre: "Evaluación del desarrollo", precio: 600 },
+    { id: "laboratorio_pediatrico", nombre: "Estudios de laboratorio pediátricos", precio: 700 },
+    { id: "ultrasonido_abdominal", nombre: "Ultrasonido abdominal", precio: 800 },
+  ],
+  "Cardiologia": [
+    { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
+    { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
+    { id: "prueba_esfuerzo", nombre: "Prueba de esfuerzo", precio: 1200 },
+    { id: "holter", nombre: "Monitor Holter (24h)", precio: 800 },
+  ],
+  "Neurología": [
+    { id: "eeg", nombre: "Electroencefalograma", precio: 900 },
+    { id: "resonancia", nombre: "Resonancia magnética", precio: 2500 },
+    { id: "tomografia", nombre: "Tomografía computada", precio: 1800 },
+    { id: "test_neuropsicologico", nombre: "Test neuropsicológico", precio: 1200 },
+  ],
+  "Dermatología": [
+    { id: "biopsia_piel", nombre: "Biopsia de piel", precio: 1000 },
+    { id: "microscopia", nombre: "Microscopía dermoscópica", precio: 600 },
+    { id: "fotografia", nombre: "Fotografía dermatológica", precio: 400 },
+    { id: "analisis_lunar", nombre: "Análisis de lunares", precio: 800 },
+  ],
+  "Traumatología": [
+    { id: "rayos_x", nombre: "Radiografía simple", precio: 400 },
+    { id: "resonancia_musculo", nombre: "Resonancia de tejido blando", precio: 2200 },
+    { id: "ultrasonido_musculo", nombre: "Ultrasonido musculoesquelético", precio: 900 },
+    { id: "infiltracion", nombre: "Infiltración articular", precio: 1500 },
+  ],
+  "Oftalmología": [
+    { id: "refraccion", nombre: "Refracción óptica", precio: 300 },
+    { id: "tonometria", nombre: "Tonometría (glaucoma)", precio: 400 },
+    { id: "campo_visual", nombre: "Campo visual automatizado", precio: 600 },
+    { id: "tomografia_ocular", nombre: "Tomografía OCT", precio: 1200 },
+  ],
+  "Otorrinolaringología": [
+    { id: "audiometria", nombre: "Audiometría", precio: 600 },
+    { id: "impedanciometria", nombre: "Impedanciometría", precio: 400 },
+    { id: "videoendoscopia", nombre: "Videoendoscopia nasofaríngea", precio: 900 },
+    { id: "timpanometria", nombre: "Timpanometría", precio: 350 },
+  ],
+  "Psiquiatría": [
+    { id: "evaluacion_psicologica", nombre: "Evaluación psicológica", precio: 1000 },
+    { id: "test_personalidad", nombre: "Test de personalidad", precio: 800 },
+    { id: "manejo_conducta", nombre: "Manejo de conducta", precio: 1200 },
+  ],
+  "Endocrinología": [
+    { id: "glucosa", nombre: "Prueba de glucosa", precio: 200 },
+    { id: "hemoglobina_glicada", nombre: "Hemoglobina glicada", precio: 400 },
+    { id: "perfil_tiroideo", nombre: "Perfil tiroideo completo", precio: 700 },
+    { id: "analisis_insulina", nombre: "Análisis de insulina", precio: 600 },
+  ],
+  "Reumatología": [
+    { id: "factor_reumatoide", nombre: "Factor reumatoide", precio: 500 },
+    { id: "ana", nombre: "Anticuerpos antinucleares (ANA)", precio: 800 },
+    { id: "esr", nombre: "Velocidad de sedimentación", precio: 300 },
+    { id: "ultrasonido_articular", nombre: "Ultrasonido articular", precio: 900 },
+  ],
+};
 
 const cuponesValidos: Record<string, number> = {
   "PROMO10": 10,
@@ -1320,6 +1455,20 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
 // TAB: DATOS GENERALES
 // ─────────────────────────────────────────────
 
+const severidadAlergiaConfig: Record<string, { cls: string; bg: string; dot: string }> = {
+  Leve: { cls: "text-amber-700", bg: "bg-amber-50 border-amber-200", dot: "bg-amber-500" },
+  Moderada: { cls: "text-orange-700", bg: "bg-orange-50 border-orange-200", dot: "bg-orange-500" },
+  Grave: { cls: "text-red-700", bg: "bg-red-50 border-red-200", dot: "bg-red-500" },
+};
+
+const tipoAlergiaIconos: Record<string, string> = {
+  Medicamento: "💊",
+  Alimento: "🍽️",
+  Ambiental: "🌿",
+  Material: "🧤",
+  Otro: "⚠️",
+};
+
 function DatosGeneralesTab({
   datosPersonales, direccion, contacto, datosFiscales,
 }: {
@@ -1331,56 +1480,218 @@ function DatosGeneralesTab({
   const edad = calcularEdad(datosPersonales.fechaNacimiento);
   const nombreCompleto = [datosPersonales.nombre, datosPersonales.apellidoPaterno, datosPersonales.apellidoMaterno].filter(Boolean).join(" ");
 
+  const [alergias, setAlergias] = useState<Alergia[]>([
+    { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
+    { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
+    { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
+  ]);
+
+  const [mostrarFormAlergia, setMostrarFormAlergia] = useState(false);
+  const [nuevaAlergia, setNuevaAlergia] = useState<Omit<Alergia, "id">>({
+    tipo: "Medicamento",
+    descripcion: "",
+    reaccion: "",
+    severidad: "Leve",
+  });
+
+  const agregarAlergia = () => {
+    if (nuevaAlergia.descripcion.trim()) {
+      setAlergias([...alergias, { id: `AL-${Date.now()}`, ...nuevaAlergia }]);
+      setNuevaAlergia({ tipo: "Medicamento", descripcion: "", reaccion: "", severidad: "Leve" });
+      setMostrarFormAlergia(false);
+    }
+  };
+
+  const eliminarAlergia = (id: string) => setAlergias(alergias.filter((a) => a.id !== id));
+
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <SectionCard icon={<User className="w-5 h-5" />} title="Datos Personales">
-        <div className="grid grid-cols-2 gap-5">
-          <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
-          <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
-          <FieldItem label="Edad" value={`${edad} años`} />
-          <FieldItem label="Sexo" value={datosPersonales.sexo} />
-          <FieldItem label="CURP" value={datosPersonales.curp} />
-          <div className="col-span-2"><FieldItem label="RFC" value={datosPersonales.rfc} /></div>
-        </div>
-      </SectionCard>
-
-      <SectionCard icon={<Phone className="w-5 h-5" />} title="Información de Contacto">
-        <div className="grid grid-cols-2 gap-5">
-          <FieldItem label="Teléfono" value={contacto.telefono} icon={<Phone className="w-3 h-3" />} />
-          <FieldItem label="Correo electrónico" value={contacto.email} icon={<Mail className="w-3 h-3" />} />
-          <div className="col-span-2 pt-3 mt-3 border-t border-border">
-            <p className="text-xs font-medium text-destructive/80 uppercase tracking-wider mb-3">Contacto de Emergencia</p>
-            <div className="grid grid-cols-2 gap-5">
-              <FieldItem label="Nombre" value={contacto.nombreContactoEmergencia} />
-              <FieldItem label="Teléfono" value={contacto.telefonoEmergencia} />
-            </div>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard icon={<MapPin className="w-5 h-5" />} title="Domicilio">
-        <div className="grid grid-cols-2 gap-5">
-          <div className="col-span-2">
-            <FieldItem label="Calle y número" value={`${direccion.calle} #${direccion.numeroExterior}${direccion.numeroInterior ? ` Int. ${direccion.numeroInterior}` : ""}`} />
-          </div>
-          <FieldItem label="Colonia" value={direccion.colonia} />
-          <FieldItem label="Ciudad" value={direccion.ciudad} />
-          <FieldItem label="Estado" value={direccion.estado} />
-          <FieldItem label="Código Postal" value={direccion.codigoPostal} />
-          <div className="col-span-2"><FieldItem label="País" value={direccion.pais} /></div>
-        </div>
-      </SectionCard>
-
-      {datosFiscales && (
-        <SectionCard icon={<Receipt className="w-5 h-5" />} title="Datos Fiscales">
+    <div className="space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        <SectionCard icon={<User className="w-5 h-5" />} title="Datos Personales">
           <div className="grid grid-cols-2 gap-5">
-            <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
-            <FieldItem label="RFC" value={datosFiscales.rfc} />
-            <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
-            <div className="col-span-2"><FieldItem label="Uso de CFDI" value={datosFiscales.usoCFDI} /></div>
+            <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
+            <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
+            <FieldItem label="Edad" value={`${edad} años`} />
+            <FieldItem label="Sexo" value={datosPersonales.sexo} />
+            <FieldItem label="CURP" value={datosPersonales.curp} />
+            <div className="col-span-2"><FieldItem label="RFC" value={datosPersonales.rfc} /></div>
           </div>
         </SectionCard>
-      )}
+
+        <SectionCard icon={<Phone className="w-5 h-5" />} title="Información de Contacto">
+          <div className="grid grid-cols-2 gap-5">
+            <FieldItem label="Teléfono" value={contacto.telefono} icon={<Phone className="w-3 h-3" />} />
+            <FieldItem label="Correo electrónico" value={contacto.email} icon={<Mail className="w-3 h-3" />} />
+            <div className="col-span-2 pt-3 mt-3 border-t border-border">
+              <p className="text-xs font-medium text-destructive/80 uppercase tracking-wider mb-3">Contacto de Emergencia</p>
+              <div className="grid grid-cols-2 gap-5">
+                <FieldItem label="Nombre" value={contacto.nombreContactoEmergencia} />
+                <FieldItem label="Teléfono" value={contacto.telefonoEmergencia} />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard icon={<MapPin className="w-5 h-5" />} title="Domicilio">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="col-span-2">
+              <FieldItem label="Calle y número" value={`${direccion.calle} #${direccion.numeroExterior}${direccion.numeroInterior ? ` Int. ${direccion.numeroInterior}` : ""}`} />
+            </div>
+            <FieldItem label="Colonia" value={direccion.colonia} />
+            <FieldItem label="Ciudad" value={direccion.ciudad} />
+            <FieldItem label="Estado" value={direccion.estado} />
+            <FieldItem label="Código Postal" value={direccion.codigoPostal} />
+            <div className="col-span-2"><FieldItem label="País" value={direccion.pais} /></div>
+          </div>
+        </SectionCard>
+
+        {datosFiscales && (
+          <SectionCard icon={<Receipt className="w-5 h-5" />} title="Datos Fiscales">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
+              <FieldItem label="RFC" value={datosFiscales.rfc} />
+              <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
+              <div className="col-span-2"><FieldItem label="Uso de CFDI" value={datosFiscales.usoCFDI} /></div>
+            </div>
+          </SectionCard>
+        )}
+      </div>
+
+      {/* ALERGIAS */}
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Alergias</h3>
+              <p className="text-xs text-muted-foreground">{alergias.length} alergia(s) registrada(s)</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setMostrarFormAlergia((v) => !v)}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Agregar
+          </button>
+        </div>
+
+        {mostrarFormAlergia && (
+          <div className="mb-5 p-4 bg-muted/30 border border-border rounded-xl space-y-4">
+            <p className="text-sm font-medium text-foreground">Nueva alergia</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                <select
+                  value={nuevaAlergia.tipo}
+                  onChange={(e) => setNuevaAlergia({ ...nuevaAlergia, tipo: e.target.value as Alergia["tipo"] })}
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  {(["Medicamento", "Alimento", "Ambiental", "Material", "Otro"] as Alergia["tipo"][]).map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1 col-span-2 md:col-span-1">
+                <label className="text-xs font-medium text-muted-foreground">Descripción / Agente</label>
+                <input
+                  type="text"
+                  value={nuevaAlergia.descripcion}
+                  onChange={(e) => setNuevaAlergia({ ...nuevaAlergia, descripcion: e.target.value })}
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Ej: Penicilina, Camarón..."
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Reacción</label>
+                <input
+                  type="text"
+                  value={nuevaAlergia.reaccion}
+                  onChange={(e) => setNuevaAlergia({ ...nuevaAlergia, reaccion: e.target.value })}
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Urticaria, edema..."
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Severidad</label>
+                <select
+                  value={nuevaAlergia.severidad}
+                  onChange={(e) => setNuevaAlergia({ ...nuevaAlergia, severidad: e.target.value as Alergia["severidad"] })}
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option>Leve</option>
+                  <option>Moderada</option>
+                  <option>Grave</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={agregarAlergia}
+                disabled={!nuevaAlergia.descripcion.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Guardar
+              </button>
+              <button
+                onClick={() => setMostrarFormAlergia(false)}
+                className="px-4 py-2 border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {alergias.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <AlertTriangle className="w-10 h-10 mx-auto mb-2 opacity-20" />
+            <p className="text-sm">Sin alergias registradas</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {alergias.map((al) => {
+              const cfg = severidadAlergiaConfig[al.severidad];
+              return (
+                <div key={al.id} className={`flex items-center justify-between gap-3 p-4 rounded-xl border ${cfg.bg}`}>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-white/70 flex items-center justify-center text-base shrink-0 shadow-sm">
+                      {tipoAlergiaIconos[al.tipo] ?? "⚠️"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                        <p className={`font-semibold text-sm ${cfg.cls}`}>{al.descripcion}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${cfg.bg} ${cfg.cls}`}>
+                          {al.tipo}
+                        </span>
+                      </div>
+                      {al.reaccion && (
+                        <p className="text-xs text-muted-foreground">{al.reaccion}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${cfg.bg} ${cfg.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                      {al.severidad}
+                    </span>
+                    <button
+                      onClick={() => eliminarAlergia(al.id)}
+                      className="p-1.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      aria-label="Eliminar alergia"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1476,17 +1787,51 @@ function CitasTab() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>("");
   
   const [formCita, setFormCita] = useState({
-    primeraVez: true,
-    tipoConsulta: "Consulta general",
+    tipoConsultaId: "consulta_general",
     especialidad: "Medicina General",
+    medicoEspecialista: medicosEspecialistas[0].nombre,
     seguro: "Sin seguro (Particular)",
-    servicios: ["consulta"] as string[],
+    servicios: [] as string[],
     cupon: "",
     horaInicio: "09:00",
     horaCierre: "09:30",
   });
   const [descuentoAplicado, setDescuentoAplicado] = useState(0);
   const [cuponValido, setCuponValido] = useState<boolean | null>(null);
+
+  // Panel de citas del día
+  const [diaSeleccionadoPanel, setDiaSeleccionadoPanel] = useState<string | null>(null);
+
+  // Reprogramación
+  const [citaReprogramando, setCitaReprogramando] = useState<CitaAgendada | null>(null);
+  const [reprog, setReprog] = useState({ fecha: "", horaInicio: "09:00", horaCierre: "09:30" });
+
+  const estatusConfig: Record<EstatusCita, { label: string; cls: string; dot: string }> = {
+    pendiente:   { label: "Pendiente",   cls: "bg-amber-50  text-amber-700  border-amber-200",  dot: "bg-amber-400"  },
+    confirmada:  { label: "Confirmada",  cls: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
+    llego:       { label: "Llegó",       cls: "bg-blue-50   text-blue-700   border-blue-200",   dot: "bg-blue-400"   },
+    cancelada:   { label: "Cancelada",   cls: "bg-red-50    text-red-700    border-red-200",    dot: "bg-red-400"    },
+  };
+
+  const cambiarEstatus = (id: string, estatus: EstatusCita) =>
+    setCitasAgendadas((prev) => prev.map((c) => c.id === id ? { ...c, estatus } : c));
+
+  const guardarReprogramacion = () => {
+    if (!citaReprogramando || !reprog.fecha || !reprog.horaInicio || !reprog.horaCierre) return;
+    setCitasAgendadas((prev) =>
+      prev.map((c) =>
+        c.id === citaReprogramando.id
+          ? { ...c, fecha: reprog.fecha, horaInicio: reprog.horaInicio, horaCierre: reprog.horaCierre, estatus: "pendiente" }
+          : c
+      )
+    );
+    setCitaReprogramando(null);
+  };
+
+  // Función para obtener servicios según especialidad
+  const getServiciosPorEspecialidad = (especialidad: string) => {
+    return serviciosPorEspecialidad[especialidad] || serviciosPorEspecialidad["Medicina General"] || [];
+  };
 
   const todasLasHoras = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -1585,10 +1930,15 @@ function CitasTab() {
     }
   };
 
-  const calcularPrecioBase = () => formCita.servicios.reduce((total, servId) => {
-    const servicio = serviciosDisponibles.find((s) => s.id === servId);
-    return total + (servicio?.precio || 0);
-  }, 0);
+  const calcularPrecioBase = () => {
+    const precioConsulta = catalogoTiposConsulta.find((c) => c.id === formCita.tipoConsultaId)?.precio || 0;
+    const serviciosActuales = getServiciosPorEspecialidad(formCita.especialidad);
+    const precioServicios = formCita.servicios.reduce((total, servId) => {
+      const servicio = serviciosActuales.find((s) => s.id === servId);
+      return total + (servicio?.precio || 0);
+    }, 0);
+    return precioConsulta + precioServicios;
+  };
 
   const precioBase = calcularPrecioBase();
   const precioConDescuento = precioBase * (1 - descuentoAplicado / 100);
@@ -1605,32 +1955,35 @@ function CitasTab() {
   const guardarCita = () => {
     if (!fechaSeleccionada) return;
     
+    const tipoConsulta = catalogoTiposConsulta.find((c) => c.id === formCita.tipoConsultaId);
     const nuevaCita: CitaAgendada = {
       id: `CITA-${Date.now()}`,
       fecha: fechaSeleccionada,
       horaInicio: formCita.horaInicio,
       horaCierre: formCita.horaCierre,
-      tipo: "cita",
-      primeraVez: formCita.primeraVez,
-      tipoConsulta: formCita.tipoConsulta,
+      tipo: formCita.tipoConsultaId === "urgencia" ? "urgencia" : "cita",
+      tipoConsultaId: formCita.tipoConsultaId,
+      tipoConsultaNombre: tipoConsulta?.nombre || "",
       especialidad: formCita.especialidad,
+      medicoEspecialista: formCita.medicoEspecialista,
       seguro: formCita.seguro,
       servicios: formCita.servicios,
       cupon: formCita.cupon,
       descuento: descuentoAplicado,
       precioBase: precioBase,
       precioFinal: precioConDescuento,
+      estatus: "pendiente" as EstatusCita,
     };
     
     setCitasAgendadas([...citasAgendadas, nuevaCita]);
     setMostrarFormulario(false);
     setFechaSeleccionada("");
     setFormCita({
-      primeraVez: true,
-      tipoConsulta: "Consulta general",
+      tipoConsultaId: "consulta_general",
       especialidad: "Medicina General",
+      medicoEspecialista: medicosEspecialistas[0].nombre,
       seguro: "Sin seguro (Particular)",
-      servicios: ["consulta"],
+      servicios: [],
       cupon: "",
       horaInicio: "09:00",
       horaCierre: "09:30",
@@ -1658,22 +2011,36 @@ function CitasTab() {
       </div>
 
       <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-2xl">
-        <span className="text-sm font-medium text-foreground">Leyenda:</span>
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded bg-emerald-400"></span>
-          <span className="text-sm text-muted-foreground">Disponible</span>
+        <span className="text-sm font-medium text-foreground">Disponibilidad:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-emerald-400"></span>
+          <span className="text-xs text-muted-foreground">Disponible</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded bg-amber-400"></span>
-          <span className="text-sm text-muted-foreground">Parcial</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-amber-400"></span>
+          <span className="text-xs text-muted-foreground">Parcial</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded bg-red-400"></span>
-          <span className="text-sm text-muted-foreground">Lleno</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-red-400"></span>
+          <span className="text-xs text-muted-foreground">Lleno</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded bg-muted"></span>
-          <span className="text-sm text-muted-foreground">No disponible</span>
+        <span className="text-muted-foreground/40 text-sm">|</span>
+        <span className="text-sm font-medium text-foreground">Citas:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-amber-300"></span>
+          <span className="text-xs text-muted-foreground">Pendiente</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-emerald-300"></span>
+          <span className="text-xs text-muted-foreground">Confirmada</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-blue-300"></span>
+          <span className="text-xs text-muted-foreground">Llegó</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-red-300"></span>
+          <span className="text-xs text-muted-foreground">Cancelada</span>
         </div>
       </div>
 
@@ -1740,19 +2107,22 @@ function CitasTab() {
               <button
                 key={index}
                 onClick={() => {
-                  if (!esOtroMes && puedeAgendar) {
+                  if (esOtroMes) return;
+                  if (citasDelDia.length > 0) {
+                    setDiaSeleccionadoPanel(fecha === diaSeleccionadoPanel ? null : fecha);
+                  } else if (puedeAgendar) {
                     setFechaSeleccionada(fecha);
                     setMostrarFormulario(true);
                   }
                 }}
-                disabled={esOtroMes || !puedeAgendar}
+                disabled={esOtroMes}
                 className={`
                   min-h-[80px] flex flex-col items-start justify-start p-2 text-sm rounded-xl transition-all w-full border
                   ${esOtroMes ? "text-muted-foreground/30 cursor-not-allowed border-transparent" : ""}
                   ${!esOtroMes ? colorFondo : ""}
-                  ${!esOtroMes && puedeAgendar ? "cursor-pointer" : "cursor-not-allowed"}
+                  ${!esOtroMes && (puedeAgendar || citasDelDia.length > 0) ? "cursor-pointer" : !esOtroMes ? "cursor-not-allowed" : ""}
                   ${esHoy && !esOtroMes ? "ring-2 ring-primary ring-offset-1" : ""}
-                  ${estaSeleccionado ? "ring-2 ring-primary bg-primary/20" : ""}
+                  ${estaSeleccionado || (!esOtroMes && fecha === diaSeleccionadoPanel) ? "ring-2 ring-primary bg-primary/20" : ""}
                 `}
               >
                 <div className="flex items-center justify-between w-full mb-1">
@@ -1779,6 +2149,9 @@ function CitasTab() {
                       <div 
                         key={cita.id} 
                         className={`text-[9px] leading-tight font-medium truncate w-full px-1 py-0.5 rounded ${
+                          cita.estatus === "cancelada" ? "bg-red-200 text-red-900 line-through" :
+                          cita.estatus === "confirmada" ? "bg-emerald-200 text-emerald-900" :
+                          cita.estatus === "llego" ? "bg-blue-200 text-blue-900" :
                           cita.tipo === "urgencia" ? "bg-red-200 text-red-900" : "bg-amber-200 text-amber-900"
                         }`}
                       >
@@ -1808,6 +2181,215 @@ function CitasTab() {
         </div>
       </div>
 
+      {/* Panel de citas del día */}
+      {diaSeleccionadoPanel && (() => {
+        const citasDelPanel = citasAgendadas.filter((c) => c.fecha === diaSeleccionadoPanel);
+        if (citasDelPanel.length === 0) return null;
+        return (
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{fmtFecha(diaSeleccionadoPanel, { weekday: true })}</p>
+                  <p className="text-xs text-muted-foreground">{citasDelPanel.length} cita(s) agendada(s)</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setFechaSeleccionada(diaSeleccionadoPanel); setMostrarFormulario(true); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-medium hover:bg-primary/20 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Agregar
+                </button>
+                <button
+                  onClick={() => setDiaSeleccionadoPanel(null)}
+                  className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="divide-y divide-border">
+              {citasDelPanel
+                .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+                .map((cita) => {
+                  const cfg = estatusConfig[cita.estatus];
+                  return (
+                    <div key={cita.id} className="p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                      {/* Hora */}
+                      <div className="flex items-center gap-2 shrink-0 w-28">
+                        <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-sm font-bold text-foreground">{cita.horaInicio}</span>
+                        <span className="text-xs text-muted-foreground">– {cita.horaCierre}</span>
+                      </div>
+                      {/* Detalle */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                          <p className="text-sm font-semibold text-foreground truncate">{cita.tipoConsultaNombre}</p>
+                          {cita.tipo === "urgencia" && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">URG</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{cita.medicoEspecialista} · {cita.especialidad}</p>
+                        <p className="text-xs font-semibold text-primary mt-0.5">${cita.precioFinal.toLocaleString()} MXN</p>
+                      </div>
+                      {/* Estatus badge */}
+                      <div className="shrink-0">
+                        <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${cfg.cls}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {/* Acciones de estatus */}
+                      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                        {cita.estatus !== "confirmada" && cita.estatus !== "cancelada" && (
+                          <button
+                            onClick={() => cambiarEstatus(cita.id, "confirmada")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors"
+                            title="Marcar como confirmada"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Confirmar
+                          </button>
+                        )}
+                        {cita.estatus !== "llego" && cita.estatus !== "cancelada" && (
+                          <button
+                            onClick={() => cambiarEstatus(cita.id, "llego")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors"
+                            title="Marcar que llegó"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" />
+                            Llegó
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setCitaReprogramando(cita);
+                            setReprog({ fecha: cita.fecha, horaInicio: cita.horaInicio, horaCierre: cita.horaCierre });
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
+                          title="Reprogramar cita"
+                        >
+                          <CalendarPlus className="w-3.5 h-3.5" />
+                          Reprogramar
+                        </button>
+                        {cita.estatus !== "cancelada" && (
+                          <button
+                            onClick={() => cambiarEstatus(cita.id, "cancelada")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs font-medium hover:bg-red-100 transition-colors"
+                            title="Cancelar cita"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Cancelar
+                          </button>
+                        )}
+                        {cita.estatus === "cancelada" && (
+                          <button
+                            onClick={() => cambiarEstatus(cita.id, "pendiente")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-border bg-muted text-muted-foreground text-xs font-medium hover:bg-muted/70 transition-colors"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Reactivar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal reprogramación */}
+      {citaReprogramando && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Reprogramar cita</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{citaReprogramando.tipoConsultaNombre} · {citaReprogramando.medicoEspecialista}</p>
+              </div>
+              <button onClick={() => setCitaReprogramando(null)} className="p-2 hover:bg-muted rounded-xl transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="p-3 bg-muted/40 border border-border rounded-xl text-xs text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">Fecha y horario actual</p>
+                <p>{fmtFecha(citaReprogramando.fecha, { weekday: true })} · {citaReprogramando.horaInicio} – {citaReprogramando.horaCierre}</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  Nueva fecha
+                </label>
+                <input
+                  type="date"
+                  value={reprog.fecha}
+                  onChange={(e) => setReprog({ ...reprog, fecha: e.target.value })}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Hora inicio
+                  </label>
+                  <select
+                    value={reprog.horaInicio}
+                    onChange={(e) => setReprog({ ...reprog, horaInicio: e.target.value })}
+                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {reprog.fecha ? obtenerHorasLibres(reprog.fecha).map((h) => (
+                      <option key={h} value={h}>{h}</option>
+                    )) : <option>Selecciona fecha primero</option>}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Hora cierre
+                  </label>
+                  <select
+                    value={reprog.horaCierre}
+                    onChange={(e) => setReprog({ ...reprog, horaCierre: e.target.value })}
+                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {reprog.fecha && reprog.horaInicio ? obtenerHorasLibres(reprog.fecha)
+                      .filter((h) => h > reprog.horaInicio)
+                      .map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      )) : <option>Selecciona hora inicio</option>}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+              <button
+                onClick={() => setCitaReprogramando(null)}
+                className="px-4 py-2.5 border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarReprogramacion}
+                disabled={!reprog.fecha || !reprog.horaInicio || !reprog.horaCierre}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+              >
+                <Save className="w-4 h-4" />
+                Guardar reprogramación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {mostrarFormulario && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1828,69 +2410,67 @@ function CitasTab() {
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <UserPlus className="w-4 h-4 text-primary" />
-                  Tipo de paciente
-                </label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setFormCita({ ...formCita, primeraVez: true })}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                      formCita.primeraVez
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Primera vez
-                  </button>
-                  <button
-                    onClick={() => setFormCita({ ...formCita, primeraVez: false })}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                      !formCita.primeraVez
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    Seguimiento
-                  </button>
-                </div>
-              </div>
-
+              {/* Tipo de consulta con precio */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Stethoscope className="w-4 h-4 text-primary" />
                   Tipo de consulta
                 </label>
-                <select
-                  value={formCita.tipoConsulta}
-                  onChange={(e) => setFormCita({ ...formCita, tipoConsulta: e.target.value })}
-                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option>Consulta general</option>
-                  <option>Consulta de seguimiento</option>
-                  <option>Consulta de especialidad</option>
-                  <option>Chequeo preventivo</option>
-                  <option>Urgencia</option>
-                </select>
+                <div className="grid grid-cols-1 gap-2">
+                  {catalogoTiposConsulta.map((tc) => (
+                    <button
+                      key={tc.id}
+                      onClick={() => setFormCita({ ...formCita, tipoConsultaId: tc.id })}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                        formCita.tipoConsultaId === tc.id
+                          ? "bg-primary/10 border-primary text-foreground"
+                          : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <span>{tc.nombre}</span>
+                      <span className={`text-xs font-bold shrink-0 ml-2 px-2 py-0.5 rounded-lg ${formCita.tipoConsultaId === tc.id ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                        ${tc.precio.toLocaleString()} MXN
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
+              {/* Médico especialista */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-primary" />
-                  Especialidad
+                  <User2 className="w-4 h-4 text-primary" />
+                  Médico
                 </label>
                 <select
-                  value={formCita.especialidad}
-                  onChange={(e) => setFormCita({ ...formCita, especialidad: e.target.value })}
+                  value={formCita.medicoEspecialista}
+                  onChange={(e) => {
+                    const med = medicosEspecialistas.find((m) => m.nombre === e.target.value);
+                    setFormCita({ 
+                      ...formCita, 
+                      medicoEspecialista: e.target.value, 
+                      especialidad: med?.especialidad || formCita.especialidad,
+                      servicios: [] // Limpiar servicios al cambiar de médico
+                    });
+                  }}
                   className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
-                  {especialidades.map((esp) => (
-                    <option key={esp}>{esp}</option>
+                  {medicosEspecialistas.map((med) => (
+                    <option key={med.nombre} value={med.nombre}>{med.nombre}</option>
                   ))}
                 </select>
+                {(() => {
+                  const med = medicosEspecialistas.find((m) => m.nombre === formCita.medicoEspecialista);
+                  return med ? (
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-medium">
+                        <Stethoscope className="w-3 h-3" />
+                        {med.especialidad}
+                      </span>
+                      <span className="text-xs text-muted-foreground">Cédula: {med.cedula}</span>
+                    </div>
+                  ) : null;
+                })()}
               </div>
 
               <div className="space-y-2">
@@ -1910,26 +2490,37 @@ function CitasTab() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-primary" />
-                  Servicios
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {serviciosDisponibles.map((servicio) => (
-                    <button
-                      key={servicio.id}
-                      onClick={() => toggleServicio(servicio.id)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                        formCita.servicios.includes(servicio.id)
-                          ? "bg-primary/10 border-primary text-foreground"
-                          : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <span className="truncate">{servicio.nombre}</span>
-                      <span className="text-xs font-semibold shrink-0 ml-2">${servicio.precio}</span>
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    Servicios adicionales
+                  </label>
+                  <span className="text-xs text-muted-foreground">
+                    {getServiciosPorEspecialidad(formCita.especialidad).length} disponibles
+                  </span>
                 </div>
+                {getServiciosPorEspecialidad(formCita.especialidad).length === 0 ? (
+                  <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
+                    No hay servicios disponibles para esta especialidad
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {getServiciosPorEspecialidad(formCita.especialidad).map((servicio) => (
+                      <button
+                        key={servicio.id}
+                        onClick={() => toggleServicio(servicio.id)}
+                        className={`flex flex-col items-start justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
+                          formCita.servicios.includes(servicio.id)
+                            ? "bg-primary/10 border-primary text-foreground"
+                            : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                        }`}
+                      >
+                        <span className="truncate text-left w-full">{servicio.nombre}</span>
+                        <span className="text-xs font-semibold mt-1">${servicio.precio.toLocaleString()}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -2009,11 +2600,26 @@ function CitasTab() {
               </div>
 
               <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Servicios seleccionados:</span>
-                  <span className="font-medium text-foreground">{formCita.servicios.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
+                {(() => {
+                  const tc = catalogoTiposConsulta.find((c) => c.id === formCita.tipoConsultaId);
+                  return tc ? (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Consulta ({tc.nombre}):</span>
+                      <span className="font-medium text-foreground">${tc.precio.toLocaleString()} MXN</span>
+                    </div>
+                  ) : null;
+                })()}
+                {formCita.servicios.length > 0 && (() => {
+                  const serviciosActuales = getServiciosPorEspecialidad(formCita.especialidad);
+                  const precioServicios = formCita.servicios.reduce((t, s) => t + (serviciosActuales.find(x => x.id === s)?.precio || 0), 0);
+                  return (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Servicios adicionales ({formCita.servicios.length}):</span>
+                      <span className="font-medium text-foreground">${precioServicios.toLocaleString()} MXN</span>
+                    </div>
+                  );
+                })()}
+                <div className="flex items-center justify-between text-sm border-t border-border/50 pt-2">
                   <span className="text-muted-foreground">Subtotal:</span>
                   <span className="font-medium text-foreground">${precioBase.toLocaleString()} MXN</span>
                 </div>
@@ -2042,7 +2648,7 @@ function CitasTab() {
               </button>
               <button
                 onClick={guardarCita}
-                disabled={!fechaSeleccionada || formCita.servicios.length === 0}
+                disabled={!fechaSeleccionada || !formCita.tipoConsultaId}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
               >
                 <Save className="w-4 h-4" />
@@ -2098,6 +2704,7 @@ interface PrescripcionItem {
 
 const subTabsConsulta = [
   { id: "datosclinicos", label: "Datos Clínicos", icon: Activity },
+  { id: "alergias", label: "Alergias", icon: AlertTriangle },
   { id: "diagnostico", label: "Diagnóstico", icon: Stethoscope },
   { id: "notas", label: "Notas", icon: FileEdit },
   { id: "prescripcion", label: "Prescripción", icon: Pill },
@@ -2108,7 +2715,7 @@ type SubTabConsultaId = (typeof subTabsConsulta)[number]["id"];
 
 function ConsultaTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("datosclinicos");
-  
+
   const [datosClinicosForm, setDatosClinicosForm] = useState<DatosClinicosForm>({
     peso: "", estatura: "", frecuenciaCardiaca: "", presionSistolica: "", presionDiastolica: "",
     imc: "", masaCorporal: "", grasaCorporal: "", frecuenciaRespiratoria: "", temperatura: "",
@@ -2128,6 +2735,27 @@ function ConsultaTab() {
   });
   const [busquedaMedicamento, setBusquedaMedicamento] = useState("");
   const [sugerenciasMedicamento, setSugerenciasMedicamento] = useState<typeof catalogoMedicamentos>([]);
+
+  // Alergias (editable por el doctor en consulta)
+  const [alergiasConsulta, setAlergiasConsulta] = useState<Alergia[]>([
+    { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
+    { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
+    { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
+  ]);
+  const [mostrarFormAlergiaConsulta, setMostrarFormAlergiaConsulta] = useState(false);
+  const [nuevaAlergiaConsulta, setNuevaAlergiaConsulta] = useState<Omit<Alergia, "id">>({
+    tipo: "Medicamento", descripcion: "", reaccion: "", severidad: "Leve",
+  });
+
+  const agregarAlergiaConsulta = () => {
+    if (nuevaAlergiaConsulta.descripcion.trim()) {
+      setAlergiasConsulta([...alergiasConsulta, { id: `AL-${Date.now()}`, ...nuevaAlergiaConsulta }]);
+      setNuevaAlergiaConsulta({ tipo: "Medicamento", descripcion: "", reaccion: "", severidad: "Leve" });
+      setMostrarFormAlergiaConsulta(false);
+    }
+  };
+
+  const eliminarAlergiaConsulta = (id: string) => setAlergiasConsulta(alergiasConsulta.filter((a) => a.id !== id));
 
   const calcularIMC = (peso: string, estatura: string) => {
     const pesoNum = parseFloat(peso);
@@ -2287,6 +2915,144 @@ function ConsultaTab() {
               <Save className="w-4 h-4" />
               Guardar Datos Clínicos
             </button>
+          </div>
+        )}
+
+        {activeSubTab === "alergias" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Alergias</h3>
+                  <p className="text-xs text-muted-foreground">{alergiasConsulta.length} alergia(s) registrada(s)</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMostrarFormAlergiaConsulta((v) => !v)}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar alergia
+              </button>
+            </div>
+
+            {mostrarFormAlergiaConsulta && (
+              <div className="p-5 bg-muted/30 border border-border rounded-2xl space-y-4">
+                <p className="text-sm font-semibold text-foreground">Nueva alergia</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                    <select
+                      value={nuevaAlergiaConsulta.tipo}
+                      onChange={(e) => setNuevaAlergiaConsulta({ ...nuevaAlergiaConsulta, tipo: e.target.value as Alergia["tipo"] })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      {(["Medicamento", "Alimento", "Ambiental", "Material", "Otro"] as Alergia["tipo"][]).map((t) => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Agente / Descripción</label>
+                    <input
+                      type="text"
+                      value={nuevaAlergiaConsulta.descripcion}
+                      onChange={(e) => setNuevaAlergiaConsulta({ ...nuevaAlergiaConsulta, descripcion: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Ej: Penicilina, Camarón..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Reacción</label>
+                    <input
+                      type="text"
+                      value={nuevaAlergiaConsulta.reaccion}
+                      onChange={(e) => setNuevaAlergiaConsulta({ ...nuevaAlergiaConsulta, reaccion: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Urticaria, dificultad respiratoria..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Severidad</label>
+                    <select
+                      value={nuevaAlergiaConsulta.severidad}
+                      onChange={(e) => setNuevaAlergiaConsulta({ ...nuevaAlergiaConsulta, severidad: e.target.value as Alergia["severidad"] })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option>Leve</option>
+                      <option>Moderada</option>
+                      <option>Grave</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={agregarAlergiaConsulta}
+                    disabled={!nuevaAlergiaConsulta.descripcion.trim()}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    Guardar
+                  </button>
+                  <button
+                    onClick={() => setMostrarFormAlergiaConsulta(false)}
+                    className="px-4 py-2.5 border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {alergiasConsulta.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm font-medium">Sin alergias registradas</p>
+                <p className="text-xs mt-1">Use el botón &quot;Agregar alergia&quot; para registrar una nueva</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {alergiasConsulta.map((al) => {
+                  const cfg = severidadAlergiaConfig[al.severidad];
+                  return (
+                    <div key={al.id} className={`flex items-center justify-between gap-3 p-4 rounded-2xl border ${cfg.bg}`}>
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-white/70 flex items-center justify-center text-lg shrink-0 shadow-sm">
+                          {tipoAlergiaIconos[al.tipo] ?? "⚠️"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <p className={`font-semibold text-sm ${cfg.cls}`}>{al.descripcion}</p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${cfg.bg} ${cfg.cls}`}>
+                              {al.tipo}
+                            </span>
+                          </div>
+                          {al.reaccion && (
+                            <p className="text-xs text-muted-foreground">{al.reaccion}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${cfg.bg} ${cfg.cls}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                          {al.severidad}
+                        </span>
+                        <button
+                          onClick={() => eliminarAlergiaConsulta(al.id)}
+                          className="p-1.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          aria-label="Eliminar alergia"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

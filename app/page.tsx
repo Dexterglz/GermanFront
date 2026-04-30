@@ -223,7 +223,7 @@ function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {["Nosotros", "Características", "Precios", "Contacto"].map(
+{["Nosotros", "Características", "Precios", "Términos", "Contacto"].map(
               (item) => (
                 <motion.a
                   key={item}
@@ -274,7 +274,7 @@ function Header() {
               className="md:hidden border-t border-border"
             >
               <div className="px-4 py-4 space-y-3">
-                {["Nosotros", "Características", "Precios", "Contacto"].map(
+{["Nosotros", "Características", "Precios", "Términos", "Contacto"].map(
                   (item) => (
                     <motion.a
                       key={item}
@@ -648,6 +648,160 @@ function CTASection() {
   )
 }
 
+// Sección de Términos y Condiciones
+function TermsSection() {
+  const { ref, isInView } = useScrollAnimation()
+  const [expandedTerm, setExpandedTerm] = useState<number | null>(null)
+
+  const terms = [
+    {
+      title: "1. Aceptación de los Términos",
+      content: "Al acceder y utilizar MediRecord, usted acepta estar sujeto a estos Términos y Condiciones de uso, todas las leyes y regulaciones aplicables, y acepta que es responsable del cumplimiento de las leyes locales aplicables. Si no está de acuerdo con alguno de estos términos, tiene prohibido usar o acceder a este sitio. Los materiales contenidos en este sitio web están protegidos por las leyes de derechos de autor y marcas comerciales aplicables."
+    },
+    {
+      title: "2. Uso de la Licencia",
+      content: "Se concede permiso para descargar temporalmente una copia de los materiales (información o software) en el sitio web de MediRecord para visualización transitoria personal y no comercial únicamente. Esta es la concesión de una licencia, no una transferencia de título, y bajo esta licencia usted no puede: modificar o copiar los materiales; usar los materiales para cualquier propósito comercial o para cualquier exhibición pública; intentar descompilar o realizar ingeniería inversa de cualquier software contenido en el sitio web de MediRecord."
+    },
+    {
+      title: "3. Privacidad y Protección de Datos",
+      content: "MediRecord se compromete a proteger la privacidad de los datos de sus usuarios conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y normativas de salud aplicables. Los expedientes clínicos electrónicos son tratados con estricta confidencialidad. Implementamos medidas de seguridad técnicas, administrativas y físicas para proteger la información contra acceso no autorizado, alteración, divulgación o destrucción."
+    },
+    {
+      title: "4. Responsabilidades del Usuario",
+      content: "El usuario es responsable de mantener la confidencialidad de su cuenta y contraseña. Usted acepta notificar inmediatamente a MediRecord sobre cualquier uso no autorizado de su cuenta. El usuario es completamente responsable de todas las actividades que ocurran bajo su cuenta. MediRecord no será responsable de ninguna pérdida que pueda incurrir como resultado del uso de su contraseña o cuenta por parte de un tercero."
+    },
+    {
+      title: "5. Confidencialidad Médica",
+      content: "Toda la información médica almacenada en MediRecord está sujeta a las disposiciones de la NOM-024-SSA3-2012 para el intercambio de información en salud y otras normativas aplicables. Los profesionales de la salud que utilicen la plataforma deben cumplir con el secreto profesional médico y las obligaciones éticas de su profesión. El acceso a expedientes clínicos está restringido únicamente al personal autorizado."
+    },
+    {
+      title: "6. Disponibilidad del Servicio",
+      content: "MediRecord se esfuerza por mantener el servicio disponible las 24 horas del día, los 7 días de la semana. Sin embargo, no garantizamos que el servicio sea ininterrumpido o libre de errores. Nos reservamos el derecho de suspender temporalmente el servicio para mantenimiento, actualizaciones o por causas de fuerza mayor. En caso de interrupciones programadas, se notificará a los usuarios con anticipación."
+    },
+    {
+      title: "7. Propiedad Intelectual",
+      content: "Todos los contenidos, diseños, logos, marcas y software de MediRecord son propiedad exclusiva de Equipo Umisumi o sus licenciantes. Está prohibida la reproducción, distribución, modificación o uso de cualquier material sin autorización previa por escrito. Los expedientes clínicos generados pertenecen al paciente y al profesional de salud tratante conforme a la legislación aplicable."
+    },
+    {
+      title: "8. Limitación de Responsabilidad",
+      content: "MediRecord es una herramienta de gestión de expedientes clínicos y no proporciona asesoramiento médico. Las decisiones clínicas son responsabilidad exclusiva del profesional de salud. En ningún caso MediRecord, sus directores, empleados o afiliados serán responsables por daños directos, indirectos, incidentales, especiales o consecuentes que resulten del uso o la imposibilidad de usar el servicio."
+    },
+    {
+      title: "9. Modificaciones a los Términos",
+      content: "MediRecord se reserva el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en el sitio web. El uso continuado del servicio después de cualquier cambio constituye su aceptación de los nuevos términos. Se recomienda revisar periódicamente esta página para estar informado de cualquier actualización."
+    },
+    {
+      title: "10. Cancelación y Terminación",
+      content: "Usted puede cancelar su cuenta en cualquier momento contactando a nuestro equipo de soporte. MediRecord se reserva el derecho de suspender o terminar su acceso al servicio sin previo aviso si incumple estos términos. En caso de terminación, se proporcionará acceso temporal para la exportación de datos conforme a las obligaciones legales de conservación de expedientes clínicos."
+    },
+  ]
+
+  return (
+    <section
+      ref={ref}
+      id="terminos"
+      className="py-20 bg-gradient-to-b from-background to-secondary/30"
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
+          className="text-center mb-16"
+        >
+          <motion.h2
+            initial={{ opacity: 0, y: 60 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="text-4xl sm:text-5xl font-bold text-foreground mb-4 text-balance"
+          >
+            Términos y Condiciones
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 60 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-lg text-muted-foreground max-w-2xl mx-auto text-balance"
+          >
+            Lea detenidamente los siguientes términos antes de utilizar nuestros servicios
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          className="space-y-4"
+        >
+          {terms.map((term, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: idx * 0.05 }}
+              className="bg-white rounded-xl border border-border overflow-hidden shadow-sm"
+            >
+              <motion.button
+                onClick={() => setExpandedTerm(expandedTerm === idx ? null : idx)}
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-accent/5 transition-colors"
+                whileHover={{ x: 4 }}
+              >
+                <span className="font-semibold text-foreground">{term.title}</span>
+                <motion.div
+                  animate={{ rotate: expandedTerm === idx ? 90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {expandedTerm === idx && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-6 pb-5 pt-2 text-muted-foreground leading-relaxed border-t border-border/50">
+                      {term.content}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-12 p-6 bg-primary/5 rounded-xl border border-primary/20"
+        >
+          <div className="flex items-start gap-4">
+            <Shield className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">Compromiso con tu Seguridad</h4>
+              <p className="text-muted-foreground text-sm">
+                En MediRecord nos tomamos muy en serio la protección de tus datos. Cumplimos con todas las normativas de salud y protección de datos aplicables. Si tienes alguna duda sobre estos términos, no dudes en contactarnos.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.6 }}
+          className="text-center text-sm text-muted-foreground mt-8"
+        >
+          Última actualización: Abril 2026
+        </motion.p>
+      </div>
+    </section>
+  )
+}
+
 // Footer
 function Footer() {
   const { ref, isInView } = useScrollAnimation()
@@ -675,24 +829,29 @@ function Footer() {
             </p>
           </motion.div>
 
-          {[
+{[
             {
               title: "Producto",
               links: [
-                "Características",
-                "Precios",
-                "Seguridad",
+                { name: "Características", href: "#características" },
+                { name: "Precios", href: "#precios" },
+                { name: "Seguridad", href: "#nosotros" },
               ],
             },
             {
               title: "Empresa",
-              links: ["Nosotros", "Blog", "Contacto", "Soporte"],
+              links: [
+                { name: "Nosotros", href: "#nosotros" },
+                { name: "Blog", href: "#" },
+                { name: "Contacto", href: "#contacto" },
+                { name: "Soporte", href: "#" },
+              ],
             },
             {
               title: "Legal",
               links: [
-                "Privacidad",
-                "Términos",
+                { name: "Privacidad", href: "#terminos" },
+                { name: "Términos y Condiciones", href: "#terminos" },
               ],
             },
           ].map((section, idx) => (
@@ -706,11 +865,11 @@ function Footer() {
               <ul className="space-y-2">
                 {section.links.map((link) => (
                   <motion.li
-                    key={link}
+                    key={link.name}
                     whileHover={{ x: 4 }}
                     className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                   >
-                    {link}
+                    <a href={link.href}>{link.name}</a>
                   </motion.li>
                 ))}
               </ul>
@@ -749,11 +908,12 @@ function Footer() {
 export default function Home() {
   return (
     <main className="overflow-hidden">
-      <Header />
+<Header />
       <HeroSection />
       <AboutUsSection />
       <AboutAppSection />
       <FeaturesSection />
+      <TermsSection />
       <CTASection />
       <Footer />
     </main>
