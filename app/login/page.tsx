@@ -121,13 +121,13 @@ export default function Login() {
 
       if (form.correo === "doctor@test.com" && form.password === "123456") {
         localStorage.setItem("rol", "doctor")
-        router.push("/Doctor")
+        router.push("/doctor")
       } else if (form.correo === "admin@test.com" && form.password === "123456") {
         localStorage.setItem("rol", "admin")
-        router.push("/Admin")
+        router.push("/admin")
       } else if (form.correo === "asistente@test.com" && form.password === "123456") {
         localStorage.setItem("rol", "asistente")
-        router.push("/Asistente")
+        router.push("/asistente")
       } else if (form.correo === "institucion@test.com" && form.password === "123456") {
         localStorage.setItem("rol", "institucion")
         router.push("/institucion")

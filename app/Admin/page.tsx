@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation";
 import { cn } from "../lib/utils"
 import {
   Users,
@@ -198,6 +199,13 @@ function Sidebar({
   collapsed: boolean
   onToggle: () => void
 }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+    router.replace("/login");
+  };
   return (
     <aside
       className={cn(
@@ -254,6 +262,7 @@ function Sidebar({
           {!collapsed && <span></span>}
         </button>
         <button
+          onClick={handleLogout}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive transition-colors",
             collapsed && "justify-center px-0"

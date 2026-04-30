@@ -39,7 +39,10 @@ import {
   DollarSign,
   PieChart,
   X,
+  Link,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 
 // Types
 type NavSection = "Dashboard" | "Pacientes" | "Doctores" | "Citas" | "Farmacia" | "Reportes" | "Configuración";
@@ -2101,6 +2104,12 @@ const InstitutionDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSection, setActiveSection] = useState<NavSection>("Dashboard");
   const [appointments, setAppointments] = useState<Appointment[]>(appointmentsData);
+  const router = useRouter();
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+    router.replace("/login");
+  };
 
   const navItems: { icon: React.ReactNode; label: NavSection }[] = [
     { icon: <Home size={20} />, label: "Dashboard" },
@@ -2144,14 +2153,15 @@ const InstitutionDashboard: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-slate-50">
       {/* SIDEBAR */}
-      <aside className="w-72 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white p-6 flex flex-col sticky top-0 h-screen">
+        <aside className="w-72 bg-white border-r border-slate-200 text-slate-900 p-6 flex flex-col sticky top-0 h-screen">
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <HeartPulse size={28} className="text-white" />
+          <div className="w-12 h-12 bg-black/5 rounded-xl flex items-center justify-center">
+            <HeartPulse size={28} className="text-black" />
           </div>
+
           <div>
-            <h1 className="text-xl font-bold">MediCenter</h1>
-            <p className="text-blue-300 text-sm">Sistema Hospitalario</p>
+            <h1 className="text-xl font-bold text-black">MediCenter</h1>
+            <p className="text-slate-500 text-sm">Sistema Hospitalario</p>
           </div>
         </div>
 
@@ -2163,37 +2173,46 @@ const InstitutionDashboard: React.FC = () => {
               onClick={() => setActiveSection(item.label)}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
                 activeSection === item.label
-                  ? "bg-white/20 text-white font-medium"
-                  : "text-blue-200 hover:bg-white/10 hover:text-white"
+                  ? "bg-black text-white font-medium"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-black"
               }`}
             >
               {item.icon}
               <span>{item.label}</span>
-              {activeSection === item.label && <ChevronRight size={16} className="ml-auto" />}
+
+              {activeSection === item.label && (
+                <ChevronRight size={16} className="ml-auto" />
+              )}
             </motion.div>
           ))}
         </nav>
 
-        <div className="border-t border-blue-700 pt-4 mt-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/10">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center font-bold">
+        <div className="border-t border-slate-200 pt-4 mt-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
+            <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">
               AD
             </div>
+
             <div className="flex-1">
-              <p className="font-medium text-sm">Admin</p>
-              <p className="text-blue-300 text-xs">Administrador</p>
+              <p className="font-medium text-sm text-black">Admin</p>
+              <p className="text-slate-500 text-xs">Administrador</p>
             </div>
-            <LogOut size={18} className="text-blue-300 cursor-pointer hover:text-white" />
+
+            <LogOut
+              size={18}
+              onClick={handleLogout}
+              className="text-slate-500 cursor-pointer hover:text-black transition"
+            />
           </div>
         </div>
       </aside>
 
       {/* CONTENIDO */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto bg-slate-50">
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-slate-800">{activeSection}</h2>
+            <h2 className="text-3xl font-bold text-black">{activeSection}</h2>
             <p className="text-slate-500">
               {activeSection === "Dashboard" && "Bienvenido de vuelta, aquí está el resumen de hoy"}
               {activeSection === "Pacientes" && "Gestiona la información de los pacientes"}
