@@ -154,7 +154,7 @@ const translations = {
     // Medical Record
     medicalHistory: "Historial médico",
     diagnoses: "Diagnósticos",
-    visits: "Visitas",
+    Visits: "Visitas",
     notes: "Notas",
     date: "Fecha",
     
@@ -356,7 +356,7 @@ const translations = {
     // Medical Record
     medicalHistory: "Medical history",
     diagnoses: "Diagnoses",
-    visits: "Visits",
+    Visits: "Visits",
     notes: "Notes",
     date: "Date",
     
@@ -1843,6 +1843,15 @@ function CitasTab() {
     cupon: "",
     horaInicio: "09:00",
     horaCierre: "09:30",
+    // Nuevos campos para motivo y datos del paciente
+    motivo: "",
+    pacienteNombre: "",
+    pacienteApellidoPaterno: "",
+    pacienteApellidoMaterno: "",
+    pacienteTelefono: "",
+    pacienteEmail: "",
+    pacienteFechaNacimiento: "",
+    pacienteSexo: "Femenino" as "Masculino" | "Femenino" | "Otro",
   });
   const [descuentoAplicado, setDescuentoAplicado] = useState(0);
   const [cuponValido, setCuponValido] = useState<boolean | null>(null);
@@ -2035,6 +2044,14 @@ function CitasTab() {
       cupon: "",
       horaInicio: "09:00",
       horaCierre: "09:30",
+      motivo: "",
+      pacienteNombre: "",
+      pacienteApellidoPaterno: "",
+      pacienteApellidoMaterno: "",
+      pacienteTelefono: "",
+      pacienteEmail: "",
+      pacienteFechaNacimiento: "",
+      pacienteSexo: "Femenino" as "Masculino" | "Femenino" | "Otro",
     });
     setDescuentoAplicado(0);
     setCuponValido(null);
@@ -2458,6 +2475,107 @@ function CitasTab() {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Datos del paciente */}
+              <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <UserPlus className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Datos del Paciente</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Nombre(s)</label>
+                    <input
+                      type="text"
+                      value={formCita.pacienteNombre}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteNombre: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Nombre"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Apellido Paterno</label>
+                    <input
+                      type="text"
+                      value={formCita.pacienteApellidoPaterno}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteApellidoPaterno: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Apellido paterno"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Apellido Materno</label>
+                    <input
+                      type="text"
+                      value={formCita.pacienteApellidoMaterno}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteApellidoMaterno: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Apellido materno"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Fecha de nacimiento</label>
+                    <input
+                      type="date"
+                      value={formCita.pacienteFechaNacimiento}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteFechaNacimiento: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Sexo</label>
+                    <select
+                      value={formCita.pacienteSexo}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteSexo: e.target.value as "Masculino" | "Femenino" | "Otro" })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="Femenino">Femenino</option>
+                      <option value="Masculino">Masculino</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Telefono</label>
+                    <input
+                      type="tel"
+                      value={formCita.pacienteTelefono}
+                      onChange={(e) => setFormCita({ ...formCita, pacienteTelefono: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="55 1234 5678"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Correo electronico</label>
+                  <input
+                    type="email"
+                    value={formCita.pacienteEmail}
+                    onChange={(e) => setFormCita({ ...formCita, pacienteEmail: e.target.value })}
+                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+              </div>
+
+              {/* Motivo de la cita */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-primary" />
+                  Motivo de la cita
+                </label>
+                <textarea
+                  value={formCita.motivo}
+                  onChange={(e) => setFormCita({ ...formCita, motivo: e.target.value })}
+                  rows={3}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Describe el motivo de la consulta..."
+                />
+              </div>
+
               {/* Tipo de consulta con precio */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -5440,7 +5558,7 @@ function ConfiguracionPanel({
 // TABS CONFIG
 // ─────────────────────────────────────────────
 
-const tabIds = ["dashboard", "datos", "signos", "citas", "consulta", "expediente", "visitas", "medicamentos", "ginecologia"] as const;
+const tabIds = ["dashboard", "datos", "signos", "citas", "consulta", "expediente", "visitas", "medicamentos"] as const;
 type TabId = (typeof tabIds)[number];
 
 const tabIcons = {
@@ -5452,7 +5570,6 @@ const tabIcons = {
   expediente: FolderOpen,
   visitas: ClipboardList,
   medicamentos: Pill,
-  ginecologia: Heart,
 };
 
 function useLocalizedTabs(t: (key: TranslationKey) => string) {
@@ -5465,7 +5582,6 @@ function useLocalizedTabs(t: (key: TranslationKey) => string) {
     { id: "expediente" as const, label: t("medicalRecord"), icon: FolderOpen },
     { id: "visitas" as const, label: t("visits"), icon: ClipboardList },
     { id: "medicamentos" as const, label: t("medications"), icon: Pill },
-    { id: "ginecologia" as const, label: t("gynecology"), icon: Heart },
   ];
 }
 
@@ -5579,20 +5695,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="p-4">
-            <div className="bg-sidebar-accent rounded-2xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={56} />
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-sidebar-foreground text-sm truncate">{nombreCompleto}</h2>
-                  <p className="text-xs text-sidebar-foreground/60">{edad} {t("yearsOld")} - {dp.sexo}</p>
-                </div>
-              </div>
-              <div className="text-xs text-sidebar-foreground/50 font-mono truncate">{dp.curp}</div>
-            </div>
-          </div>
-
-          <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -5603,16 +5706,11 @@ export default function Page() {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   activeTab === id
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
-                    : id === "ginecologia"
-                    ? "text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 }`}
               >
                 <Icon className="w-5 h-5" />
                 {label}
-                {id === "ginecologia" && activeTab !== "ginecologia" && (
-                  <span className="ml-auto px-1.5 py-0.5 text-xs bg-rose-500/20 text-rose-400 rounded-md font-semibold">New</span>
-                )}
               </button>
             ))}
           </nav>
@@ -5779,13 +5877,15 @@ export default function Page() {
                   </>
                 )}
               </div>
-              <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-border">
-                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-foreground">DR</span>
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-foreground">{config.nombreDoctor}</p>
-                  <p className="text-xs text-muted-foreground">{config.especialidad}</p>
+              <div className="flex items-center gap-3 pl-3 border-l border-border">
+                <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{edad}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-red-500 font-medium">Penicilina</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5801,7 +5901,7 @@ export default function Page() {
           {activeTab === "expediente" && <ExpedienteTab diagnosticos={paciente.diagnosticos} citas={paciente.citas} notas={paciente.notas} />}
           {activeTab === "visitas" && <VisitasTab visitas={paciente.visitas} />}
           {activeTab === "medicamentos" && <MedicamentosTab medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
-          {activeTab === "ginecologia" && <GinecologiaTab />}
+
         </main>
       </div>
 
