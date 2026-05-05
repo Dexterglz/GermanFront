@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -39,10 +40,7 @@ import {
   DollarSign,
   PieChart,
   X,
-  Link,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useNavigate } from "react-router-dom";
 
 // Types
 type NavSection = "Dashboard" | "Pacientes" | "Doctores" | "Citas" | "Farmacia" | "Reportes" | "Configuración";
@@ -2104,8 +2102,11 @@ const InstitutionDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSection, setActiveSection] = useState<NavSection>("Dashboard");
   const [appointments, setAppointments] = useState<Appointment[]>(appointmentsData);
+
   const router = useRouter();
+
   const handleLogout = () => {
+    localStorage.removeItem("rol");
     localStorage.removeItem("token");
     sessionStorage.clear();
     router.replace("/login");
@@ -2139,9 +2140,9 @@ const InstitutionDashboard: React.FC = () => {
         return (
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <Settings size={64} className="text-slate-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-800">Configuración</h3>
-              <p className="text-slate-500">Próximamente disponible</p>
+              <Settings size={64} className="text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground">Configuración</h3>
+              <p className="text-muted-foreground">Próximamente disponible</p>
             </div>
           </div>
         );
@@ -2151,20 +2152,23 @@ const InstitutionDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {/* SIDEBAR */}
-        <aside className="w-72 bg-white border-r border-slate-200 text-slate-900 p-6 flex flex-col sticky top-0 h-screen">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-12 h-12 bg-black/5 rounded-xl flex items-center justify-center">
-            <HeartPulse size={28} className="text-black" />
-          </div>
+    <div className="flex min-h-screen bg-background text-foreground">
 
+      {/* SIDEBAR */}
+      <aside className="w-72 bg-sidebar border-r border-sidebar-border p-6 flex flex-col sticky top-0 h-screen">
+        
+        {/* HEADER */}
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-12 h-12 bg-sidebar-primary rounded-xl flex items-center justify-center">
+            <HeartPulse size={28} className="text-sidebar-primary-foreground" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-black">MediCenter</h1>
-            <p className="text-slate-500 text-sm">Sistema Hospitalario</p>
+            <h1 className="text-xl font-bold text-sidebar-foreground">MediCenter</h1>
+            <p className="text-sidebar-foreground/60 text-sm">Sistema Hospitalario</p>
           </div>
         </div>
 
+        {/* NAV */}
         <nav className="space-y-2 flex-1">
           {navItems.map((item, idx) => (
             <motion.div
@@ -2173,47 +2177,46 @@ const InstitutionDashboard: React.FC = () => {
               onClick={() => setActiveSection(item.label)}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
                 activeSection === item.label
-                  ? "bg-black text-white font-medium"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-black"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               }`}
             >
               {item.icon}
               <span>{item.label}</span>
-
               {activeSection === item.label && (
-                <ChevronRight size={16} className="ml-auto" />
+                <ChevronRight size={16} className="ml-auto opacity-60" />
               )}
             </motion.div>
           ))}
         </nav>
 
-        <div className="border-t border-slate-200 pt-4 mt-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
-            <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">
+        {/* FOOTER */}
+        <div className="border-t border-sidebar-border pt-4 mt-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-accent">
+            <div className="w-10 h-10 bg-sidebar-primary rounded-full flex items-center justify-center font-bold text-sidebar-primary-foreground">
               AD
             </div>
-
             <div className="flex-1">
-              <p className="font-medium text-sm text-black">Admin</p>
-              <p className="text-slate-500 text-xs">Administrador</p>
+              <p className="font-medium text-sm text-sidebar-foreground">Admin</p>
+              <p className="text-sidebar-foreground/60 text-xs">Administrador</p>
             </div>
-
             <LogOut
               size={18}
               onClick={handleLogout}
-              className="text-slate-500 cursor-pointer hover:text-black transition"
+              className="text-sidebar-foreground/60 cursor-pointer hover:text-sidebar-foreground transition-colors"
             />
           </div>
         </div>
       </aside>
 
       {/* CONTENIDO */}
-      <main className="flex-1 p-8 overflow-auto bg-slate-50">
+      <main className="flex-1 p-8 overflow-auto">
+
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-black">{activeSection}</h2>
-            <p className="text-slate-500">
+            <h2 className="text-3xl font-bold text-foreground">{activeSection}</h2>
+            <p className="text-muted-foreground">
               {activeSection === "Dashboard" && "Bienvenido de vuelta, aquí está el resumen de hoy"}
               {activeSection === "Pacientes" && "Gestiona la información de los pacientes"}
               {activeSection === "Doctores" && "Administra el equipo médico"}
@@ -2225,27 +2228,28 @@ const InstitutionDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Búsqueda */}
+
+            {/* BÚSQUEDA */}
             <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar paciente, doctor..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2.5 bg-card border border-border rounded-xl w-72 focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
 
-            {/* Notificaciones */}
+            {/* NOTIFICACIONES */}
             <div className="relative">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50"
+                className="relative p-3 bg-card border border-border rounded-xl hover:bg-muted transition-colors"
               >
-                <Bell size={20} className="text-slate-600" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                <Bell size={20} className="text-muted-foreground" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-xs rounded-full flex items-center justify-center">
                   4
                 </span>
               </motion.button>
@@ -2256,32 +2260,34 @@ const InstitutionDashboard: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-80 bg-card rounded-xl shadow-xl border border-border z-50 overflow-hidden"
                   >
-                    <div className="p-4 border-b border-slate-100">
-                      <h4 className="font-semibold text-slate-800">Notificaciones</h4>
+                    <div className="p-4 border-b border-border">
+                      <h4 className="font-semibold text-foreground">Notificaciones</h4>
                     </div>
+
                     <div className="max-h-80 overflow-auto">
                       {notifications.map((notif) => (
                         <div
                           key={notif.id}
-                          className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer"
+                          className="p-4 border-b border-border hover:bg-muted cursor-pointer"
                         >
                           <div className="flex gap-3">
-                            {notif.type === "urgent" && <AlertCircle size={20} className="text-red-500 shrink-0" />}
-                            {notif.type === "info" && <Bell size={20} className="text-blue-500 shrink-0" />}
-                            {notif.type === "warning" && <AlertCircle size={20} className="text-yellow-500 shrink-0" />}
-                            {notif.type === "success" && <CheckCircle2 size={20} className="text-green-500 shrink-0" />}
+                            {notif.type === "urgent" && <AlertCircle size={20} className="text-destructive shrink-0" />}
+                            {notif.type === "info" && <Bell size={20} className="text-primary shrink-0" />}
+                            {notif.type === "warning" && <AlertCircle size={20} className="text-amber-500 shrink-0" />}
+                            {notif.type === "success" && <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />}
                             <div>
-                              <p className="text-sm text-slate-700">{notif.message}</p>
-                              <p className="text-xs text-slate-400 mt-1">{notif.time}</p>
+                              <p className="text-sm text-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{notif.time}</p>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="p-3 bg-slate-50 text-center">
-                      <button className="text-blue-600 text-sm font-medium hover:underline">
+
+                    <div className="p-3 bg-muted text-center">
+                      <button className="text-primary text-sm font-medium hover:underline">
                         Ver todas las notificaciones
                       </button>
                     </div>
@@ -2290,17 +2296,21 @@ const InstitutionDashboard: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Fecha */}
-            <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl">
-              <Clock size={18} className="text-slate-400" />
-              <span className="text-slate-600 font-medium">
-                {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
+            {/* FECHA */}
+            <div className="flex items-center gap-2 bg-card border border-border px-4 py-2.5 rounded-xl">
+              <Clock size={18} className="text-muted-foreground" />
+              <span className="text-foreground font-medium">
+                {new Date().toLocaleDateString("es-MX", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Content */}
+        {/* CONTENT */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
@@ -2312,6 +2322,7 @@ const InstitutionDashboard: React.FC = () => {
             {renderContent()}
           </motion.div>
         </AnimatePresence>
+
       </main>
     </div>
   );

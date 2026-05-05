@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -5674,6 +5676,16 @@ export default function Page() {
   const marcarTodas = () => setLeidas(new Set(notificaciones.map((n) => n.id)));
   const marcarUna = (id: string) => setLeidas((prev) => new Set([...prev, id]));
 
+  //Cerrar sesión
+
+  const router = useRouter(); 
+  const handleLogout = () => {
+    localStorage.removeItem("rol");
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+    router.replace("/login");
+  };
+
   return (
     <LanguageContext.Provider value={{ idioma: config.idioma, t }}>
     <div className="min-h-screen bg-background font-sans">
@@ -5714,7 +5726,12 @@ export default function Page() {
               </button>
             ))}
           </nav>
-
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
           <div className="p-4 border-t border-sidebar-border space-y-1">
             <div className="px-4 py-2 flex items-center justify-between">
               <span className="text-xs text-sidebar-foreground/40 font-medium">{t("theme")}</span>

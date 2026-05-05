@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   User,
@@ -54,6 +55,10 @@ import {
   Settings,
   LogOut,
   Mail,
+  ChevronRightIcon,
+  Monitor,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -1066,6 +1071,14 @@ export default function Page() {
   const nombreCompleto = [dp.nombre, dp.apellidoPaterno, dp.apellidoMaterno].filter(Boolean).join(" ");
   const edad = calcularEdad(dp.fechaNacimiento);
 
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    router.replace("/login");
+  };
+
   return (
     <div className="min-h-screen bg-background font-sans">
       {/* Sidebar Overlay */}
@@ -1086,20 +1099,6 @@ export default function Page() {
                 <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">MediRecord</h1>
                 <p className="text-xs text-sidebar-foreground/60">Sistema de Expedientes</p>
               </div>
-            </div>
-          </div>
-
-          {/* Patient Card */}
-          <div className="p-4">
-            <div className="bg-sidebar-accent rounded-2xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} />
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-sidebar-foreground text-sm truncate">{nombreCompleto}</h2>
-                  <p className="text-xs text-sidebar-foreground/60">{edad} años · {dp.sexo}</p>
-                </div>
-              </div>
-              <div className="text-xs text-sidebar-foreground/50 font-mono truncate">{dp.curp}</div>
             </div>
           </div>
 
@@ -1124,11 +1123,33 @@ export default function Page() {
             ))}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
+
+          <div className="p-4 border-t border-sidebar-border space-y-1">
+            <div className="px-4 py-2 flex items-center justify-between">
+              <span className="text-xs text-sidebar-foreground/40 font-medium">Tema</span>
+              <div className="flex gap-2">
+                <button className="p-2 rounded-lg bg-sidebar-accent">
+                  <Sun className="w-[16px] h-[16px] text-sidebar-foreground" />
+                </button>
+                <button className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground">
+                  <Monitor className="w-[16px] h-[16px]" />
+                </button>
+                <button className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground">
+                  <Moon className="w-[16px] h-[16px]" />
+                </button>
+              </div>
+            </div>
+
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all" >
               <Settings className="w-5 h-5" />
-              Configuración
+              <p>Configuración</p>
+              <ChevronRightIcon className="w-4 h-4 ml-auto opacity-50" />
             </button>
           </div>
         </div>

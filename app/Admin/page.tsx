@@ -25,6 +25,12 @@ import {
   CheckCircle,
   XCircle,
   Menu,
+  Sun,
+  Monitor,
+  Moon,
+  Settings,
+  ChevronRightIcon,
+
 } from "lucide-react"
 
 // ─────────────────────────────────────────────
@@ -190,91 +196,89 @@ function initials(name: string) {
 
 function Sidebar({
   activeTab,
-  onTabChange,
-  collapsed,
-  onToggle,
+  onTabChange
 }: {
-  activeTab: string
-  onTabChange: (tab: string) => void
-  collapsed: boolean
-  onToggle: () => void
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }) {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     sessionStorage.clear();
     router.replace("/login");
   };
-  return (
-    <aside
-      className={cn(
-        "flex flex-col h-screen bg-sidebar text-sidebar-foreground transition-all duration-300 shrink-0",
-        collapsed ? "w-16" : "w-60"
-      )}
-    >
-      <div className={cn("flex items-center gap-3 px-4 py-5 border-b border-sidebar-border", collapsed && "justify-center px-0")}>
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary shrink-0">
-          <HeartPulse className="w-5 h-5 text-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <div>
-            <p className="text-sm font-bold leading-tight text-sidebar-foreground">MedAdmin</p>
-            <p className="text-xs text-sidebar-foreground/50">Panel Clínico</p>
-          </div>
-        )}
-      </div>
 
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+  return (
+    <aside className="w-[280px] h-screen bg-sidebar border-r border-sidebar-border flex flex-col justify-between">
+
+      <div className="flex items-center gap-4 px-6 py-5 border-b border-sidebar-border">
+        <div className="w-12 h-12 rounded-2xl bg-sidebar-primary flex items-center justify-center">
+          <Stethoscope className="w-5 h-5 text-sidebar-primary-foreground" />
+        </div>
+
+        <div className="leading-tight">
+          <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">
+            MediRecord
+          </h1>
+          <p className="text-[13px] text-sidebar-foreground/60 mt-[2px]">
+            Sistema de Expedientes
+          </p>
+        </div>
+      </div>
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
-          const isActive = activeTab === item.id
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                collapsed && "justify-center px-0"
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              className={` w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_6px_14px_rgba(0,0,0,0.15)]"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                }
+              `}>
+            <Icon className="w-[18px] h-[18px]" />
+            <span>{item.label}</span>
             </button>
-          )
+          );
         })}
       </nav>
-
-      <div className="p-2 border-t border-sidebar-border space-y-1">
-        <button
-          onClick={onToggle}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
-            collapsed && "justify-center px-0"
-          )}
-          title={collapsed ? "Expandir" : "Colapsar"}
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          {!collapsed && <span></span>}
-        </button>
+    
         <button
           onClick={handleLogout}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive transition-colors",
-            collapsed && "justify-center px-0"
-          )}
-          title={collapsed ? "Cerrar sesión" : undefined}
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && <span>Cerrar sesión</span>}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
+          <LogOut className="w-5 h-5" />
+          Cerrar sesión
+        </button>
+
+      <div className="p-4 border-t border-sidebar-border space-y-1">
+        <div className="px-4 py-2 flex items-center justify-between">
+          <span className="text-xs text-sidebar-foreground/40 font-medium">Tema</span>
+          <div className="flex gap-2">
+            <button className="p-2 rounded-lg bg-sidebar-accent">
+              <Sun className="w-[16px] h-[16px] text-sidebar-foreground" />
+            </button>
+            <button className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground">
+              <Monitor className="w-[16px] h-[16px]" />
+            </button>
+            <button className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground">
+              <Moon className="w-[16px] h-[16px]" />
+            </button>
+          </div>
+        </div>
+
+        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all" >
+          <Settings className="w-5 h-5" />
+          <p>Configuración</p>
+          <ChevronRightIcon className="w-4 h-4 ml-auto opacity-50" />
         </button>
       </div>
     </aside>
-  )
+  );
 }
 
 // ─────────────────────────────────────────────

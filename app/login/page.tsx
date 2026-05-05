@@ -163,6 +163,8 @@ export default function Login() {
     if (rol === "doctor") router.push("/doctor")
     if (rol === "admin") router.push("/admin")
     if (rol === "asistente") router.push("/asistente")
+    if (rol === "institucion") router.push("/institucion")
+    if (rol === "user") router.push("/user")
   }, [router])
 
   return (

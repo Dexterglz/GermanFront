@@ -218,7 +218,7 @@ function Header() {
             className="flex items-center gap-2 font-bold text-xl text-primary"
           >
             <Heart className="w-6 h-6" />
-            Extraño a mi ex 
+            Expediente Clínico
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -822,7 +822,7 @@ function Footer() {
           >
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <Heart className="w-5 h-5" />
-              Extraño a mi ex 
+              Expediente Clínico
             </h3>
             <p className="text-gray-300 text-sm">
               Transformando la atención médica a través de la tecnología
