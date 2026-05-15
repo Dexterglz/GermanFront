@@ -646,6 +646,7 @@ interface Paciente {
   medicamentos: Medicamento[];
   recordatorios: Recordatorio[];
   dashboard?: MiniDashboard;
+  alergias: Alergia[];
 }
 
 type EstatusCita = "pendiente" | "confirmada" | "llego" | "cancelada";
@@ -843,6 +844,7 @@ const pacienteMock: Paciente = {
     { id: "REC-003", medicamentoId: "MED-009", hora: "08:00", activo: true },
     { id: "REC-004", medicamentoId: "MED-009", hora: "20:00", activo: true },
   ],
+  
   dashboard: {
     pacienteId: "PAC-001",
     ultimoRegistro: { id: "SV-012", fecha: "2026-04-10T10:00:00Z", peso: 62.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 67, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 20.5, indiceMasaCorporal: 22.8 },
@@ -854,6 +856,11 @@ const pacienteMock: Paciente = {
       { id: "MED-009", pacienteId: "PAC-001", nombre: "Calcio + Vitamina D3", dosis: "600 mg / 400 UI", frecuencia: "2 veces al día con alimentos", fechaInicio: "2026-04-10" },
     ],
   },
+  alergias: [ // AGREGAR ESTE CAMPO
+    { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
+    { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
+    { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
+  ],
 };
 
 // Datos para citas
@@ -1830,6 +1837,18 @@ function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] })
 // TAB: CITAS (con calendario y formulario)
 // ─────────────────────────────────────────────
 
+  // Función para obtener especialidades únicas de los médicos
+  const obtenerEspecialidadesMedicos = () => {
+    const especialidadesUnicas = new Set(medicosEspecialistas.map((m) => m.especialidad));
+    return Array.from(especialidadesUnicas).sort();
+  };
+
+  // Función para obtener médicos filtrados por especialidad
+  const getMedicosPorEspecialidad = (especialidadFiltro: string) => {
+    if (!especialidadFiltro) return medicosEspecialistas;
+    return medicosEspecialistas.filter((m) => m.especialidad === especialidadFiltro);
+  };
+
 function CitasTab() {
   const [mesActual, setMesActual] = useState(new Date());
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -1854,6 +1873,8 @@ function CitasTab() {
     pacienteEmail: "",
     pacienteFechaNacimiento: "",
     pacienteSexo: "Femenino" as "Masculino" | "Femenino" | "Otro",
+    especialidadMedico: "",
+    
   });
   const [descuentoAplicado, setDescuentoAplicado] = useState(0);
   const [cuponValido, setCuponValido] = useState<boolean | null>(null);
@@ -2038,6 +2059,7 @@ function CitasTab() {
     setMostrarFormulario(false);
     setFechaSeleccionada("");
     setFormCita({
+      especialidadMedico: "",
       tipoConsultaId: "consulta_general",
       especialidad: "Medicina General",
       medicoEspecialista: medicosEspecialistas[0].nombre,
@@ -2054,6 +2076,7 @@ function CitasTab() {
       pacienteEmail: "",
       pacienteFechaNacimiento: "",
       pacienteSexo: "Femenino" as "Masculino" | "Femenino" | "Otro",
+
     });
     setDescuentoAplicado(0);
     setCuponValido(null);
@@ -2578,6 +2601,31 @@ function CitasTab() {
                 />
               </div>
 
+              {/* Especialidad del Médico - NUEVO CAMPO */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-primary" />
+                  Especialidad del Médico
+                </label>
+                <select
+                  value={formCita.especialidadMedico}
+                  onChange={(e) => {
+                    setFormCita({ 
+                      ...formCita, 
+                      especialidadMedico: e.target.value,
+                      medicoEspecialista: "", // Limpiar selección de médico
+                      especialidad: e.target.value // Actualizar especialidad
+                    });
+                  }}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">Seleccionar especialidad</option>
+                  {obtenerEspecialidadesMedicos().map((esp) => (
+                    <option key={esp} value={esp}>{esp}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Tipo de consulta con precio */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -2613,7 +2661,9 @@ function CitasTab() {
                 <select
                   value={formCita.medicoEspecialista}
                   onChange={(e) => {
-                    const med = medicosEspecialistas.find((m) => m.nombre === e.target.value);
+                    const med = getMedicosPorEspecialidad(formCita.especialidadMedico).find(
+                      (m) => m.nombre === e.target.value
+                    );
                     setFormCita({ 
                       ...formCita, 
                       medicoEspecialista: e.target.value, 
@@ -2622,13 +2672,20 @@ function CitasTab() {
                     });
                   }}
                   className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  disabled={!formCita.especialidadMedico}
                 >
-                  {medicosEspecialistas.map((med) => (
-                    <option key={med.nombre} value={med.nombre}>{med.nombre}</option>
+                  <option value="">
+                    {formCita.especialidadMedico ? "Seleccionar médico" : "Primero selecciona una especialidad"}
+                  </option>
+                  {getMedicosPorEspecialidad(formCita.especialidadMedico).map((med) => (
+                    <option key={med.nombre} value={med.nombre}>
+                      {med.nombre}
+                    </option>
                   ))}
                 </select>
                 {(() => {
-                  const med = medicosEspecialistas.find((m) => m.nombre === formCita.medicoEspecialista);
+                  const medicosFiltrados = getMedicosPorEspecialidad(formCita.especialidadMedico);
+                  const med = medicosFiltrados.find((m) => m.nombre === formCita.medicoEspecialista);
                   return med ? (
                     <div className="flex items-center gap-2 flex-wrap pt-0.5">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-medium">
@@ -5894,17 +5951,85 @@ export default function Page() {
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-3 pl-3 border-l border-border">
-                <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{edad}</span>
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-red-500 font-medium">Penicilina</span>
+                <div className="flex items-center gap-3 pl-3 border-l border-border">
+                  <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
+                  <div className="hidden sm:block flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{edad} años</span>
+                      
+                      {paciente.alergias.length > 0 && (
+                        <>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          
+                          {/* Dropdown de Alergias */}
+                          <div className="relative group">
+                            <button className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group-hover:shadow-md">
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                              <span className="text-xs font-semibold text-red-700">
+                                {paciente.alergias.length} alergia{paciente.alergias.length > 1 ? 's' : ''}
+                              </span>
+                              <ChevronDown className="w-3 h-3 text-red-600 group-hover:rotate-180 transition-transform" />
+                            </button>
+
+                            {/* Panel desplegable */}
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl shadow-black/10 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+                              {/* Header */}
+                              <div className="px-4 py-3 border-b border-border bg-muted/30">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                  Alergias registradas
+                                </p>
+                              </div>
+
+                              {/* Lista de alergias */}
+                              <div className="max-h-[320px] overflow-y-auto divide-y divide-border/50">
+                                {paciente.alergias.map((alergia) => {
+                                  const severidadConfig: Record<string, { bg: string; text: string; dot: string; icon: string }> = {
+                                    Grave: { bg: "bg-red-50 border-red-200", text: "text-red-700", dot: "bg-red-500", icon: "🚨" },
+                                    Moderada: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", dot: "bg-orange-500", icon: "⚠️" },
+                                    Leve: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", dot: "bg-amber-500", icon: "⚡" },
+                                  };
+                                  const cfg = severidadConfig[alergia.severidad];
+                                  
+                                  return (
+                                    <div key={alergia.id} className={`px-4 py-3 hover:bg-muted/30 transition-colors`}>
+                                      <div className="flex items-start gap-3">
+                                        <div className={`w-2 h-2 rounded-full ${cfg.dot} mt-1.5 shrink-0`} />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <p className={`text-sm font-semibold ${cfg.text}`}>{alergia.descripcion}</p>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${cfg.bg} ${cfg.text}`}>
+                                              {alergia.severidad}
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground">{alergia.tipo}</p>
+                                          {alergia.reaccion && (
+                                            <p className="text-xs text-foreground mt-1 leading-relaxed">{alergia.reaccion}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Footer */}
+                              <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
+                                <p className="text-xs text-muted-foreground">
+                                  ⚠️ Revisar antes de prescribir medicamentos
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {paciente.alergias.length === 0 && (
+                        <span className="text-xs text-emerald-600 font-medium">Sin alergias</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
         </header>
