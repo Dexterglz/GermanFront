@@ -860,6 +860,7 @@ const pacienteMock: Paciente = {
     { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
     { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
     { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
+    
   ],
 };
 
@@ -891,34 +892,172 @@ const tiposSeguros = [
 
 // Catálogo de médicos especialistas
 const medicosEspecialistas = [
-  { nombre: "Dr. Carlos Rodríguez", especialidad: "Ginecología y Obstetricia", cedula: "12345678" },
-  { nombre: "Dra. Ana María López", especialidad: "Medicina General", cedula: "23456789" },
-  { nombre: "Dr. Roberto Martínez", especialidad: "Cardiología", cedula: "34567890" },
-  { nombre: "Dra. Patricia Hernández", especialidad: "Pediatría", cedula: "45678901" },
-  { nombre: "Dr. Eduardo Sánchez", especialidad: "Neurología", cedula: "56789012" },
-  { nombre: "Dra. Sofía Ramírez", especialidad: "Dermatología", cedula: "67890123" },
-  { nombre: "Dr. Javier Torres", especialidad: "Traumatología", cedula: "78901234" },
-  { nombre: "Dra. Laura Medina", especialidad: "Oftalmología", cedula: "89012345" },
-  { nombre: "Dr. Miguel Ángel Flores", especialidad: "Otorrinolaringología", cedula: "90123456" },
-  { nombre: "Dra. Isabel Vega", especialidad: "Psiquiatría", cedula: "01234567" },
-  { nombre: "Dr. Fernando Gutiérrez", especialidad: "Endocrinología", cedula: "11223344" },
-  { nombre: "Dra. Carmen Ortiz", especialidad: "Reumatología", cedula: "22334455" },
+  { 
+    nombre: "Dr. Carlos Rodríguez", 
+    especialidad: "Ginecología y Obstetricia", 
+    cedula: "12345678",
+    tiposConsultaId: ["consulta_general", "consulta_prenatal", "consulta_especialidad", "urgencia"],
+    serviciosId: ["consulta_gine", "ultrasonido_tv", "ultrasonido_obs", "papanicolaou", "colposcopia", "perfil_hormonal", "amh", "vph", "biopsia", "insercion_diu"]
+  },
+  { 
+    nombre: "Dra. Ana María López", 
+    especialidad: "Medicina General", 
+    cedula: "23456789",
+    tiposConsultaId: ["consulta_general", "consulta_seguimiento", "chequeo_preventivo", "urgencia"],
+    serviciosId: ["laboratorio_general", "analisis_sangre", "rayos_x", "ekg", "presion"]
+  },
+  { 
+    nombre: "Dr. Roberto Martínez", 
+    especialidad: "Cardiología", 
+    cedula: "34567890",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["ekg", "ecocardiograma", "prueba_esfuerzo", "holter", "analisis_lipidos"]
+  },
+  { 
+    nombre: "Dra. Patricia Hernández", 
+    especialidad: "Pediatría", 
+    cedula: "45678901",
+    tiposConsultaId: ["consulta_general", "consulta_seguimiento", "chequeo_preventivo"],
+    serviciosId: ["vacunas", "desarrollo", "laboratorio_pediatrico", "ultrasonido_abdominal"]
+  },
+  { 
+    nombre: "Dr. Eduardo Sánchez", 
+    especialidad: "Neurología", 
+    cedula: "56789012",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["eeg", "resonancia", "tomografia", "test_neuropsicologico"]
+  },
+  { 
+    nombre: "Dra. Sofía Ramírez", 
+    especialidad: "Dermatología", 
+    cedula: "67890123",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["biopsia_piel", "microscopia", "fotografia", "analisis_lunar"]
+  },
+  { 
+    nombre: "Dr. Javier Torres", 
+    especialidad: "Traumatología", 
+    cedula: "78901234",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["rayos_x", "resonancia_musculo", "ultrasonido_musculo", "infiltracion"]
+  },
+  { 
+    nombre: "Dra. Laura Medina", 
+    especialidad: "Oftalmología", 
+    cedula: "89012345",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["refraccion", "tonometria", "campo_visual", "tomografia_ocular"]
+  },
+  { 
+    nombre: "Dr. Miguel Ángel Flores", 
+    especialidad: "Otorrinolaringología", 
+    cedula: "90123456",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["audiometria", "impedanciometria", "videoendoscopia", "timpanometria"]
+  },
+  { 
+    nombre: "Dra. Isabel Vega", 
+    especialidad: "Psiquiatría", 
+    cedula: "01234567",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["evaluacion_psicologica", "test_personalidad", "manejo_conducta"]
+  },
+  { 
+    nombre: "Dr. Fernando Gutiérrez", 
+    especialidad: "Endocrinología", 
+    cedula: "11223344",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["glucosa", "hemoglobina_glicada", "perfil_tiroideo", "analisis_insulina"]
+  },
+  { 
+    nombre: "Dra. Carmen Ortiz", 
+    especialidad: "Reumatología", 
+    cedula: "22334455",
+    tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
+    serviciosId: ["factor_reumatoide", "ana", "esr", "ultrasonido_articular"]
+  },
 ];
 
+// Catálogo ÚNICO de servicios disponibles
 const serviciosDisponibles = [
-  { id: "consulta", nombre: "Consulta ginecológica", precio: 900 },
-  { id: "consulta_prenatal", nombre: "Consulta prenatal", precio: 950 },
+  // Medicina General
+  { id: "laboratorio_general", nombre: "Estudios de laboratorio básicos", precio: 600 },
+  { id: "analisis_sangre", nombre: "Análisis de sangre completo", precio: 800 },
+  { id: "rayos_x", nombre: "Radiografía simple", precio: 400 },
+  { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
+  { id: "presion", nombre: "Monitoreo de presión arterial", precio: 200 },
+  
+  // Ginecología y Obstetricia
+  { id: "consulta_gine", nombre: "Consulta ginecológica", precio: 900 },
   { id: "ultrasonido_tv", nombre: "Ultrasonido transvaginal", precio: 1400 },
   { id: "ultrasonido_obs", nombre: "Ultrasonido obstétrico", precio: 1500 },
   { id: "papanicolaou", nombre: "Papanicolaou", precio: 500 },
   { id: "colposcopia", nombre: "Colposcopía + biopsia", precio: 1800 },
-  { id: "laboratorio", nombre: "Estudios de laboratorio", precio: 600 },
   { id: "perfil_hormonal", nombre: "Perfil hormonal completo", precio: 1200 },
   { id: "amh", nombre: "Hormona Antimülleriana (AMH)", precio: 900 },
   { id: "vph", nombre: "Prueba VPH + genotipificación", precio: 1100 },
   { id: "biopsia", nombre: "Biopsia endometrial", precio: 1600 },
   { id: "insercion_diu", nombre: "Inserción de DIU", precio: 2200 },
+  
+  // Cardiología
+  { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
+  { id: "prueba_esfuerzo", nombre: "Prueba de esfuerzo", precio: 1200 },
+  { id: "holter", nombre: "Monitor Holter (24h)", precio: 800 },
+  { id: "analisis_lipidos", nombre: "Análisis de lípidos", precio: 600 },
+  
+  // Pediatría
+  { id: "vacunas", nombre: "Administración de vacunas", precio: 300 },
+  { id: "desarrollo", nombre: "Evaluación del desarrollo", precio: 600 },
+  { id: "laboratorio_pediatrico", nombre: "Estudios de laboratorio pediátricos", precio: 700 },
+  { id: "ultrasonido_abdominal", nombre: "Ultrasonido abdominal", precio: 800 },
+  
+  // Neurología
+  { id: "eeg", nombre: "Electroencefalograma", precio: 900 },
+  { id: "resonancia", nombre: "Resonancia magnética", precio: 2500 },
+  { id: "tomografia", nombre: "Tomografía computada", precio: 1800 },
+  { id: "test_neuropsicologico", nombre: "Test neuropsicológico", precio: 1200 },
+  
+  // Dermatología
+  { id: "biopsia_piel", nombre: "Biopsia de piel", precio: 1000 },
+  { id: "microscopia", nombre: "Microscopía dermoscópica", precio: 600 },
+  { id: "fotografia", nombre: "Fotografía dermatológica", precio: 400 },
+  { id: "analisis_lunar", nombre: "Análisis de lunares", precio: 800 },
+  
+  // Traumatología
+  { id: "resonancia_musculo", nombre: "Resonancia de tejido blando", precio: 2200 },
+  { id: "ultrasonido_musculo", nombre: "Ultrasonido musculoesquelético", precio: 900 },
+  { id: "infiltracion", nombre: "Infiltración articular", precio: 1500 },
+  
+  // Oftalmología
+  { id: "refraccion", nombre: "Refracción óptica", precio: 300 },
+  { id: "tonometria", nombre: "Tonometría (glaucoma)", precio: 400 },
+  { id: "campo_visual", nombre: "Campo visual automatizado", precio: 600 },
+  { id: "tomografia_ocular", nombre: "Tomografía OCT", precio: 1200 },
+  
+  // Otorrinolaringología
+  { id: "audiometria", nombre: "Audiometría", precio: 600 },
+  { id: "impedanciometria", nombre: "Impedanciometría", precio: 400 },
+  { id: "videoendoscopia", nombre: "Videoendoscopia nasofaríngea", precio: 900 },
+  { id: "timpanometria", nombre: "Timpanometría", precio: 350 },
+  
+  // Psiquiatría
+  { id: "evaluacion_psicologica", nombre: "Evaluación psicológica", precio: 1000 },
+  { id: "test_personalidad", nombre: "Test de personalidad", precio: 800 },
+  { id: "manejo_conducta", nombre: "Manejo de conducta", precio: 1200 },
+  
+  // Endocrinología
+  { id: "glucosa", nombre: "Prueba de glucosa", precio: 200 },
+  { id: "hemoglobina_glicada", nombre: "Hemoglobina glicada", precio: 400 },
+  { id: "perfil_tiroideo", nombre: "Perfil tiroideo completo", precio: 700 },
+  { id: "analisis_insulina", nombre: "Análisis de insulina", precio: 600 },
+  
+  // Reumatología
+  { id: "factor_reumatoide", nombre: "Factor reumatoide", precio: 500 },
+  { id: "ana", nombre: "Anticuerpos antinucleares (ANA)", precio: 800 },
+  { id: "esr", nombre: "Velocidad de sedimentación", precio: 300 },
+  { id: "ultrasonido_articular", nombre: "Ultrasonido articular", precio: 900 },
 ];
+
 
 // Catálogo de tipos de consulta con precio base
 const catalogoTiposConsulta = [
@@ -1243,6 +1382,26 @@ function presionCategoria(sis: number, dia: number) {
   if (sis < 130 && dia < 80) return { label: "Elevada", cls: "text-amber-600" };
   return { label: "Alta", cls: "text-red-600" };
 }
+
+// Obtener tipos de consulta disponibles para un médico
+const getTiposConsultaPorMedico = (nombreMedico: string) => {
+  const medico = medicosEspecialistas.find((m) => m.nombre === nombreMedico);
+  if (!medico) return [];
+  
+  return catalogoTiposConsulta.filter((tc) => 
+    medico.tiposConsultaId.includes(tc.id)
+  );
+};
+
+// Obtener servicios disponibles para un médico
+const getServiciosPorMedico = (nombreMedico: string) => {
+  const medico = medicosEspecialistas.find((m) => m.nombre === nombreMedico);
+  if (!medico) return [];
+  
+  return serviciosDisponibles.filter((servicio) => 
+    medico.serviciosId.includes(servicio.id)
+  );
+};
 
 // ─────────────────────────────────────────────
 // AVATAR COMPONENT (ANIMATED)
@@ -2611,47 +2770,7 @@ function CitasTab() {
                 </select>
               </div>
 
-              {/* Motivo de la cita */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-primary" />
-                  Motivo de la cita
-                </label>
-                <textarea
-                  value={formCita.motivo}
-                  onChange={(e) => setFormCita({ ...formCita, motivo: e.target.value })}
-                  rows={3}
-                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                  placeholder="Describe el motivo de la consulta..."
-                />
-              </div>
-
-              {/* Tipo de consulta con precio */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-primary" />
-                  Tipo de consulta
-                </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {catalogoTiposConsulta.map((tc) => (
-                    <button
-                      key={tc.id}
-                      onClick={() => setFormCita({ ...formCita, tipoConsultaId: tc.id })}
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                        formCita.tipoConsultaId === tc.id
-                          ? "bg-primary/10 border-primary text-foreground"
-                          : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <span>{tc.nombre}</span>
-                      <span className={`text-xs font-bold shrink-0 ml-2 px-2 py-0.5 rounded-lg ${formCita.tipoConsultaId === tc.id ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                        ${tc.precio.toLocaleString()} MXN
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+              
               {/* Médico especialista */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -2668,7 +2787,8 @@ function CitasTab() {
                       ...formCita, 
                       medicoEspecialista: e.target.value, 
                       especialidad: med?.especialidad || formCita.especialidad,
-                      servicios: [] // Limpiar servicios al cambiar de médico
+                      tipoConsultaId: "", // AGREGAR ESTA LÍNEA - resetea el tipo de consulta
+                      servicios: []
                     });
                   }}
                   className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -2698,6 +2818,56 @@ function CitasTab() {
                 })()}
               </div>
 
+              {/* Tipo de consulta - FILTRADO POR MÉDICO */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-primary" />
+                  Tipo de consulta
+                </label>
+                
+                {!formCita.medicoEspecialista ? (
+                  <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
+                    Selecciona un médico primero para ver sus tipos de consulta
+                  </div>
+                ) : getTiposConsultaPorMedico(formCita.medicoEspecialista).length === 0 ? (
+                  <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
+                    Este médico no tiene tipos de consulta disponibles
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {getTiposConsultaPorMedico(formCita.medicoEspecialista).map((tc) => (
+                      <button
+                        key={tc.id}
+                        onClick={() => setFormCita({ ...formCita, tipoConsultaId: tc.id })}
+                        className={`flex items-center justify-center px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                          formCita.tipoConsultaId === tc.id
+                            ? "bg-primary/10 border-primary text-foreground"
+                            : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                        }`}
+                      >
+                        <span>{tc.nombre}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              
+              {/* Motivo de la cita */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-primary" />
+                  Motivo de la cita
+                </label>
+                <textarea
+                  value={formCita.motivo}
+                  onChange={(e) => setFormCita({ ...formCita, motivo: e.target.value })}
+                  rows={3}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Describe el motivo de la consulta..."
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Shield className="w-4 h-4 text-primary" />
@@ -2721,16 +2891,24 @@ function CitasTab() {
                     Servicios adicionales
                   </label>
                   <span className="text-xs text-muted-foreground">
-                    {getServiciosPorEspecialidad(formCita.especialidad).length} disponibles
+                    {!formCita.medicoEspecialista 
+                      ? "Selecciona un médico" 
+                      : `${getServiciosPorMedico(formCita.medicoEspecialista).length} disponibles`
+                    }
                   </span>
                 </div>
-                {getServiciosPorEspecialidad(formCita.especialidad).length === 0 ? (
+
+                {!formCita.medicoEspecialista ? (
                   <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
-                    No hay servicios disponibles para esta especialidad
+                    Selecciona un médico primero para ver los servicios disponibles
+                  </div>
+                ) : getServiciosPorMedico(formCita.medicoEspecialista).length === 0 ? (
+                  <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
+                    Este médico no tiene servicios adicionales disponibles
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    {getServiciosPorEspecialidad(formCita.especialidad).map((servicio) => (
+                    {getServiciosPorMedico(formCita.medicoEspecialista).map((servicio) => (
                       <button
                         key={servicio.id}
                         onClick={() => toggleServicio(servicio.id)}
@@ -5965,80 +6143,80 @@ export default function Page() {
                         
                         {/* Dropdown de Alergias */}
                         <div className="relative group">
-                          <button className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group-hover:shadow-md">
-                            <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                          <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group-hover:shadow-md">
+                            <AlertTriangle className="w-3 h-3 text-red-600" />
                             <span className="text-xs font-semibold text-red-700">
-                              {paciente.alergias.length} alergia{paciente.alergias.length > 1 ? 's' : ''}
+                              {paciente.alergias.length}
                             </span>
-                            <ChevronDown className="w-3 h-3 text-red-600 group-hover:rotate-180 transition-transform" />
+                            <ChevronDown className="w-2.5 h-2.5 text-red-600 group-hover:rotate-180 transition-transform" />
                           </button>
 
                           {/* Panel desplegable */}
-                          <div className="absolute right-0 top-full mt-2 w-[600px] bg-card border border-border rounded-2xl shadow-2xl shadow-black/10 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
-                            {/* Header */}
-                            <div className="px-4 py-3 border-b border-border bg-muted/30">
+                          <div className="absolute right-0 top-full mt-1 w-[520px] bg-card border border-border rounded-xl shadow-lg shadow-black/10 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+                            {/* Header compacto */}
+                            <div className="px-3 py-2 border-b border-border bg-muted/30">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Alergias registradas ({paciente.alergias.length})
+                                Alergias ({paciente.alergias.length})
                               </p>
                             </div>
 
                             {/* Lista horizontal con scroll */}
-                            <div className="p-4">
-                              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                                {paciente.alergias.map((alergia) => {
-                                  const severidadConfig: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-                                    Grave: { 
-                                      bg: "bg-red-50", 
-                                      border: "border-red-200 hover:border-red-300",
-                                      text: "text-red-700", 
-                                      dot: "bg-red-500" 
-                                    },
-                                    Moderada: { 
-                                      bg: "bg-orange-50", 
-                                      border: "border-orange-200 hover:border-orange-300",
-                                      text: "text-orange-700", 
-                                      dot: "bg-orange-500" 
-                                    },
-                                    Leve: { 
-                                      bg: "bg-amber-50", 
-                                      border: "border-amber-200 hover:border-amber-300",
-                                      text: "text-amber-700", 
-                                      dot: "bg-amber-500" 
-                                    },
+                            <div className="p-3">
+                              <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-hide">
+                                {/* Agrupar alergias por tipo */}
+                                {Object.entries(
+                                  paciente.alergias.reduce((acc, alergia) => {
+                                    if (!acc[alergia.tipo]) {
+                                      acc[alergia.tipo] = [];
+                                    }
+                                    acc[alergia.tipo].push(alergia);
+                                    return acc;
+                                  }, {} as Record<string, Alergia[]>)
+                                ).map(([tipo, alergias]) => {
+                                  const tipoIconos: Record<string, { icon: string; bg: string; border: string; text: string }> = {
+                                    Medicamento: { icon: "💊", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
+                                    Alimento: { icon: "🍽️", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" },
+                                    Ambiental: { icon: "🌿", bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700" },
+                                    Material: { icon: "🧤", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700" },
+                                    Otro: { icon: "⚠️", bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-700" },
                                   };
-                                  const cfg = severidadConfig[alergia.severidad];
-                                  
+                                  const tipoConfig = tipoIconos[tipo] || tipoIconos["Otro"];
+
                                   return (
                                     <div
-                                      key={alergia.id}
-                                      className={`flex-shrink-0 w-64 ${cfg.bg} border-2 ${cfg.border} rounded-xl p-3.5 transition-all hover:shadow-md cursor-default`}
-                                      title={alergia.reaccion}
+                                      key={tipo}
+                                      className={`flex-shrink-0 ${tipoConfig.bg} border ${tipoConfig.border} rounded-lg p-2.5 transition-all hover:shadow-sm min-w-max`}
                                     >
-                                      <div className="flex items-start gap-3">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} mt-1.5 shrink-0`} />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 mb-1.5">
-                                            <p className={`text-sm font-bold ${cfg.text} truncate`}>
-                                              {alergia.descripcion}
-                                            </p>
-                                          </div>
-                                          
-                                          <div className="space-y-1.5">
-                                            <div className="flex items-center gap-1.5">
-                                              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${cfg.bg} ${cfg.text} border ${cfg.border}`}>
-                                                {alergia.severidad}
-                                              </span>
-                                              <span className="text-xs text-muted-foreground font-medium">
-                                                {alergia.tipo}
-                                              </span>
-                                            </div>
-                                            
-                                            {alergia.reaccion && (
-                                              <p className={`text-xs ${cfg.text} leading-relaxed line-clamp-2`}>
-                                                {alergia.reaccion}
-                                              </p>
-                                            )}
-                                          </div>
+                                      <div className="space-y-1.5">
+                                        {/* Encabezado del tipo - más compacto */}
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-base">{tipoConfig.icon}</span>
+                                          <h4 className={`text-xs font-bold ${tipoConfig.text}`}>{tipo}</h4>
+                                          {alergias.length > 1 && (
+                                            <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${tipoConfig.bg} ${tipoConfig.text} border ${tipoConfig.border}`}>
+                                              {alergias.length}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Lista de alergias del tipo - compacta */}
+                                        <div className="space-y-1 pl-5">
+                                          {alergias.map((alergia) => {
+                                            const severidadDot: Record<string, string> = {
+                                              Grave: "bg-red-500",
+                                              Moderada: "bg-orange-500",
+                                              Leve: "bg-amber-500",
+                                            };
+
+                                            return (
+                                              <div key={alergia.id} className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${severidadDot[alergia.severidad]}`} />
+                                                <span className="text-xs text-foreground font-medium">
+                                                  {alergia.descripcion}
+                                                </span>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       </div>
                                     </div>
@@ -6047,12 +6225,9 @@ export default function Page() {
                               </div>
                             </div>
 
-                            {/* Footer */}
-                            <div className="px-4 py-3 border-t border-border/50 bg-muted/20 rounded-b-2xl">
-                              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                <AlertCircle className="w-3.5 h-3.5" />
-                                ⚠️ Revisar antes de prescribir medicamentos
-                              </p>
+                            {/* Footer compacto */}
+                            <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20 rounded-b-xl">
+                              <p className="text-xs text-muted-foreground">⚠️ Revisar antes de prescribir</p>
                             </div>
                           </div>
                         </div>
