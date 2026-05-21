@@ -20,7 +20,6 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Pill,
   Stethoscope,
   HeartPulse,
   Home,
@@ -35,16 +34,48 @@ import {
   Eye,
   Download,
   Filter,
-  Package,
-  AlertTriangle,
-  DollarSign,
   PieChart,
   X,
 } from "lucide-react";
 
 // Types
-type NavSection = "Dashboard" | "Pacientes" | "Doctores" | "Citas" | "Farmacia" | "Reportes" | "Configuración";
+type NavSection = "Dashboard" | "Pacientes" | "Doctores" | "Citas" | "Reportes" | "Configuración";
 type AppointmentStatus = "confirmada" | "pendiente" | "cancelada" | "en_curso";
+
+// API response shapes
+interface ApiPatient {
+  id: number;
+  user_id: number;
+  nombre_completo: string;
+  fecha_nacimiento: string;
+  sexo: string;
+  curp: string;
+  telefono: string;
+  direccion: string;
+  tipo_sangre: string;
+  alergias: string;
+  contacto_emergencia: string;
+  telefono_contacto_emergencia: string;
+  institution_id: number | null;
+}
+
+interface ApiDoctor {
+  id: number;
+  user_id: number;
+  nombre_completo: string;
+  especialidad: string;
+  telefono: string;
+  correo: string;
+  horario: string;
+  institution_id: number | null;
+  disponible: boolean;
+}
+
+interface ApiInstitution {
+  id: number;
+  user_id: number;
+  nombre_institucion: string;
+}
 
 interface Patient {
   id: number;
@@ -72,6 +103,15 @@ interface Doctor {
   disponible: boolean;
 }
 
+function calcularEdad(fechaNacimiento: string): number {
+  const hoy = new Date();
+  const nac = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return edad;
+}
+
 interface Appointment {
   id: number;
   paciente: string;
@@ -84,89 +124,6 @@ interface Appointment {
   tipo: string;
   notas: string;
 }
-
-interface Medication {
-  id: number;
-  nombre: string;
-  categoria: string;
-  stock: number;
-  stockMinimo: number;
-  precio: number;
-  proveedor: string;
-  vencimiento: string;
-  ubicacion: string;
-}
-
-// Data
-const patientsData: Patient[] = [
-  { id: 1, nombre: "Juan Pérez", edad: 45, genero: "Masculino", telefono: "555-0101", email: "juan@email.com", direccion: "Calle 123, Col. Centro", ultimaVisita: "15/03/2026", proximaCita: "27/03/2026", condiciones: ["Hipertensión", "Diabetes Tipo 2"] },
-  { id: 2, nombre: "Ana López", edad: 32, genero: "Femenino", telefono: "555-0102", email: "ana@email.com", direccion: "Av. Principal 456", ultimaVisita: "20/03/2026", proximaCita: "27/03/2026", condiciones: ["Arritmia"] },
-  { id: 3, nombre: "Carlos Mendoza", edad: 58, genero: "Masculino", telefono: "555-0103", email: "carlos@email.com", direccion: "Blvd. Norte 789", ultimaVisita: "18/03/2026", proximaCita: "27/03/2026", condiciones: ["Artritis", "Osteoporosis"] },
-  { id: 4, nombre: "María García", edad: 8, genero: "Femenino", telefono: "555-0104", email: "mama.garcia@email.com", direccion: "Calle Sur 321", ultimaVisita: "22/03/2026", proximaCita: "27/03/2026", condiciones: ["Asma"] },
-  { id: 5, nombre: "Roberto Díaz", edad: 67, genero: "Masculino", telefono: "555-0105", email: "roberto@email.com", direccion: "Av. Este 654", ultimaVisita: "25/03/2026", proximaCita: "27/03/2026", condiciones: ["EPOC", "Hipertensión"] },
-  { id: 6, nombre: "Laura Sánchez", edad: 29, genero: "Femenino", telefono: "555-0106", email: "laura@email.com", direccion: "Plaza Central 987", ultimaVisita: "24/03/2026", proximaCita: "27/03/2026", condiciones: ["Dermatitis"] },
-  { id: 7, nombre: "Fernando Torres", edad: 41, genero: "Masculino", telefono: "555-0107", email: "fernando@email.com", direccion: "Calle Oeste 147", ultimaVisita: "21/03/2026", proximaCita: "28/03/2026", condiciones: ["Migraña crónica"] },
-  { id: 8, nombre: "Patricia Ruiz", edad: 55, genero: "Femenino", telefono: "555-0108", email: "patricia@email.com", direccion: "Av. Las Flores 258", ultimaVisita: "19/03/2026", proximaCita: "29/03/2026", condiciones: ["Hipotiroidismo"] },
-];
-
-const doctorsData: Doctor[] = [
-  { id: 1, nombre: "Dr. Ramírez", especialidad: "Medicina General", telefono: "555-1001", email: "ramirez@medicenter.com", horario: "8:00 - 16:00", pacientes: 245, rating: 4.9, avatar: "RA", disponible: true },
-  { id: 2, nombre: "Dra. Gómez", especialidad: "Cardiología", telefono: "555-1002", email: "gomez@medicenter.com", horario: "9:00 - 17:00", pacientes: 189, rating: 4.8, avatar: "GO", disponible: true },
-  { id: 3, nombre: "Dr. Silva", especialidad: "Traumatología", telefono: "555-1003", email: "silva@medicenter.com", horario: "7:00 - 15:00", pacientes: 167, rating: 4.7, avatar: "SI", disponible: false },
-  { id: 4, nombre: "Dra. Torres", especialidad: "Pediatría", telefono: "555-1004", email: "torres@medicenter.com", horario: "8:00 - 14:00", pacientes: 203, rating: 4.9, avatar: "TO", disponible: true },
-  { id: 5, nombre: "Dra. Vega", especialidad: "Dermatología", telefono: "555-1005", email: "vega@medicenter.com", horario: "10:00 - 18:00", pacientes: 156, rating: 4.6, avatar: "VE", disponible: true },
-  { id: 6, nombre: "Dr. Morales", especialidad: "Neurología", telefono: "555-1006", email: "morales@medicenter.com", horario: "8:00 - 16:00", pacientes: 134, rating: 4.8, avatar: "MO", disponible: true },
-  { id: 7, nombre: "Dra. Herrera", especialidad: "Ginecología", telefono: "555-1007", email: "herrera@medicenter.com", horario: "9:00 - 17:00", pacientes: 198, rating: 4.9, avatar: "HE", disponible: false },
-  { id: 8, nombre: "Dr. Castro", especialidad: "Oftalmología", telefono: "555-1008", email: "castro@medicenter.com", horario: "7:00 - 15:00", pacientes: 142, rating: 4.7, avatar: "CA", disponible: true },
-];
-
-const appointmentsData: Appointment[] = [
-  { id: 1, paciente: "Juan Pérez", pacienteId: 1, doctor: "Dr. Ramírez", doctorId: 1, fecha: "27/03/2026", hora: "09:00", estado: "confirmada", tipo: "Consulta General", notas: "Control de presión arterial" },
-  { id: 2, paciente: "Ana López", pacienteId: 2, doctor: "Dra. Gómez", doctorId: 2, fecha: "27/03/2026", hora: "09:30", estado: "pendiente", tipo: "Cardiología", notas: "Seguimiento de arritmia" },
-  { id: 3, paciente: "Carlos Mendoza", pacienteId: 3, doctor: "Dr. Silva", doctorId: 3, fecha: "27/03/2026", hora: "10:00", estado: "confirmada", tipo: "Traumatología", notas: "Revisión de rodilla" },
-  { id: 4, paciente: "María García", pacienteId: 4, doctor: "Dra. Torres", doctorId: 4, fecha: "27/03/2026", hora: "10:30", estado: "cancelada", tipo: "Pediatría", notas: "Vacunación" },
-  { id: 5, paciente: "Roberto Díaz", pacienteId: 5, doctor: "Dr. Ramírez", doctorId: 1, fecha: "27/03/2026", hora: "11:00", estado: "en_curso", tipo: "Consulta General", notas: "Control EPOC" },
-  { id: 6, paciente: "Laura Sánchez", pacienteId: 6, doctor: "Dra. Vega", doctorId: 5, fecha: "27/03/2026", hora: "11:30", estado: "confirmada", tipo: "Dermatología", notas: "Tratamiento dermatitis" },
-  { id: 7, paciente: "Fernando Torres", pacienteId: 7, doctor: "Dr. Morales", doctorId: 6, fecha: "28/03/2026", hora: "09:00", estado: "pendiente", tipo: "Neurología", notas: "Evaluación migraña" },
-  { id: 8, paciente: "Patricia Ruiz", pacienteId: 8, doctor: "Dra. Herrera", doctorId: 7, fecha: "29/03/2026", hora: "10:00", estado: "confirmada", tipo: "Ginecología", notas: "Control anual" },
-];
-
-const medicationsData: Medication[] = [
-  { id: 1, nombre: "Ibuprofeno 400mg", categoria: "Analgésicos", stock: 45, stockMinimo: 100, precio: 85.50, proveedor: "FarmaLab", vencimiento: "12/2027", ubicacion: "A-101" },
-  { id: 2, nombre: "Paracetamol 500mg", categoria: "Analgésicos", stock: 320, stockMinimo: 150, precio: 45.00, proveedor: "MediPharma", vencimiento: "06/2027", ubicacion: "A-102" },
-  { id: 3, nombre: "Amoxicilina 500mg", categoria: "Antibióticos", stock: 180, stockMinimo: 100, precio: 120.00, proveedor: "BioMed", vencimiento: "09/2026", ubicacion: "B-201" },
-  { id: 4, nombre: "Omeprazol 20mg", categoria: "Gastrointestinales", stock: 95, stockMinimo: 80, precio: 95.00, proveedor: "FarmaLab", vencimiento: "03/2027", ubicacion: "C-301" },
-  { id: 5, nombre: "Losartán 50mg", categoria: "Cardiovasculares", stock: 28, stockMinimo: 50, precio: 150.00, proveedor: "CardioMed", vencimiento: "11/2026", ubicacion: "D-401" },
-  { id: 6, nombre: "Metformina 850mg", categoria: "Antidiabéticos", stock: 200, stockMinimo: 100, precio: 78.00, proveedor: "DiabeCare", vencimiento: "08/2027", ubicacion: "D-402" },
-  { id: 7, nombre: "Salbutamol Inhalador", categoria: "Respiratorios", stock: 65, stockMinimo: 40, precio: 180.00, proveedor: "RespiraMed", vencimiento: "05/2026", ubicacion: "E-501" },
-  { id: 8, nombre: "Diclofenaco 100mg", categoria: "Antiinflamatorios", stock: 12, stockMinimo: 60, precio: 92.00, proveedor: "FarmaLab", vencimiento: "07/2026", ubicacion: "A-103" },
-  { id: 9, nombre: "Cetirizina 10mg", categoria: "Antihistamínicos", stock: 150, stockMinimo: 80, precio: 55.00, proveedor: "AlergMed", vencimiento: "10/2027", ubicacion: "F-601" },
-  { id: 10, nombre: "Atorvastatina 20mg", categoria: "Cardiovasculares", stock: 88, stockMinimo: 70, precio: 165.00, proveedor: "CardioMed", vencimiento: "04/2027", ubicacion: "D-403" },
-];
-
-const stats = [
-  { title: "Pacientes", value: "1,245", change: "+12%", trend: "up", icon: <Users size={28} /> },
-  { title: "Doctores", value: "58", change: "+3", trend: "up", icon: <Hospital size={28} /> },
-  { title: "Citas Hoy", value: "132", change: "-8%", trend: "down", icon: <Calendar size={28} /> },
-  { title: "Actividad", value: "94%", change: "+5%", trend: "up", icon: <Activity size={28} /> },
-];
-
-const notifications = [
-  { id: 1, type: "urgent", message: "Emergencia en sala 3 - Paciente crítico", time: "Hace 5 min" },
-  { id: 2, type: "info", message: "Dr. Ramírez ha confirmado su turno", time: "Hace 15 min" },
-  { id: 3, type: "warning", message: "Stock bajo de medicamentos: Ibuprofeno", time: "Hace 1 hora" },
-  { id: 4, type: "success", message: "Reporte mensual generado exitosamente", time: "Hace 2 horas" },
-];
-
-const weeklyData = [
-  { day: "Lun", citas: 45, completadas: 42 },
-  { day: "Mar", citas: 52, completadas: 48 },
-  { day: "Mié", citas: 38, completadas: 35 },
-  { day: "Jue", citas: 65, completadas: 60 },
-  { day: "Vie", citas: 58, completadas: 55 },
-  { day: "Sáb", citas: 30, completadas: 28 },
-  { day: "Dom", citas: 12, completadas: 12 },
-];
 
 const StatusBadge = ({ estado }: { estado: string }) => {
   const styles: Record<string, string> = {
@@ -191,7 +148,7 @@ const StatusBadge = ({ estado }: { estado: string }) => {
 // Modal Component
 const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
   if (!isOpen) return null;
-  
+
   return (
     <AnimatePresence>
       <motion.div
@@ -222,9 +179,31 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 };
 
 // Dashboard View
-const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (section: NavSection) => void; appointments: Appointment[] }) => {
-  const maxCitas = Math.max(...weeklyData.map((d) => d.citas));
-  const topDoctors = doctorsData.slice(0, 4);
+const DashboardView = ({
+  setActiveSection,
+  appointments,
+  patients,
+  doctors,
+}: {
+  setActiveSection: (section: NavSection) => void;
+  appointments: Appointment[];
+  patients: Patient[];
+  doctors: Doctor[];
+}) => {
+  const stats = [
+    { title: "Pacientes", value: patients.length.toString(), change: "", trend: "up", icon: <Users size={28} /> },
+    { title: "Doctores", value: doctors.length.toString(), change: "", trend: "up", icon: <Hospital size={28} /> },
+    { title: "Citas Hoy", value: appointments.length.toString(), change: "", trend: "up", icon: <Calendar size={28} /> },
+    {
+      title: "Confirmadas",
+      value: appointments.filter((a) => a.estado === "confirmada").length.toString(),
+      change: "",
+      trend: "up",
+      icon: <Activity size={28} />,
+    },
+  ];
+
+  const topDoctors = doctors.slice(0, 4);
 
   return (
     <>
@@ -233,8 +212,8 @@ const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (
         {[
           { icon: <Calendar size={20} />, label: "Nueva Cita", color: "bg-blue-500", section: "Citas" as NavSection },
           { icon: <Users size={20} />, label: "Agregar Paciente", color: "bg-green-500", section: "Pacientes" as NavSection },
+          { icon: <Stethoscope size={20} />, label: "Agregar Doctor", color: "bg-indigo-500", section: "Doctores" as NavSection },
           { icon: <FileText size={20} />, label: "Generar Reporte", color: "bg-purple-500", section: "Reportes" as NavSection },
-          { icon: <Pill size={20} />, label: "Inventario", color: "bg-orange-500", section: "Farmacia" as NavSection },
         ].map((action, idx) => (
           <motion.button
             key={idx}
@@ -262,14 +241,16 @@ const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (
           >
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 bg-blue-50 rounded-xl text-blue-600">{stat.icon}</div>
-              <div
-                className={`flex items-center gap-1 text-sm font-medium ${
-                  stat.trend === "up" ? "text-green-600" : "text-red-500"
-                }`}
-              >
-                {stat.trend === "up" ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                {stat.change}
-              </div>
+              {stat.change && (
+                <div
+                  className={`flex items-center gap-1 text-sm font-medium ${
+                    stat.trend === "up" ? "text-green-600" : "text-red-500"
+                  }`}
+                >
+                  {stat.trend === "up" ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                  {stat.change}
+                </div>
+              )}
             </div>
             <p className="text-slate-500 text-sm">{stat.title}</p>
             <h3 className="text-3xl font-bold text-slate-800">{stat.value}</h3>
@@ -282,8 +263,8 @@ const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (
         {/* TABLA CITAS */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-xl font-semibold text-slate-800">Citas de Hoy</h3>
-            <button 
+            <h3 className="text-xl font-semibold text-slate-800">Citas Recientes</h3>
+            <button
               onClick={() => setActiveSection("Citas")}
               className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
             >
@@ -291,147 +272,90 @@ const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
-                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
-                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
-                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
-                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.slice(0, 6).map((apt, idx) => (
-                  <motion.tr
-                    key={apt.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                          {apt.paciente.split(" ").map((n) => n[0]).join("")}
+          {appointments.length === 0 ? (
+            <div className="p-12 text-center text-slate-400">
+              <Calendar size={40} className="mx-auto mb-3 opacity-40" />
+              <p>No hay citas registradas</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
+                    <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
+                    <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
+                    <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
+                    <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.slice(0, 6).map((apt, idx) => (
+                    <motion.tr
+                      key={apt.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {apt.paciente.split(" ").map((n) => n[0]).join("")}
+                          </div>
+                          <span className="font-medium text-slate-800">{apt.paciente}</span>
                         </div>
-                        <span className="font-medium text-slate-800">{apt.paciente}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-600">{apt.doctor}</td>
-                    <td className="p-4 text-slate-600">{apt.hora}</td>
-                    <td className="p-4 text-slate-600">{apt.tipo}</td>
-                    <td className="p-4">
-                      <StatusBadge estado={apt.estado} />
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </td>
+                      <td className="p-4 text-slate-600">{apt.doctor}</td>
+                      <td className="p-4 text-slate-600">{apt.hora}</td>
+                      <td className="p-4 text-slate-600">{apt.tipo}</td>
+                      <td className="p-4">
+                        <StatusBadge estado={apt.estado} />
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* TOP DOCTORES */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-xl font-semibold text-slate-800 mb-6">Top Doctores</h3>
-          <div className="space-y-4">
-            {topDoctors.map((doc, idx) => (
-              <motion.div
-                key={doc.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 cursor-pointer"
-              >
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-                  {doc.avatar}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-slate-800">{doc.nombre}</h4>
-                  <p className="text-slate-500 text-sm">{doc.especialidad}</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    <Star size={14} fill="currentColor" />
-                    <span className="font-medium text-slate-800">{doc.rating}</span>
+          {topDoctors.length === 0 ? (
+            <div className="text-center text-slate-400 py-8">
+              <Stethoscope size={36} className="mx-auto mb-3 opacity-40" />
+              <p>Sin doctores registrados</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {topDoctors.map((doc, idx) => (
+                <motion.div
+                  key={doc.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 cursor-pointer"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                    {doc.avatar}
                   </div>
-                  <p className="text-slate-400 text-xs">{doc.pacientes} pacientes</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* BOTTOM GRID */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* GRÁFICA SEMANAL */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h3 className="text-xl font-semibold text-slate-800 mb-6">Citas de la Semana</h3>
-          <div className="flex items-end justify-between gap-3 h-48">
-            {weeklyData.map((data, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full flex flex-col items-center gap-1">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(data.citas / maxCitas) * 100}%` }}
-                    transition={{ delay: idx * 0.1, duration: 0.5 }}
-                    className="w-full bg-blue-100 rounded-t-lg relative min-h-[20px]"
-                    style={{ height: `${(data.citas / maxCitas) * 140}px` }}
-                  >
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(data.completadas / data.citas) * 100}%` }}
-                      transition={{ delay: idx * 0.1 + 0.3, duration: 0.5 }}
-                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-lg"
-                    />
-                  </motion.div>
-                </div>
-                <span className="text-sm text-slate-500 font-medium">{data.day}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-100 rounded" />
-              <span className="text-sm text-slate-500">Programadas</span>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-800">{doc.nombre}</h4>
+                    <p className="text-slate-500 text-sm">{doc.especialidad}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star size={14} fill="currentColor" />
+                      <span className="font-medium text-slate-800">{doc.rating}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs">{doc.pacientes} pacientes</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded" />
-              <span className="text-sm text-slate-500">Completadas</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ACTIVIDAD RECIENTE */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h3 className="text-xl font-semibold text-slate-800 mb-6">Actividad Reciente</h3>
-          <div className="space-y-4">
-            {[
-              { icon: <CheckCircle2 size={20} />, color: "text-green-500 bg-green-50", text: "Cita completada: Juan Pérez con Dr. Ramírez", time: "Hace 10 min" },
-              { icon: <Calendar size={20} />, color: "text-blue-500 bg-blue-50", text: "Nueva cita agendada: María García", time: "Hace 25 min" },
-              { icon: <Users size={20} />, color: "text-purple-500 bg-purple-50", text: "Nuevo paciente registrado: Carlos López", time: "Hace 45 min" },
-              { icon: <XCircle size={20} />, color: "text-red-500 bg-red-50", text: "Cita cancelada: Ana Martínez", time: "Hace 1 hora" },
-              { icon: <FileText size={20} />, color: "text-orange-500 bg-orange-50", text: "Reporte de laboratorio listo", time: "Hace 2 horas" },
-            ].map((activity, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="flex items-start gap-3"
-              >
-                <div className={`p-2 rounded-lg ${activity.color.split(" ")[1]}`}>
-                  <span className={activity.color.split(" ")[0]}>{activity.icon}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-700">{activity.text}</p>
-                  <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          )}
         </div>
       </div>
     </>
@@ -439,51 +363,135 @@ const DashboardView = ({ setActiveSection, appointments }: { setActiveSection: (
 };
 
 // Patients View
-const PatientsView = () => {
-  const [patients, setPatients] = useState<Patient[]>(patientsData);
+const PatientsView = ({ institutionId }: { institutionId: number | null }) => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [newPatient, setNewPatient] = useState({
     nombre: "",
     edad: "",
-    genero: "Masculino",
+    genero: "Femenino",
     telefono: "",
     email: "",
     direccion: "",
-    condiciones: "",
+    alergias: "",
+    tipo_sangre: "",
+    contacto_emergencia: "",
+    telefono_contacto: "",
   });
 
-  const filteredPatients = patients.filter(
-    (p) =>
-      p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleAddPatient = () => {
-    const patient: Patient = {
-      id: patients.length + 1,
-      nombre: newPatient.nombre,
-      edad: parseInt(newPatient.edad),
-      genero: newPatient.genero,
-      telefono: newPatient.telefono,
-      email: newPatient.email,
-      direccion: newPatient.direccion,
-      ultimaVisita: "-",
-      proximaCita: "-",
-      condiciones: newPatient.condiciones.split(",").map((c) => c.trim()),
-    };
-    setPatients([...patients, patient]);
-    setShowAddModal(false);
-    setNewPatient({ nombre: "", edad: "", genero: "Masculino", telefono: "", email: "", direccion: "", condiciones: "" });
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:3000/api/patients");
+      const data: ApiPatient[] = await res.json();
+      const filtered = institutionId
+        ? data.filter((p) => p.institution_id === institutionId)
+        : data;
+      const mapped: Patient[] = filtered.map((p) => ({
+        id: p.id,
+        nombre: p.nombre_completo,
+        edad: calcularEdad(p.fecha_nacimiento),
+        genero: p.sexo,
+        telefono: p.telefono,
+        email: "",
+        direccion: p.direccion,
+        ultimaVisita: "-",
+        proximaCita: "-",
+        condiciones: p.alergias ? [p.alergias] : [],
+      }));
+      setPatients(mapped);
+    } catch (err) {
+      console.error("[v0] Error fetching patients:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeletePatient = (id: number) => {
-    setPatients(patients.filter((p) => p.id !== id));
+  React.useEffect(() => {
+    fetchPatients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [institutionId]);
+
+  const filteredPatients = patients.filter((p) =>
+    p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleAddPatient = async () => {
+    if (!newPatient.nombre.trim()) return;
+    setSaving(true);
+    try {
+      const body = {
+        nombre_completo: newPatient.nombre,
+        fecha_nacimiento: new Date(
+          new Date().getFullYear() - (parseInt(newPatient.edad) || 0),
+          0,
+          1
+        ).toISOString(),
+        sexo: newPatient.genero,
+        telefono: newPatient.telefono,
+        direccion: newPatient.direccion,
+        alergias: newPatient.alergias,
+        tipo_sangre: newPatient.tipo_sangre,
+        contacto_emergencia: newPatient.contacto_emergencia,
+        telefono_contacto_emergencia: newPatient.telefono_contacto,
+        institution_id: institutionId,
+      };
+      const res = await fetch("http://localhost:3000/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        await fetchPatients();
+        setShowAddModal(false);
+        setNewPatient({
+          nombre: "", edad: "", genero: "Femenino", telefono: "", email: "",
+          direccion: "", alergias: "", tipo_sangre: "", contacto_emergencia: "", telefono_contacto: "",
+        });
+        setSuccessMessage("¡Paciente guardado correctamente!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error("[v0] Error saving patient:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePatient = async (id: number) => {
+    try {
+      await fetch(`http://localhost:3000/api/patients/${id}`, { method: "DELETE" });
+      setPatients(patients.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("[v0] Error deleting patient:", err);
+    }
   };
 
   return (
     <>
+      {/* Success Message Toast */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3"
+          >
+            <CheckCircle2 size={24} />
+            <span className="font-medium">{successMessage}</span>
+            <button onClick={() => setSuccessMessage(null)} className="ml-2 hover:bg-green-600 rounded-full p-1">
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Gestión de Pacientes</h2>
@@ -507,7 +515,7 @@ const PatientsView = () => {
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Buscar por nombre o email..."
+              placeholder="Buscar por nombre..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -522,86 +530,99 @@ const PatientsView = () => {
 
       {/* Patients Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Edad</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Contacto</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Última Visita</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Condiciones</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPatients.map((patient, idx) => (
-              <motion.tr
-                key={patient.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="border-b border-slate-50 hover:bg-slate-50/50"
-              >
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium">
-                      {patient.nombre.split(" ").map((n) => n[0]).join("")}
+        {loading ? (
+          <div className="p-16 text-center text-slate-400">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm">Cargando pacientes...</p>
+          </div>
+        ) : filteredPatients.length === 0 ? (
+          <div className="p-16 text-center text-slate-400">
+            <Users size={48} className="mx-auto mb-4 opacity-40" />
+            <p className="text-lg font-medium mb-1">Sin pacientes registrados</p>
+            <p className="text-sm">Agrega el primer paciente usando el botón de arriba</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Edad</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Contacto</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Última Visita</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Condiciones</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPatients.map((patient, idx) => (
+                <motion.tr
+                  key={patient.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="border-b border-slate-50 hover:bg-slate-50/50"
+                >
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium">
+                        {patient.nombre.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-800">{patient.nombre}</p>
+                        <p className="text-sm text-slate-500">{patient.genero}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-slate-800">{patient.nombre}</p>
-                      <p className="text-sm text-slate-500">{patient.genero}</p>
+                  </td>
+                  <td className="p-4 text-slate-600">{patient.edad} años</td>
+                  <td className="p-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-slate-600 flex items-center gap-1">
+                        <Phone size={14} /> {patient.telefono}
+                      </span>
+                      <span className="text-sm text-slate-400 flex items-center gap-1">
+                        <Mail size={14} /> {patient.email}
+                      </span>
                     </div>
-                  </div>
-                </td>
-                <td className="p-4 text-slate-600">{patient.edad} años</td>
-                <td className="p-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm text-slate-600 flex items-center gap-1">
-                      <Phone size={14} /> {patient.telefono}
-                    </span>
-                    <span className="text-sm text-slate-400 flex items-center gap-1">
-                      <Mail size={14} /> {patient.email}
-                    </span>
-                  </div>
-                </td>
-                <td className="p-4 text-slate-600">{patient.ultimaVisita}</td>
-                <td className="p-4">
-                  <div className="flex flex-wrap gap-1">
-                    {patient.condiciones.slice(0, 2).map((cond, i) => (
-                      <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">
-                        {cond}
-                      </span>
-                    ))}
-                    {patient.condiciones.length > 2 && (
-                      <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-full">
-                        +{patient.condiciones.length - 2}
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSelectedPatient(patient)}
-                      className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                    >
-                      <Eye size={18} />
-                    </button>
-                    <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeletePatient(patient.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-red-500"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                  <td className="p-4 text-slate-600">{patient.ultimaVisita}</td>
+                  <td className="p-4">
+                    <div className="flex flex-wrap gap-1">
+                      {patient.condiciones.slice(0, 2).map((cond, i) => (
+                        <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">
+                          {cond}
+                        </span>
+                      ))}
+                      {patient.condiciones.length > 2 && (
+                        <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-full">
+                          +{patient.condiciones.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedPatient(patient)}
+                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeletePatient(patient.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg text-red-500"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Add Patient Modal */}
@@ -629,17 +650,32 @@ const PatientsView = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Género</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
               <select
                 value={newPatient.genero}
                 onChange={(e) => setNewPatient({ ...newPatient, genero: e.target.value })}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option>Masculino</option>
                 <option>Femenino</option>
+                <option>Masculino</option>
                 <option>Otro</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Sangre</label>
+              <select
+                value={newPatient.tipo_sangre}
+                onChange={(e) => setNewPatient({ ...newPatient, tipo_sangre: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar...</option>
+                {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
               <input
@@ -649,18 +685,19 @@ const PatientsView = () => {
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Alergias</label>
+              <input
+                type="text"
+                value={newPatient.alergias}
+                onChange={(e) => setNewPatient({ ...newPatient, alergias: e.target.value })}
+                placeholder="Ej: Penicilina"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={newPatient.email}
-              onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Dirección</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Direccion</label>
             <input
               type="text"
               value={newPatient.direccion}
@@ -668,15 +705,25 @@ const PatientsView = () => {
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Condiciones (separadas por coma)</label>
-            <input
-              type="text"
-              value={newPatient.condiciones}
-              onChange={(e) => setNewPatient({ ...newPatient, condiciones: e.target.value })}
-              placeholder="Ej: Diabetes, Hipertensión"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Contacto de Emergencia</label>
+              <input
+                type="text"
+                value={newPatient.contacto_emergencia}
+                onChange={(e) => setNewPatient({ ...newPatient, contacto_emergencia: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Tel. Emergencia</label>
+              <input
+                type="text"
+                value={newPatient.telefono_contacto}
+                onChange={(e) => setNewPatient({ ...newPatient, telefono_contacto: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
           <div className="flex gap-3 pt-4">
             <button
@@ -687,9 +734,10 @@ const PatientsView = () => {
             </button>
             <button
               onClick={handleAddPatient}
-              className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 disabled:opacity-60"
             >
-              Guardar Paciente
+              {saving ? "Guardando..." : "Guardar Paciente"}
             </button>
           </div>
         </div>
@@ -712,7 +760,7 @@ const PatientsView = () => {
                 <p className="text-slate-500">{selectedPatient.edad} años - {selectedPatient.genero}</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-slate-50 rounded-xl">
                 <p className="text-sm text-slate-500 mb-1">Teléfono</p>
@@ -767,11 +815,14 @@ const PatientsView = () => {
 };
 
 // Doctors View
-const DoctorsView = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>(doctorsData);
+const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [newDoctor, setNewDoctor] = useState({
     nombre: "",
     especialidad: "",
@@ -780,40 +831,121 @@ const DoctorsView = () => {
     horario: "",
   });
 
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:3000/api/doctors");
+      const data: ApiDoctor[] = await res.json();
+      const filtered = institutionId
+        ? data.filter((d) => d.institution_id === institutionId)
+        : data;
+      const mapped: Doctor[] = filtered.map((d) => ({
+        id: d.id,
+        nombre: d.nombre_completo,
+        especialidad: d.especialidad,
+        telefono: d.telefono,
+        email: d.correo,
+        horario: d.horario || "Por definir",
+        pacientes: 0,
+        rating: 5.0,
+        avatar: d.nombre_completo.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+        disponible: d.disponible ?? true,
+      }));
+      setDoctors(mapped);
+    } catch (err) {
+      console.error("[v0] Error fetching doctors:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDoctors();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [institutionId]);
+
   const filteredDoctors = doctors.filter(
     (d) =>
       d.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.especialidad.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddDoctor = () => {
-    const doctor: Doctor = {
-      id: doctors.length + 1,
-      nombre: newDoctor.nombre,
-      especialidad: newDoctor.especialidad,
-      telefono: newDoctor.telefono,
-      email: newDoctor.email,
-      horario: newDoctor.horario,
-      pacientes: 0,
-      rating: 5.0,
-      avatar: newDoctor.nombre.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
-      disponible: true,
-    };
-    setDoctors([...doctors, doctor]);
-    setShowAddModal(false);
-    setNewDoctor({ nombre: "", especialidad: "", telefono: "", email: "", horario: "" });
+  const handleAddDoctor = async () => {
+    if (!newDoctor.nombre.trim()) return;
+    setSaving(true);
+    try {
+      const body = {
+        nombre_completo: newDoctor.nombre,
+        especialidad: newDoctor.especialidad,
+        telefono: newDoctor.telefono,
+        correo: newDoctor.email,
+        horario: newDoctor.horario,
+        institution_id: institutionId,
+        disponible: true,
+      };
+      const res = await fetch("http://localhost:3000/api/doctors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        await fetchDoctors();
+        setShowAddModal(false);
+        setNewDoctor({ nombre: "", especialidad: "", telefono: "", email: "", horario: "" });
+        setSuccessMessage("¡Doctor guardado correctamente!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error("[v0] Error saving doctor:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteDoctor = (id: number) => {
-    setDoctors(doctors.filter((d) => d.id !== id));
+  const handleDeleteDoctor = async (id: number) => {
+    try {
+      await fetch(`http://localhost:3000/api/doctors/${id}`, { method: "DELETE" });
+      setDoctors(doctors.filter((d) => d.id !== id));
+    } catch (err) {
+      console.error("[v0] Error deleting doctor:", err);
+    }
   };
 
-  const handleToggleDisponibilidad = (id: number) => {
-    setDoctors(doctors.map((d) => (d.id === id ? { ...d, disponible: !d.disponible } : d)));
+  const handleToggleDisponibilidad = async (id: number) => {
+    const doctor = doctors.find((d) => d.id === id);
+    if (!doctor) return;
+    try {
+      await fetch(`http://localhost:3000/api/doctors/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disponible: !doctor.disponible }),
+      });
+      setDoctors(doctors.map((d) => (d.id === id ? { ...d, disponible: !d.disponible } : d)));
+    } catch (err) {
+      console.error("[v0] Error toggling doctor availability:", err);
+    }
   };
 
   return (
     <>
+      {/* Success Message Toast */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3"
+          >
+            <CheckCircle2 size={24} />
+            <span className="font-medium">{successMessage}</span>
+            <button onClick={() => setSuccessMessage(null)} className="ml-2 hover:bg-green-600 rounded-full p-1">
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Gestión de Doctores</h2>
@@ -861,7 +993,9 @@ const DoctorsView = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">
-                {(doctors.reduce((acc, d) => acc + d.rating, 0) / doctors.length).toFixed(1)}
+                {doctors.length > 0
+                  ? (doctors.reduce((acc, d) => acc + d.rating, 0) / doctors.length).toFixed(1)
+                  : "-"}
               </p>
               <p className="text-sm text-slate-500">Rating Promedio</p>
             </div>
@@ -897,81 +1031,94 @@ const DoctorsView = () => {
       </div>
 
       {/* Doctors Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDoctors.map((doctor, idx) => (
-          <motion.div
-            key={doctor.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                  {doctor.avatar}
+      {loading ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-16 text-center text-slate-400">
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm">Cargando doctores...</p>
+        </div>
+      ) : filteredDoctors.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-16 text-center text-slate-400">
+          <Stethoscope size={48} className="mx-auto mb-4 opacity-40" />
+          <p className="text-lg font-medium mb-1">Sin doctores registrados</p>
+          <p className="text-sm">Agrega el primer doctor usando el botón de arriba</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDoctors.map((doctor, idx) => (
+            <motion.div
+              key={doctor.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                    {doctor.avatar}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-800">{doctor.nombre}</h4>
+                    <p className="text-sm text-slate-500">{doctor.especialidad}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-slate-800">{doctor.nombre}</h4>
-                  <p className="text-sm text-slate-500">{doctor.especialidad}</p>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    doctor.disponible ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {doctor.disponible ? "Disponible" : "Ocupado"}
+                </span>
+              </div>
+
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Clock size={16} className="text-slate-400" />
+                  {doctor.horario}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Phone size={16} className="text-slate-400" />
+                  {doctor.telefono}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Mail size={16} className="text-slate-400" />
+                  {doctor.email}
                 </div>
               </div>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  doctor.disponible ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                }`}
-              >
-                {doctor.disponible ? "Disponible" : "Ocupado"}
-              </span>
-            </div>
 
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Clock size={16} className="text-slate-400" />
-                {doctor.horario}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Phone size={16} className="text-slate-400" />
-                {doctor.telefono}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Mail size={16} className="text-slate-400" />
-                {doctor.email}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Star size={16} className="text-yellow-500" fill="currentColor" />
+                    <span className="font-medium text-slate-800">{doctor.rating}</span>
+                  </div>
+                  <div className="text-sm text-slate-500">{doctor.pacientes} pacientes</div>
+                </div>
                 <div className="flex items-center gap-1">
-                  <Star size={16} className="text-yellow-500" fill="currentColor" />
-                  <span className="font-medium text-slate-800">{doctor.rating}</span>
+                  <button
+                    onClick={() => setSelectedDoctor(doctor)}
+                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                  >
+                    <Eye size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleToggleDisponibilidad(doctor.id)}
+                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+                  >
+                    <Edit size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteDoctor(doctor.id)}
+                    className="p-2 hover:bg-red-50 rounded-lg text-red-500"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <div className="text-sm text-slate-500">{doctor.pacientes} pacientes</div>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setSelectedDoctor(doctor)}
-                  className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                >
-                  <Eye size={18} />
-                </button>
-                <button
-                  onClick={() => handleToggleDisponibilidad(doctor.id)}
-                  className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
-                >
-                  <Edit size={18} />
-                </button>
-                <button
-                  onClick={() => handleDeleteDoctor(doctor.id)}
-                  className="p-2 hover:bg-red-50 rounded-lg text-red-500"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Add Doctor Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Agregar Nuevo Doctor">
@@ -1043,9 +1190,10 @@ const DoctorsView = () => {
             </button>
             <button
               onClick={handleAddDoctor}
-              className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 disabled:opacity-60"
             >
-              Guardar Doctor
+              {saving ? "Guardando..." : "Guardar Doctor"}
             </button>
           </div>
         </div>
@@ -1112,9 +1260,13 @@ const DoctorsView = () => {
 const AppointmentsView = ({
   appointments,
   setAppointments,
+  patients,
+  doctors,
 }: {
   appointments: Appointment[];
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
+  patients: Patient[];
+  doctors: Doctor[];
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1137,12 +1289,12 @@ const AppointmentsView = ({
   });
 
   const handleAddAppointment = () => {
-    const patient = patientsData.find((p) => p.id === parseInt(newAppointment.pacienteId));
-    const doctor = doctorsData.find((d) => d.id === parseInt(newAppointment.doctorId));
+    const patient = patients.find((p) => p.id === parseInt(newAppointment.pacienteId));
+    const doctor = doctors.find((d) => d.id === parseInt(newAppointment.doctorId));
     if (!patient || !doctor) return;
 
     const appointment: Appointment = {
-      id: appointments.length + 1,
+      id: Date.now(),
       paciente: patient.nombre,
       pacienteId: patient.id,
       doctor: doctor.nombre,
@@ -1267,84 +1419,92 @@ const AppointmentsView = ({
 
       {/* Appointments Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Fecha</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAppointments.map((apt, idx) => (
-              <motion.tr
-                key={apt.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: idx * 0.03 }}
-                className="border-b border-slate-50 hover:bg-slate-50/50"
-              >
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                      {apt.paciente.split(" ").map((n) => n[0]).join("")}
+        {filteredAppointments.length === 0 ? (
+          <div className="p-16 text-center text-slate-400">
+            <Calendar size={48} className="mx-auto mb-4 opacity-40" />
+            <p className="text-lg font-medium mb-1">Sin citas registradas</p>
+            <p className="text-sm">Agenda la primera cita usando el botón de arriba</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Fecha</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
+                <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAppointments.map((apt, idx) => (
+                <motion.tr
+                  key={apt.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="border-b border-slate-50 hover:bg-slate-50/50"
+                >
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {apt.paciente.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <span className="font-medium text-slate-800">{apt.paciente}</span>
                     </div>
-                    <span className="font-medium text-slate-800">{apt.paciente}</span>
-                  </div>
-                </td>
-                <td className="p-4 text-slate-600">{apt.doctor}</td>
-                <td className="p-4 text-slate-600">{apt.fecha}</td>
-                <td className="p-4 text-slate-600">{apt.hora}</td>
-                <td className="p-4 text-slate-600">{apt.tipo}</td>
-                <td className="p-4">
-                  <StatusBadge estado={apt.estado} />
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-1">
-                    {apt.estado === "pendiente" && (
+                  </td>
+                  <td className="p-4 text-slate-600">{apt.doctor}</td>
+                  <td className="p-4 text-slate-600">{apt.fecha}</td>
+                  <td className="p-4 text-slate-600">{apt.hora}</td>
+                  <td className="p-4 text-slate-600">{apt.tipo}</td>
+                  <td className="p-4">
+                    <StatusBadge estado={apt.estado} />
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-1">
+                      {apt.estado === "pendiente" && (
+                        <button
+                          onClick={() => handleUpdateStatus(apt.id, "confirmada")}
+                          className="p-2 hover:bg-green-50 rounded-lg text-green-600"
+                          title="Confirmar"
+                        >
+                          <CheckCircle2 size={18} />
+                        </button>
+                      )}
+                      {apt.estado === "confirmada" && (
+                        <button
+                          onClick={() => handleUpdateStatus(apt.id, "en_curso")}
+                          className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                          title="Iniciar"
+                        >
+                          <Activity size={18} />
+                        </button>
+                      )}
+                      {apt.estado !== "cancelada" && (
+                        <button
+                          onClick={() => handleUpdateStatus(apt.id, "cancelada")}
+                          className="p-2 hover:bg-red-50 rounded-lg text-red-500"
+                          title="Cancelar"
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleUpdateStatus(apt.id, "confirmada")}
-                        className="p-2 hover:bg-green-50 rounded-lg text-green-600"
-                        title="Confirmar"
+                        onClick={() => handleDeleteAppointment(apt.id)}
+                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+                        title="Eliminar"
                       >
-                        <CheckCircle2 size={18} />
+                        <Trash2 size={18} />
                       </button>
-                    )}
-                    {apt.estado === "confirmada" && (
-                      <button
-                        onClick={() => handleUpdateStatus(apt.id, "en_curso")}
-                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                        title="Iniciar"
-                      >
-                        <Activity size={18} />
-                      </button>
-                    )}
-                    {apt.estado !== "cancelada" && (
-                      <button
-                        onClick={() => handleUpdateStatus(apt.id, "cancelada")}
-                        className="p-2 hover:bg-red-50 rounded-lg text-red-500"
-                        title="Cancelar"
-                      >
-                        <XCircle size={18} />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteAppointment(apt.id)}
-                      className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
-                      title="Eliminar"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Add Appointment Modal */}
@@ -1358,7 +1518,7 @@ const AppointmentsView = ({
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seleccionar paciente...</option>
-              {patientsData.map((p) => (
+              {patients.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}
                 </option>
@@ -1373,7 +1533,7 @@ const AppointmentsView = ({
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seleccionar doctor...</option>
-              {doctorsData
+              {doctors
                 .filter((d) => d.disponible)
                 .map((d) => (
                   <option key={d.id} value={d.id}>
@@ -1446,383 +1606,16 @@ const AppointmentsView = ({
   );
 };
 
-// Pharmacy View
-const PharmacyView = () => {
-  const [medications, setMedications] = useState<Medication[]>(medicationsData);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<string>("todas");
-  const [newMedication, setNewMedication] = useState({
-    nombre: "",
-    categoria: "",
-    stock: "",
-    stockMinimo: "",
-    precio: "",
-    proveedor: "",
-    vencimiento: "",
-    ubicacion: "",
-  });
-
-  const categories = [...new Set(medications.map((m) => m.categoria))];
-  const lowStockItems = medications.filter((m) => m.stock < m.stockMinimo);
-  const totalValue = medications.reduce((acc, m) => acc + m.stock * m.precio, 0);
-
-  const filteredMedications = medications.filter((med) => {
-    const matchesSearch = med.nombre.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === "todas" || med.categoria === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleAddMedication = () => {
-    const medication: Medication = {
-      id: medications.length + 1,
-      nombre: newMedication.nombre,
-      categoria: newMedication.categoria,
-      stock: parseInt(newMedication.stock),
-      stockMinimo: parseInt(newMedication.stockMinimo),
-      precio: parseFloat(newMedication.precio),
-      proveedor: newMedication.proveedor,
-      vencimiento: newMedication.vencimiento,
-      ubicacion: newMedication.ubicacion,
-    };
-    setMedications([...medications, medication]);
-    setShowAddModal(false);
-    setNewMedication({
-      nombre: "",
-      categoria: "",
-      stock: "",
-      stockMinimo: "",
-      precio: "",
-      proveedor: "",
-      vencimiento: "",
-      ubicacion: "",
-    });
-  };
-
-  const handleUpdateStock = (id: number, amount: number) => {
-    setMedications(
-      medications.map((m) => (m.id === id ? { ...m, stock: Math.max(0, m.stock + amount) } : m))
-    );
-  };
-
-  const handleDeleteMedication = (id: number) => {
-    setMedications(medications.filter((m) => m.id !== id));
-  };
-
-  return (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestión de Farmacia</h2>
-          <p className="text-slate-500">Control de inventario y medicamentos</p>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-medium"
-        >
-          <Plus size={20} />
-          Agregar Medicamento
-        </motion.button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Package size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{medications.length}</p>
-              <p className="text-sm text-slate-500">Productos</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-50 rounded-lg">
-              <AlertTriangle size={20} className="text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{lowStockItems.length}</p>
-              <p className="text-sm text-slate-500">Stock Bajo</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <DollarSign size={20} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">${totalValue.toLocaleString()}</p>
-              <p className="text-sm text-slate-500">Valor Total</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <Pill size={20} className="text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{categories.length}</p>
-              <p className="text-sm text-slate-500">Categorías</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Low Stock Alert */}
-      {lowStockItems.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="text-red-500" size={24} />
-            <div>
-              <h4 className="font-semibold text-red-800">Alerta de Stock Bajo</h4>
-              <p className="text-red-600 text-sm">
-                {lowStockItems.length} producto(s) requieren reabastecimiento:{" "}
-                {lowStockItems.map((m) => m.nombre).join(", ")}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search and Filter */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar medicamento..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="todas">Todas las categorías</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Medications Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Medicamento</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Categoría</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Stock</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Precio</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Proveedor</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Vencimiento</th>
-              <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMedications.map((med, idx) => (
-              <motion.tr
-                key={med.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: idx * 0.03 }}
-                className={`border-b border-slate-50 hover:bg-slate-50/50 ${
-                  med.stock < med.stockMinimo ? "bg-red-50/30" : ""
-                }`}
-              >
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                      <Pill size={20} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-800">{med.nombre}</p>
-                      <p className="text-xs text-slate-500">Ubicación: {med.ubicacion}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
-                    {med.categoria}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`font-semibold ${
-                        med.stock < med.stockMinimo ? "text-red-600" : "text-slate-800"
-                      }`}
-                    >
-                      {med.stock}
-                    </span>
-                    {med.stock < med.stockMinimo && (
-                      <AlertTriangle size={16} className="text-red-500" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">Mín: {med.stockMinimo}</p>
-                </td>
-                <td className="p-4 text-slate-800 font-medium">${med.precio.toFixed(2)}</td>
-                <td className="p-4 text-slate-600">{med.proveedor}</td>
-                <td className="p-4 text-slate-600">{med.vencimiento}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleUpdateStock(med.id, 10)}
-                      className="p-2 hover:bg-green-50 rounded-lg text-green-600 text-xs font-medium"
-                      title="Agregar stock"
-                    >
-                      +10
-                    </button>
-                    <button
-                      onClick={() => handleUpdateStock(med.id, -10)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-red-600 text-xs font-medium"
-                      title="Reducir stock"
-                    >
-                      -10
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMedication(med.id)}
-                      className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Medication Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Agregar Medicamento">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nombre del Medicamento</label>
-            <input
-              type="text"
-              value={newMedication.nombre}
-              onChange={(e) => setNewMedication({ ...newMedication, nombre: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Categoría</label>
-              <select
-                value={newMedication.categoria}
-                onChange={(e) => setNewMedication({ ...newMedication, categoria: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Seleccionar...</option>
-                <option>Analgésicos</option>
-                <option>Antibióticos</option>
-                <option>Antiinflamatorios</option>
-                <option>Cardiovasculares</option>
-                <option>Gastrointestinales</option>
-                <option>Antidiabéticos</option>
-                <option>Respiratorios</option>
-                <option>Antihistamínicos</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Proveedor</label>
-              <input
-                type="text"
-                value={newMedication.proveedor}
-                onChange={(e) => setNewMedication({ ...newMedication, proveedor: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Stock Inicial</label>
-              <input
-                type="number"
-                value={newMedication.stock}
-                onChange={(e) => setNewMedication({ ...newMedication, stock: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Stock Mínimo</label>
-              <input
-                type="number"
-                value={newMedication.stockMinimo}
-                onChange={(e) => setNewMedication({ ...newMedication, stockMinimo: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Precio ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={newMedication.precio}
-                onChange={(e) => setNewMedication({ ...newMedication, precio: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Vencimiento</label>
-              <input
-                type="text"
-                value={newMedication.vencimiento}
-                onChange={(e) => setNewMedication({ ...newMedication, vencimiento: e.target.value })}
-                placeholder="MM/YYYY"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Ubicación</label>
-              <input
-                type="text"
-                value={newMedication.ubicacion}
-                onChange={(e) => setNewMedication({ ...newMedication, ubicacion: e.target.value })}
-                placeholder="Ej: A-101"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleAddMedication}
-              className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"
-            >
-              Guardar Medicamento
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </>
-  );
-};
-
 // Reports View
-const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
+const ReportsView = ({
+  appointments,
+  patients,
+  doctors,
+}: {
+  appointments: Appointment[];
+  patients: Patient[];
+  doctors: Doctor[];
+}) => {
   const [selectedPeriod, setSelectedPeriod] = useState("semana");
 
   const appointmentsByStatus = {
@@ -1842,9 +1635,10 @@ const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
     return acc;
   }, {} as Record<string, number>);
 
-  const totalPatients = patientsData.length;
-  const totalDoctors = doctorsData.length;
-  const avgRating = (doctorsData.reduce((acc, d) => acc + d.rating, 0) / doctorsData.length).toFixed(1);
+  const avgRating =
+    doctors.length > 0
+      ? (doctors.reduce((acc, d) => acc + d.rating, 0) / doctors.length).toFixed(1)
+      : "-";
 
   return (
     <>
@@ -1881,7 +1675,7 @@ const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Total Pacientes</p>
-              <p className="text-3xl font-bold mt-1">{totalPatients}</p>
+              <p className="text-3xl font-bold mt-1">{patients.length}</p>
             </div>
             <Users size={40} className="text-blue-300" />
           </div>
@@ -1890,7 +1684,7 @@ const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Total Doctores</p>
-              <p className="text-3xl font-bold mt-1">{totalDoctors}</p>
+              <p className="text-3xl font-bold mt-1">{doctors.length}</p>
             </div>
             <Stethoscope size={40} className="text-green-300" />
           </div>
@@ -1922,68 +1716,34 @@ const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
             <PieChart size={20} className="text-blue-500" />
             Citas por Estado
           </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-green-500 rounded-full" />
-                <span className="text-slate-600">Confirmadas</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500 rounded-full"
-                    style={{ width: `${(appointmentsByStatus.confirmadas / appointments.length) * 100}%` }}
-                  />
+          {appointments.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-sm">Sin datos disponibles</div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { label: "Confirmadas", count: appointmentsByStatus.confirmadas, color: "bg-green-500" },
+                { label: "Pendientes", count: appointmentsByStatus.pendientes, color: "bg-yellow-500" },
+                { label: "En Curso", count: appointmentsByStatus.enCurso, color: "bg-blue-500" },
+                { label: "Canceladas", count: appointmentsByStatus.canceladas, color: "bg-red-500" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 ${item.color} rounded-full`} />
+                    <span className="text-slate-600">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.color} rounded-full`}
+                        style={{ width: `${(item.count / appointments.length) * 100}%` }}
+                      />
+                    </div>
+                    <span className="font-semibold text-slate-800 w-8">{item.count}</span>
+                  </div>
                 </div>
-                <span className="font-semibold text-slate-800 w-8">{appointmentsByStatus.confirmadas}</span>
-              </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full" />
-                <span className="text-slate-600">Pendientes</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-yellow-500 rounded-full"
-                    style={{ width: `${(appointmentsByStatus.pendientes / appointments.length) * 100}%` }}
-                  />
-                </div>
-                <span className="font-semibold text-slate-800 w-8">{appointmentsByStatus.pendientes}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-blue-500 rounded-full" />
-                <span className="text-slate-600">En Curso</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${(appointmentsByStatus.enCurso / appointments.length) * 100}%` }}
-                  />
-                </div>
-                <span className="font-semibold text-slate-800 w-8">{appointmentsByStatus.enCurso}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-red-500 rounded-full" />
-                <span className="text-slate-600">Canceladas</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-red-500 rounded-full"
-                    style={{ width: `${(appointmentsByStatus.canceladas / appointments.length) * 100}%` }}
-                  />
-                </div>
-                <span className="font-semibold text-slate-800 w-8">{appointmentsByStatus.canceladas}</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Appointments by Type */}
@@ -1992,105 +1752,67 @@ const ReportsView = ({ appointments }: { appointments: Appointment[] }) => {
             <BarChart3 size={20} className="text-purple-500" />
             Citas por Tipo de Consulta
           </h3>
-          <div className="space-y-4">
-            {Object.entries(appointmentsByType).map(([type, count]) => (
-              <div key={type} className="flex items-center justify-between">
-                <span className="text-slate-600">{type}</span>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${(count / appointments.length) * 100}%` }}
-                    />
+          {Object.keys(appointmentsByType).length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-sm">Sin datos disponibles</div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(appointmentsByType).map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between">
+                  <span className="text-slate-600">{type}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-purple-500 rounded-full"
+                        style={{ width: `${(count / appointments.length) * 100}%` }}
+                      />
+                    </div>
+                    <span className="font-semibold text-slate-800 w-8">{count}</span>
                   </div>
-                  <span className="font-semibold text-slate-800 w-8">{count}</span>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Doctor Performance */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <Stethoscope size={20} className="text-green-500" />
           Rendimiento por Doctor
         </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {doctorsData.map((doctor) => (
-            <div key={doctor.id} className="p-4 bg-slate-50 rounded-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-                  {doctor.avatar}
+        {doctors.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 text-sm">Sin doctores registrados</div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {doctors.map((doctor) => (
+              <div key={doctor.id} className="p-4 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                    {doctor.avatar}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{doctor.nombre}</p>
+                    <p className="text-sm text-slate-500">{doctor.especialidad}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-slate-800">{doctor.nombre}</p>
-                  <p className="text-sm text-slate-500">{doctor.especialidad}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-2 bg-white rounded-lg">
-                  <p className="text-lg font-bold text-slate-800">{doctorAppointments[doctor.nombre] || 0}</p>
-                  <p className="text-xs text-slate-500">Citas</p>
-                </div>
-                <div className="p-2 bg-white rounded-lg">
-                  <p className="text-lg font-bold text-slate-800 flex items-center justify-center gap-1">
-                    <Star size={14} className="text-yellow-500" fill="currentColor" />
-                    {doctor.rating}
-                  </p>
-                  <p className="text-xs text-slate-500">Rating</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Weekly Summary Chart */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <TrendingUp size={20} className="text-blue-500" />
-          Resumen Semanal de Citas
-        </h3>
-        <div className="flex items-end justify-between gap-4 h-64">
-          {weeklyData.map((data, idx) => {
-            const maxCitas = Math.max(...weeklyData.map((d) => d.citas));
-            return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full flex flex-col items-center gap-1">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(data.citas / maxCitas) * 180}px` }}
-                    transition={{ delay: idx * 0.1, duration: 0.5 }}
-                    className="w-full bg-blue-100 rounded-t-lg relative min-h-[20px]"
-                  >
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(data.completadas / data.citas) * 100}%` }}
-                      transition={{ delay: idx * 0.1 + 0.3, duration: 0.5 }}
-                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-lg"
-                    />
-                  </motion.div>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm font-medium text-slate-600">{data.day}</span>
-                  <p className="text-xs text-slate-400">{data.completadas}/{data.citas}</p>
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div className="p-2 bg-white rounded-lg">
+                    <p className="text-lg font-bold text-slate-800">{doctorAppointments[doctor.nombre] || 0}</p>
+                    <p className="text-xs text-slate-500">Citas</p>
+                  </div>
+                  <div className="p-2 bg-white rounded-lg">
+                    <p className="text-lg font-bold text-slate-800 flex items-center justify-center gap-1">
+                      <Star size={14} className="text-yellow-500" fill="currentColor" />
+                      {doctor.rating}
+                    </p>
+                    <p className="text-xs text-slate-500">Rating</p>
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-        <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-100 rounded" />
-            <span className="text-sm text-slate-500">Programadas</span>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded" />
-            <span className="text-sm text-slate-500">Completadas</span>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );
@@ -2101,9 +1823,80 @@ const InstitutionDashboard: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSection, setActiveSection] = useState<NavSection>("Dashboard");
-  const [appointments, setAppointments] = useState<Appointment[]>(appointmentsData);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [institutionId, setInstitutionId] = useState<number | null>(null);
+  const [institutionName, setInstitutionName] = useState("MediCenter");
 
   const router = useRouter();
+
+  // Fetch institution data on mount
+  React.useEffect(() => {
+    const loadInstitution = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/institutions");
+        const data: ApiInstitution[] = await res.json();
+        if (data && data.length > 0) {
+          setInstitutionId(data[0].id);
+          setInstitutionName(data[0].nombre_institucion);
+        }
+      } catch (err) {
+        console.error("[v0] Error fetching institution:", err);
+      }
+    };
+    loadInstitution();
+  }, []);
+
+  // Fetch patients and doctors for Dashboard view
+  React.useEffect(() => {
+    const loadPatientsAndDoctors = async () => {
+      try {
+        // Fetch patients
+        const patientsRes = await fetch("http://localhost:3000/api/patients");
+        const patientsData: ApiPatient[] = await patientsRes.json();
+        const filteredPatients = institutionId
+          ? patientsData.filter((p) => p.institution_id === institutionId)
+          : patientsData;
+        const mappedPatients: Patient[] = filteredPatients.map((p) => ({
+          id: p.id,
+          nombre: p.nombre_completo,
+          edad: calcularEdad(p.fecha_nacimiento),
+          genero: p.sexo,
+          telefono: p.telefono,
+          email: "",
+          direccion: p.direccion,
+          ultimaVisita: "-",
+          proximaCita: "-",
+          condiciones: p.alergias ? [p.alergias] : [],
+        }));
+        setPatients(mappedPatients);
+
+        // Fetch doctors
+        const doctorsRes = await fetch("http://localhost:3000/api/doctors");
+        const doctorsData: ApiDoctor[] = await doctorsRes.json();
+        const filteredDoctors = institutionId
+          ? doctorsData.filter((d) => d.institution_id === institutionId)
+          : doctorsData;
+        const mappedDoctors: Doctor[] = filteredDoctors.map((d) => ({
+          id: d.id,
+          nombre: d.nombre_completo,
+          especialidad: d.especialidad,
+          telefono: d.telefono,
+          email: d.correo,
+          horario: d.horario || "Por definir",
+          pacientes: 0,
+          rating: 5.0,
+          avatar: d.nombre_completo.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+          disponible: d.disponible ?? true,
+        }));
+        setDoctors(mappedDoctors);
+      } catch (err) {
+        console.error("[v0] Error fetching patients/doctors:", err);
+      }
+    };
+    loadPatientsAndDoctors();
+  }, [institutionId]);
 
   const handleLogout = () => {
     localStorage.removeItem("rol");
@@ -2117,25 +1910,40 @@ const InstitutionDashboard: React.FC = () => {
     { icon: <Users size={20} />, label: "Pacientes" },
     { icon: <Stethoscope size={20} />, label: "Doctores" },
     { icon: <Calendar size={20} />, label: "Citas" },
-    { icon: <Pill size={20} />, label: "Farmacia" },
     { icon: <BarChart3 size={20} />, label: "Reportes" },
     { icon: <Settings size={20} />, label: "Configuración" },
+  ];
+
+  const notifications = [
+    { id: 1, type: "info", message: "Sistema listo para su uso", time: "Ahora" },
   ];
 
   const renderContent = () => {
     switch (activeSection) {
       case "Dashboard":
-        return <DashboardView setActiveSection={setActiveSection} appointments={appointments} />;
+        return (
+          <DashboardView
+            setActiveSection={setActiveSection}
+            appointments={appointments}
+            patients={patients}
+            doctors={doctors}
+          />
+        );
       case "Pacientes":
-        return <PatientsView />;
+        return <PatientsView institutionId={institutionId} />;
       case "Doctores":
-        return <DoctorsView />;
+        return <DoctorsView institutionId={institutionId} />;
       case "Citas":
-        return <AppointmentsView appointments={appointments} setAppointments={setAppointments} />;
-      case "Farmacia":
-        return <PharmacyView />;
+        return (
+          <AppointmentsView
+            appointments={appointments}
+            setAppointments={setAppointments}
+            patients={patients}
+            doctors={doctors}
+          />
+        );
       case "Reportes":
-        return <ReportsView appointments={appointments} />;
+        return <ReportsView appointments={appointments} patients={patients} doctors={doctors} />;
       case "Configuración":
         return (
           <div className="flex items-center justify-center h-96">
@@ -2156,14 +1964,14 @@ const InstitutionDashboard: React.FC = () => {
 
       {/* SIDEBAR */}
       <aside className="w-72 bg-sidebar border-r border-sidebar-border p-6 flex flex-col sticky top-0 h-screen">
-        
+
         {/* HEADER */}
         <div className="flex items-center gap-3 mb-10">
           <div className="w-12 h-12 bg-sidebar-primary rounded-xl flex items-center justify-center">
             <HeartPulse size={28} className="text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-sidebar-foreground">MediCenter</h1>
+            <h1 className="text-xl font-bold text-sidebar-foreground">{institutionName}</h1>
             <p className="text-sidebar-foreground/60 text-sm">Sistema Hospitalario</p>
           </div>
         </div>
@@ -2221,7 +2029,6 @@ const InstitutionDashboard: React.FC = () => {
               {activeSection === "Pacientes" && "Gestiona la información de los pacientes"}
               {activeSection === "Doctores" && "Administra el equipo médico"}
               {activeSection === "Citas" && "Controla todas las citas médicas"}
-              {activeSection === "Farmacia" && "Gestiona el inventario de medicamentos"}
               {activeSection === "Reportes" && "Analiza las estadísticas del sistema"}
               {activeSection === "Configuración" && "Ajusta las preferencias del sistema"}
             </p>
@@ -2250,7 +2057,7 @@ const InstitutionDashboard: React.FC = () => {
               >
                 <Bell size={20} className="text-muted-foreground" />
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-xs rounded-full flex items-center justify-center">
-                  4
+                  {notifications.length}
                 </span>
               </motion.button>
 
@@ -2273,10 +2080,7 @@ const InstitutionDashboard: React.FC = () => {
                           className="p-4 border-b border-border hover:bg-muted cursor-pointer"
                         >
                           <div className="flex gap-3">
-                            {notif.type === "urgent" && <AlertCircle size={20} className="text-destructive shrink-0" />}
-                            {notif.type === "info" && <Bell size={20} className="text-primary shrink-0" />}
-                            {notif.type === "warning" && <AlertCircle size={20} className="text-amber-500 shrink-0" />}
-                            {notif.type === "success" && <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />}
+                            <Bell size={20} className="text-primary shrink-0" />
                             <div>
                               <p className="text-sm text-foreground">{notif.message}</p>
                               <p className="text-xs text-muted-foreground mt-1">{notif.time}</p>
