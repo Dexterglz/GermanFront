@@ -76,6 +76,54 @@ import {
 const ChevronRightIcon = ChevronRight;
 
 // ─────────────────────────────────────────────
+// DOCTOR SERVICE
+// ─────────────────────────────────────────────
+
+const BASE_URL = "http://localhost:3000/api";
+
+const getAuthHeaders = (isMultipart = false): HeadersInit => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (!isMultipart) headers["Content-Type"] = "application/json";
+  return headers;
+};
+
+const doctorService = {
+  // Citas
+  createAppointment: (data: Record<string, unknown>) =>
+    fetch(`${BASE_URL}/appointments`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  createRecurringAppointments: (data: Record<string, unknown>) =>
+    fetch(`${BASE_URL}/appointments/recurring`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  confirmAppointment: (appointmentId: string) =>
+    fetch(`${BASE_URL}/appointments/${appointmentId}/confirm`, { method: "POST", headers: getAuthHeaders() }).then((r) => r.json()),
+
+  rescheduleAppointment: (appointmentId: string, data: Record<string, unknown>) =>
+    fetch(`${BASE_URL}/appointments/${appointmentId}/reschedule`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  cancelAppointment: (appointmentId: string, reason: string) =>
+    fetch(`${BASE_URL}/appointments/${appointmentId}/cancel`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ reason }) }).then((r) => r.json()),
+
+  // Panel y agenda
+  getDoctorSummary: () =>
+    fetch(`${BASE_URL}/dashboard/doctor/summary`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
+
+  getDoctorPatients: () =>
+    fetch(`${BASE_URL}/dashboard/doctor/patients`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
+
+  // Perfil, horarios y expedientes
+  updateProfile: (formData: FormData) =>
+    fetch(`${BASE_URL}/doctors/profile`, { method: "PUT", headers: getAuthHeaders(true), body: formData }).then((r) => r.json()),
+
+  setAvailability: (schedulesArray: unknown[]) =>
+    fetch(`${BASE_URL}/doctors/availability`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ schedules: schedulesArray }) }).then((r) => r.json()),
+
+  createPatientFile: (patientData: Record<string, unknown>) =>
+    fetch(`${BASE_URL}/patients`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(patientData) }).then((r) => r.json()),
+};
+
+// ─────────────────────────────────────────────
 // TRANSLATIONS
 // ─────────────────────────────────────────────
 
@@ -675,193 +723,48 @@ interface CitaAgendada {
 // ─────────────────────────────────────────────
 
 const pacienteMock: Paciente = {
-  id: "PAC-001",
+  id: "",
   datosPersonales: {
-    id: "DP-001",
-    nombre: "María Fernanda",
-    apellidoPaterno: "González",
-    apellidoMaterno: "Martínez",
-    fechaNacimiento: "1992-03-15",
+    id: "",
+    nombre: "",
+    apellidoPaterno: "",
+    apellidoMaterno: "",
+    fechaNacimiento: "",
     sexo: "Femenino",
-    curp: "GOMF920315MDFRRT01",
-    rfc: "GOMF920315AB1",
+    curp: "",
+    rfc: "",
   },
   direccion: {
-    calle: "Av. Paseo de la Reforma",
-    numeroExterior: "505",
-    numeroInterior: "12A",
-    colonia: "Cuauhtémoc",
-    ciudad: "Ciudad de México",
-    estado: "CDMX",
-    codigoPostal: "06500",
-    pais: "México",
+    calle: "",
+    numeroExterior: "",
+    numeroInterior: "",
+    colonia: "",
+    ciudad: "",
+    estado: "",
+    codigoPostal: "",
+    pais: "",
   },
   contacto: {
-    telefono: "55 8765 4321",
-    telefonoEmergencia: "55 1234 5678",
-    email: "maria.gonzalez@email.com",
-    nombreContactoEmergencia: "Roberto González (Padre)",
+    telefono: "",
+    telefonoEmergencia: "",
+    email: "",
+    nombreContactoEmergencia: "",
   },
   datosFiscales: {
-    razonSocial: "María Fernanda González Martínez",
-    rfc: "GOMF920315AB1",
-    usoCFDI: "G03 - Gastos en general",
-    regimenFiscal: "612 - Personas Físicas con Actividades Empresariales",
+    razonSocial: "",
+    rfc: "",
+    usoCFDI: "",
+    regimenFiscal: "",
   },
-  signosVitales: [
-    { id: "SV-001", fecha: "2023-06-10T09:00:00Z", peso: 64.0, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 72, presionSistolica: 118, presionDiastolica: 75, grasaCorporal: 24.0, indiceMasaCorporal: 23.5 },
-    { id: "SV-002", fecha: "2023-09-18T10:30:00Z", peso: 63.2, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 114, presionDiastolica: 73, grasaCorporal: 23.1, indiceMasaCorporal: 23.2 },
-    { id: "SV-003", fecha: "2024-01-15T09:30:00Z", peso: 62.5, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 68, presionSistolica: 115, presionDiastolica: 72, grasaCorporal: 22.5, indiceMasaCorporal: 22.9 },
-    { id: "SV-004", fecha: "2024-02-20T10:00:00Z", peso: 61.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 112, presionDiastolica: 70, grasaCorporal: 21.8, indiceMasaCorporal: 22.7 },
-    { id: "SV-005", fecha: "2024-03-10T11:15:00Z", peso: 61.2, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 66, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 21.2, indiceMasaCorporal: 22.5 },
-    { id: "SV-006", fecha: "2024-06-05T09:00:00Z", peso: 63.5, estatura: 165, temperatura: 36.7, frecuenciaCardiaca: 76, presionSistolica: 116, presionDiastolica: 74, grasaCorporal: 22.0, indiceMasaCorporal: 23.3 },
-    { id: "SV-007", fecha: "2024-09-12T10:00:00Z", peso: 65.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 78, presionSistolica: 118, presionDiastolica: 76, grasaCorporal: 22.8, indiceMasaCorporal: 23.9 },
-    { id: "SV-008", fecha: "2024-12-03T09:30:00Z", peso: 64.2, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 69, presionSistolica: 113, presionDiastolica: 71, grasaCorporal: 22.3, indiceMasaCorporal: 23.6 },
-    { id: "SV-009", fecha: "2025-03-08T10:00:00Z", peso: 63.0, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 67, presionSistolica: 111, presionDiastolica: 69, grasaCorporal: 21.5, indiceMasaCorporal: 23.1 },
-    { id: "SV-010", fecha: "2025-06-20T09:15:00Z", peso: 62.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 71, presionSistolica: 112, presionDiastolica: 70, grasaCorporal: 21.3, indiceMasaCorporal: 23.0 },
-    { id: "SV-011", fecha: "2025-10-14T10:30:00Z", peso: 63.5, estatura: 165, temperatura: 36.3, frecuenciaCardiaca: 68, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 21.0, indiceMasaCorporal: 23.3 },
-    { id: "SV-012", fecha: "2026-01-20T09:00:00Z", peso: 62.3, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 65, presionSistolica: 109, presionDiastolica: 67, grasaCorporal: 20.8, indiceMasaCorporal: 22.9 },
-    { id: "SV-013", fecha: "2026-04-10T10:00:00Z", peso: 62.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 67, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 20.5, indiceMasaCorporal: 22.8 },
-  ],
-  citas: [
-    { id: "CIT-001", pacienteId: "PAC-001", fecha: "2023-06-10", hora: "09:00", motivo: "Revisión ginecológica anual", estado: "Completada", notas: "Examen pélvico normal. Papanicolaou realizado. Colposcopia diferida para siguiente ciclo." },
-    { id: "CIT-002", pacienteId: "PAC-001", fecha: "2023-09-18", hora: "10:30", motivo: "Resultado Papanicolaou y colposcopia", estado: "Completada", notas: "Resultado Pap: LEIBG (lesión escamosa intraepitelial de bajo grado). Colposcopia: zona de transformación tipo 1 visible. Biopsia tomada." },
-    { id: "CIT-003", pacienteId: "PAC-001", fecha: "2024-01-15", hora: "09:00", motivo: "Control seguimiento CIN I", estado: "Completada", notas: "Biopsia confirma NIC I. Conducta expectante. Citología en 6 meses." },
-    { id: "CIT-004", pacienteId: "PAC-001", fecha: "2024-06-05", hora: "09:00", motivo: "Citología de control — 6 meses", estado: "Completada", notas: "Citología NILM (negativa para lesión intraepitelial). Excelente respuesta. Control anual." },
-    { id: "CIT-005", pacienteId: "PAC-001", fecha: "2024-09-12", hora: "10:00", motivo: "Asesoría anticonceptiva", estado: "Completada", notas: "Paciente solicita cambio de método anticonceptivo. Se prescribe píldora de baja dosis (Levonorgestrel/Etinilestradiol 0.15/0.03 mg). Se orienta sobre uso correcto y efectos secundarios." },
-    { id: "CIT-006", pacienteId: "PAC-001", fecha: "2024-12-03", hora: "09:30", motivo: "Dismenorrea severa — Valoración", estado: "Completada", notas: "Paciente refiere dolor pélvico cíclico 8/10 desde hace 3 meses. Se solicita ultrasonido pélvico transvaginal y laparoscopia diagnóstica. Sospecha de endometriosis." },
-    { id: "CIT-007", pacienteId: "PAC-001", fecha: "2025-03-08", hora: "10:00", motivo: "Resultados laparoscopia — Diagnóstico endometriosis estadio II", estado: "Completada", notas: "Laparoscopia confirma endometriosis estadio II (clasificación AFS revisada). Focos en ovario izquierdo y ligamentos uterosacros. Se realizó vaporización láser de focos. Inicio de tratamiento hormonal." },
-    { id: "CIT-008", pacienteId: "PAC-001", fecha: "2025-06-20", hora: "09:15", motivo: "Control endometriosis — 3 meses post cirugía", estado: "Completada", notas: "Paciente refiere mejoría significativa del dolor (EVA 3/10). Continúa con dienogest 2mg/día. Ultrasonido sin evidencia de endometriomas. Control en 3 meses." },
-    { id: "CIT-009", pacienteId: "PAC-001", fecha: "2025-10-14", hora: "10:30", motivo: "Control endometriosis y revisión anticonceptiva", estado: "Completada", notas: "Sin dolor intermenstrual. Ciclos regulares bajo tratamiento. Se decide continuar dienogest. Se solicita perfil hormonal y AMH para valoración de fertilidad futura." },
-    { id: "CIT-010", pacienteId: "PAC-001", fecha: "2026-01-20", hora: "09:00", motivo: "Resultados perfil hormonal — Asesoría de fertilidad", estado: "Completada", notas: "AMH 2.8 ng/mL (reserva ovárica normal para edad). FSH 6.5 mUI/mL. LH 4.2 mUI/mL. Estradiol 42 pg/mL. Se orienta sobre opciones de preservación de fertilidad ante diagnóstico de endometriosis." },
-    { id: "CIT-011", pacienteId: "PAC-001", fecha: "2026-04-10", hora: "10:00", motivo: "Control prenatal — 8 semanas de gestación", estado: "Completada", notas: "Embarazo de 8 semanas confirmado por ultrasonido. Embrión con actividad cardíaca positiva. FCF: 172 lpm. Se inicia protocolo prenatal completo." },
-    { id: "CIT-012", pacienteId: "PAC-001", fecha: "2026-04-24", hora: "10:30", motivo: "Control prenatal — 10 semanas", estado: "Confirmada" },
-    { id: "CIT-013", pacienteId: "PAC-001", fecha: "2026-05-15", hora: "16:00", motivo: "Ultrasonido estructural del primer trimestre", estado: "Pendiente" },
-    { id: "CIT-014", pacienteId: "PAC-001", fecha: "2026-06-08", hora: "09:00", motivo: "Control prenatal — 16 semanas + Amniocentesis", estado: "Pendiente" },
-  ],
-  visitas: [
-    {
-      id: "VIS-001", pacienteId: "PAC-001", fecha: "2023-06-10T09:00:00Z", motivo: "Revisión ginecológica anual",
-      observaciones: "Examen físico sin alteraciones. Mamas simétricas sin nódulos palpables. Abdomen blando depresible. Genitales externos normales. Especuloscopia: cérvix sin lesiones visibles. Papanicolaou tomado. Se orienta sobre prevención de ITS y uso de anticonceptivos de barrera.",
-      signosVitales: { id: "SV-001", fecha: "2023-06-10T09:00:00Z", peso: 64.0, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 72, presionSistolica: 118, presionDiastolica: 75, grasaCorporal: 24.0, indiceMasaCorporal: 23.5 },
-    },
-    {
-      id: "VIS-002", pacienteId: "PAC-001", fecha: "2023-09-18T10:30:00Z", motivo: "Resultado Papanicolaou y colposcopia",
-      observaciones: "Se informa resultado Pap LEIBG. Colposcopia: zona de transformación tipo 1. Se toman 2 biopsias dirigidas en horario 6 y 9. Paciente tolera procedimiento sin complicaciones. Se indica abstinencia sexual por 1 semana y vigilancia de sangrado.",
-      signosVitales: { id: "SV-002", fecha: "2023-09-18T10:30:00Z", peso: 63.2, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 114, presionDiastolica: 73, grasaCorporal: 23.1, indiceMasaCorporal: 23.2 },
-    },
-    {
-      id: "VIS-003", pacienteId: "PAC-001", fecha: "2024-01-15T09:30:00Z", motivo: "Control seguimiento NIC I y revisión prenatal",
-      observaciones: "Biopsia confirma neoplasia intraepitelial cervical grado I (NIC I). Prueba VPH positiva para genotipo 31. Conducta expectante con citología en 6 meses. Paciente ansiosa, se brinda apoyo emocional. Inicio de suplementación prenatal: ácido fólico 5mg y sulfato ferroso.",
-      signosVitales: { id: "SV-003", fecha: "2024-01-15T09:30:00Z", peso: 62.5, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 68, presionSistolica: 115, presionDiastolica: 72, grasaCorporal: 22.5, indiceMasaCorporal: 22.9 },
-    },
-    {
-      id: "VIS-004", pacienteId: "PAC-001", fecha: "2024-02-20T10:00:00Z", motivo: "Seguimiento nutricional y vitamina D",
-      observaciones: "Mejoría notable en hábitos alimenticios. Déficit de vitamina D corregido parcialmente (25-OH vitamina D: 28 ng/mL, meta >30). Se ajusta dosis de vitamina D3 a 4000 UI diarias por 8 semanas adicionales. Paciente en buen estado de ánimo.",
-      signosVitales: { id: "SV-004", fecha: "2024-02-20T10:00:00Z", peso: 61.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 112, presionDiastolica: 70, grasaCorporal: 21.8, indiceMasaCorporal: 22.7 },
-    },
-    {
-      id: "VIS-005", pacienteId: "PAC-001", fecha: "2024-06-05T09:00:00Z", motivo: "Citología de control a los 6 meses",
-      observaciones: "Citología NILM. Regresión espontánea de NIC I. Excelente evolución. Control anual. Se orienta sobre vacuna VPH nonavalente, se aplica primera dosis.",
-      signosVitales: { id: "SV-005", fecha: "2024-06-05T09:00:00Z", peso: 63.5, estatura: 165, temperatura: 36.7, frecuenciaCardiaca: 76, presionSistolica: 116, presionDiastolica: 74, grasaCorporal: 22.0, indiceMasaCorporal: 23.3 },
-    },
-    {
-      id: "VIS-006", pacienteId: "PAC-001", fecha: "2024-09-12T10:00:00Z", motivo: "Asesoría anticonceptiva",
-      observaciones: "Paciente solicita método hormonal de alta eficacia. Se descutan anticonceptivos orales combinados, parche, anillo vaginal y DIU hormonal. Se elige ACO combinada de baja dosis. Se prescribe Microgynon (levonorgestrel 0.15mg/etinilestradiol 0.03mg) por 6 meses inicialmente.",
-      signosVitales: { id: "SV-006", fecha: "2024-09-12T10:00:00Z", peso: 65.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 78, presionSistolica: 118, presionDiastolica: 76, grasaCorporal: 22.8, indiceMasaCorporal: 23.9 },
-    },
-    {
-      id: "VIS-007", pacienteId: "PAC-001", fecha: "2024-12-03T09:30:00Z", motivo: "Dismenorrea severa — Primera valoración",
-      observaciones: "Paciente refiere dismenorrea EVA 8/10, diarrea y náuseas durante el primer día del ciclo. Dolor pélvico intermenstrual leve. Dispareunia profunda ocasional. Exploración: útero en retroversión, movilización dolorosa. Anexos con resistencia en fondo de saco. Alta sospecha clínica de endometriosis. Se solicita eco TV y laparoscopia diagnóstica.",
-      signosVitales: { id: "SV-007", fecha: "2024-12-03T09:30:00Z", peso: 64.2, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 69, presionSistolica: 113, presionDiastolica: 71, grasaCorporal: 22.3, indiceMasaCorporal: 23.6 },
-    },
-    {
-      id: "VIS-008", pacienteId: "PAC-001", fecha: "2025-03-08T10:00:00Z", motivo: "Diagnóstico endometriosis — Resultados laparoscopia",
-      observaciones: "Laparoscopia confirma endometriosis estadio II. Implantes peritoneales en ovario izquierdo (endometrioma 2.1 cm), ligamentos uterosacros bilaterales y fondo de saco de Douglas. Se realizó vaporización CO2 de focos superficiales y drenaje de endometrioma. Inicio: dienogest 2mg/día.",
-      signosVitales: { id: "SV-008", fecha: "2025-03-08T10:00:00Z", peso: 63.0, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 67, presionSistolica: 111, presionDiastolica: 69, grasaCorporal: 21.5, indiceMasaCorporal: 23.1 },
-    },
-    {
-      id: "VIS-009", pacienteId: "PAC-001", fecha: "2025-06-20T09:15:00Z", motivo: "Control endometriosis — 3 meses post cirugía",
-      observaciones: "Paciente refiere mejoría notable: dismenorrea EVA 3/10. Sin dispareunia. Sangrado escaso bajo dienogest. Eco TV: ovario izquierdo sin endometrioma visible. Fondo de saco libre. Se indica continuar dienogest y cita en 3 meses.",
-      signosVitales: { id: "SV-009", fecha: "2025-06-20T09:15:00Z", peso: 62.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 71, presionSistolica: 112, presionDiastolica: 70, grasaCorporal: 21.3, indiceMasaCorporal: 23.0 },
-    },
-    {
-      id: "VIS-010", pacienteId: "PAC-001", fecha: "2025-10-14T10:30:00Z", motivo: "Control endometriosis y asesoría de fertilidad",
-      observaciones: "Sin sintomatología pélvica activa. Ciclos regulares bajo progestágeno. Se solicita perfil hormonal reproductivo (FSH, LH, estradiol, AMH) para valorar reserva ovárica. Se orienta sobre opciones de fertilización in vitro preventiva.",
-      signosVitales: { id: "SV-010", fecha: "2025-10-14T10:30:00Z", peso: 63.5, estatura: 165, temperatura: 36.3, frecuenciaCardiaca: 68, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 21.0, indiceMasaCorporal: 23.3 },
-    },
-    {
-      id: "VIS-011", pacienteId: "PAC-001", fecha: "2026-01-20T09:00:00Z", motivo: "Resultados perfil hormonal y asesoría reproductiva",
-      observaciones: "Perfil hormonal dentro de parámetros normales para la edad. AMH 2.8 ng/mL indica reserva ovárica adecuada. Se orienta sobre criopreservación de ovocitos como opción de preservación de fertilidad. Paciente refiere deseo de embarazo en el corto plazo, se inicia seguimiento para concepción.",
-      signosVitales: { id: "SV-011", fecha: "2026-01-20T09:00:00Z", peso: 62.3, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 65, presionSistolica: 109, presionDiastolica: 67, grasaCorporal: 20.8, indiceMasaCorporal: 22.9 },
-    },
-    {
-      id: "VIS-012", pacienteId: "PAC-001", fecha: "2026-04-10T10:00:00Z", motivo: "Primera consulta prenatal — 8 SDG",
-      observaciones: "Embarazo de 8.2 semanas por FUM y ultrasonido. Embrión único, FCF 172 lpm, CRL 16.2 mm. Saco gestacional y vitelino normales. Se inicia protocolo prenatal: ácido fólico, vitaminas prenatales, calcio. Se solicita BHC, glucosa, tipo y Rh, VDRL, VIH, hepatitis B, TSH, urocultivo, cultivo vaginal. Próxima cita 10 SDG.",
-      signosVitales: { id: "SV-012", fecha: "2026-04-10T10:00:00Z", peso: 62.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 67, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 20.5, indiceMasaCorporal: 22.8 },
-    },
-  ],
-  diagnosticos: [
-    { id: "DX-001", pacienteId: "PAC-001", fecha: "2023-06-10", descripcion: "Revisión ginecológica anual normal (Z01.4)", tratamiento: "Continuación de medidas preventivas. Papanicolaou anual. Mastografía a los 40 años. Suplementación con ácido fólico 400 mcg/día.", severidad: "Leve" },
-    { id: "DX-002", pacienteId: "PAC-001", fecha: "2023-09-18", descripcion: "Lesión Escamosa Intraepitelial de Bajo Grado (LEIBG) — VPH genotipo 31", tratamiento: "Conducta expectante. Citología de control en 6 meses. Abstención de relaciones sexuales sin protección. Vacuna VPH nonavalente.", severidad: "Leve" },
-    { id: "DX-003", pacienteId: "PAC-001", fecha: "2024-01-15", descripcion: "Neoplasia Intraepitelial Cervical grado I (NIC I)", tratamiento: "Seguimiento estricto. Citología cervical cada 6 meses. Colposcopia en caso de progresión. Primera dosis de vacuna VPH nonavalente.", severidad: "Leve" },
-    { id: "DX-004", pacienteId: "PAC-001", fecha: "2024-02-20", descripcion: "Deficiencia de vitamina D (E55.9)", tratamiento: "Vitamina D3 4000 UI diarias por 8 semanas. Exposición solar moderada 20 min/día. Control sérico en 8 semanas.", severidad: "Leve" },
-    { id: "DX-005", pacienteId: "PAC-001", fecha: "2024-06-05", descripcion: "Citología cervical negativa para lesión intraepitelial (NILM) — Regresión NIC I", tratamiento: "Alta de seguimiento especial. Citología anual de rutina. Segunda dosis vacuna VPH nonavalente.", severidad: "Leve" },
-    { id: "DX-006", pacienteId: "PAC-001", fecha: "2024-12-03", descripcion: "Dismenorrea severa con sospecha de endometriosis (N80.9)", tratamiento: "Antiinflamatorios AINEs durante menstruación (naproxeno 500mg c/8h). Solicitud de ultrasonido pélvico transvaginal y laparoscopia diagnóstica. Diario de dolor.", severidad: "Moderado" },
-    { id: "DX-007", pacienteId: "PAC-001", fecha: "2025-03-08", descripcion: "Endometriosis estadio II — Ovario izquierdo y ligamentos uterosacros (N80.1)", tratamiento: "Laparoscopia quirúrgica completada (vaporización CO2). Dienogest 2 mg/día de forma continua. Control ecográfico trimestral. Analgesia: ibuprofeno 400mg PRN.", severidad: "Moderado" },
-    { id: "DX-008", pacienteId: "PAC-001", fecha: "2025-06-20", descripcion: "Endometriosis en remisión bajo tratamiento hormonal (N80.1)", tratamiento: "Continuar dienogest 2mg/día. Eco TV de control trimestral. Evaluar suspensión de tratamiento ante deseo gestacional.", severidad: "Leve" },
-    { id: "DX-009", pacienteId: "PAC-001", fecha: "2025-10-14", descripcion: "Seguimiento endometriosis — Reserva ovárica normal (AMH 2.8 ng/mL)", tratamiento: "Continuar dienogest hasta deseo gestacional. Asesoría reproductiva. Perfil hormonal anual. Criopreservación de ovocitos como opción.", severidad: "Leve" },
-    { id: "DX-010", pacienteId: "PAC-001", fecha: "2026-04-10", descripcion: "Embarazo intrauterino de 8 semanas — Primer trimestre (Z34.0)", tratamiento: "Ácido fólico 5mg/día. Vitaminas prenatales. Calcio 1200mg/día. Control prenatal mensual. Restricción de actividades de riesgo. Dieta balanceada.", severidad: "Leve" },
-  ],
-  notas: [
-    { id: "NM-001", pacienteId: "PAC-001", fecha: "2023-06-10T09:45:00Z", contenido: "Paciente acude a revisión ginecológica anual de rutina. Refiere ciclos menstruales regulares cada 28 días, duración 4-5 días, flujo moderado. Niega dispareunia, leucorrea patológica o sangrado intermenstrual. Última citología hace 13 meses, normal. Método anticonceptivo: preservativo. Se realiza papanicolaou y toma de muestra para VPH." },
-    { id: "NM-002", pacienteId: "PAC-001", fecha: "2023-09-18T11:00:00Z", contenido: "Paciente acude a recibir resultado de citología. Se informa LEIBG. Colposcopia realizada en consultorio. Se explica procedimiento antes de realizarlo. Paciente comprende y acepta. Dos biopsias tomadas. Resultado preliminar: zona de transformación tipo 1 con cambios koilocíticos. Se explica pronóstico favorable y conducta expectante. Muy ansiosa, se dedica tiempo para resolución de dudas." },
-    { id: "NM-003", pacienteId: "PAC-001", fecha: "2024-01-15T09:45:00Z", contenido: "Biopsia confirma NIC I. Se explica a paciente que NIC I tiene regresión espontánea en 60-80% de casos en 2 años. Se discute manejo expectante vs tratamiento ablativo. Paciente prefiere observación. Se indica citología en 6 meses. Se solicita genotipificación VPH (resultado: VPH 31 positivo). Se prescribe vacuna VPH nonavalente. Inicio de suplementación prenatal a solicitud de paciente que planifica embarazo en el futuro." },
-    { id: "NM-004", pacienteId: "PAC-001", fecha: "2024-06-05T09:30:00Z", contenido: "Excelente noticia para la paciente: citología NILM. Se confirma regresión completa del NIC I a los 6 meses. Paciente muy aliviada. Se aplica segunda dosis de vacuna VPH nonavalente. Se explica que el seguimiento anual es suficiente. Se aprovecha la consulta para orientación sobre métodos anticonceptivos de mayor eficacia." },
-    { id: "NM-005", pacienteId: "PAC-001", fecha: "2024-09-12T10:30:00Z", contenido: "Paciente acude solicitando cambio de método anticonceptivo. Actualmente usa preservativo. Desea iniciar hormonal para mayor eficacia. Sin contraindicaciones para estrógenos (no fumadora, normotensa, sin migraña con aura, sin antecedente trombótico). Se inicia ACO combinada baja dosis. Se instruye sobre inicio el primer día del ciclo, toma diaria sin omisiones, efectos secundarios esperados (manchado los primeros 3 meses, sensibilidad mamaria) y señales de alarma." },
-    { id: "NM-006", pacienteId: "PAC-001", fecha: "2024-12-03T10:00:00Z", contenido: "Paciente refiere desde hace 3 meses dolor menstrual incapacitante (EVA 8/10) que no cede con AINEs habituales. Náuseas y vómito el primer día. Falta al trabajo por el dolor. Menciona también dispareunia profunda ocasional durante relaciones sexuales y molestia pélvica en los días previos a la menstruación. Exploración con datos clínicos altamente sugestivos de endometriosis. Se discuten opciones diagnósticas. Paciente acepta laparoscopia." },
-    { id: "NM-007", pacienteId: "PAC-001", fecha: "2025-03-08T10:45:00Z", contenido: "Post-laparoscopia (realizada 15/02/2025): hallazgos confirman endometriosis estadio II según clasificación revisada de la AFS. Focos activos en ovario izquierdo (endometrioma 2.1 cm drenado), ligamentos uterosacros bilaterales y peritoneo pélvico posterior. Procedimiento sin complicaciones intraoperatorias. Inicio de dienogest 2mg/día como tratamiento médico coadyuvante. Paciente recuperada satisfactoriamente." },
-    { id: "NM-008", pacienteId: "PAC-001", fecha: "2025-06-20T09:45:00Z", contenido: "Control a 3 meses de cirugía. Mejoría muy significativa: EVA 3/10 durante menstruación, sin dispareunia, sin dolor intermenstrual. Sangrado muy escaso bajo dienogest (amenorrea funcional). Ecografía transvaginal sin evidencia de recurrencia. Paciente satisfecha con el tratamiento. Comenta interés en embarazo para el año próximo. Se discuten implicaciones del embarazo en endometriosis y opciones." },
-    { id: "NM-009", pacienteId: "PAC-001", fecha: "2025-10-14T11:00:00Z", contenido: "Perfil hormonal completo solicitado para valoración de reserva ovárica previo a planificación de embarazo. Se habla sobre impacto de endometriosis en fertilidad (15-40% de mujeres infértiles tienen endometriosis). Se orienta sobre suspensión de dienogest 1-2 meses antes de intentar concebir y el potencial beneficio del embarazo como tratamiento natural de la endometriosis." },
-    { id: "NM-010", pacienteId: "PAC-001", fecha: "2026-01-20T09:30:00Z", contenido: "Resultados de laboratorio muy alentadores. AMH 2.8 ng/mL (normal >1.0 para su edad). FSH, LH y estradiol en rango folicular normal. Se orienta sobre suspensión de dienogest y búsqueda de embarazo. Se instruye sobre signos tempranos de embarazo y solicitud de primera consulta prenatal al confirmar embarazo. Próxima cita en caso de embarazo confirmado." },
-    { id: "NM-011", pacienteId: "PAC-001", fecha: "2026-04-10T10:30:00Z", contenido: "Primera consulta prenatal. Embarazo de 8.2 semanas confirmado. Paciente emocionada. Ultrasonido: embrión único intrauterino, FCF 172 lpm, CRL 16.2 mm, saco gestacional regular. Se realizan biometría y evaluación de estructuras embrionarias para la edad gestacional, todo dentro de parámetros normales. Se inicia protocolo completo de atención prenatal. Se orienta sobre síntomas normales del primer trimestre (náuseas, fatiga, sensibilidad mamaria) y señales de alarma." },
-  ],
-  medicamentos: [
-    { id: "MED-001", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "5 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
-    { id: "MED-002", pacienteId: "PAC-001", nombre: "Sulfato ferroso", dosis: "300 mg", frecuencia: "1 vez al día con alimentos", fechaInicio: "2024-01-15", fechaFin: "2024-04-15" },
-    { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "4000 UI", frecuencia: "1 vez al día", fechaInicio: "2024-02-20", fechaFin: "2024-04-20" },
-    { id: "MED-004", pacienteId: "PAC-001", nombre: "Levonorgestrel/Etinilestradiol (Microgynon)", dosis: "0.15 mg/0.03 mg", frecuencia: "1 comprimido diario por 21 días, descanso 7 días", fechaInicio: "2024-09-12", fechaFin: "2025-01-20" },
-    { id: "MED-005", pacienteId: "PAC-001", nombre: "Naproxeno sódico", dosis: "500 mg", frecuencia: "Cada 8 horas durante menstruación (máx. 3 días)", fechaInicio: "2024-12-03", fechaFin: "2025-03-07" },
-    { id: "MED-006", pacienteId: "PAC-001", nombre: "Dienogest", dosis: "2 mg", frecuencia: "1 vez al día de forma continua", fechaInicio: "2025-03-08", fechaFin: "2025-12-10" },
-    { id: "MED-007", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "5 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2026-04-10" },
-    { id: "MED-008", pacienteId: "PAC-001", nombre: "Multivitamínico prenatal", dosis: "1 cápsula", frecuencia: "1 vez al día con el desayuno", fechaInicio: "2026-04-10" },
-    { id: "MED-009", pacienteId: "PAC-001", nombre: "Calcio + Vitamina D3", dosis: "600 mg / 400 UI", frecuencia: "2 veces al día con alimentos", fechaInicio: "2026-04-10" },
-    { id: "MED-010", pacienteId: "PAC-001", nombre: "Ibuprofeno", dosis: "400 mg", frecuencia: "PRN dolor (máx. cada 8 horas)", fechaInicio: "2025-03-08", fechaFin: "2026-03-01" },
-  ],
-  recordatorios: [
-    { id: "REC-001", medicamentoId: "MED-007", hora: "08:00", activo: true },
-    { id: "REC-002", medicamentoId: "MED-008", hora: "08:00", activo: true },
-    { id: "REC-003", medicamentoId: "MED-009", hora: "08:00", activo: true },
-    { id: "REC-004", medicamentoId: "MED-009", hora: "20:00", activo: true },
-  ],
-  
-  dashboard: {
-    pacienteId: "PAC-001",
-    ultimoRegistro: { id: "SV-012", fecha: "2026-04-10T10:00:00Z", peso: 62.0, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 67, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 20.5, indiceMasaCorporal: 22.8 },
-    ultimoDiagnostico: { id: "DX-010", pacienteId: "PAC-001", fecha: "2026-04-10", descripcion: "Embarazo intrauterino de 8 semanas — Primer trimestre (Z34.0)", tratamiento: "Ácido fólico 5mg/día. Vitaminas prenatales. Calcio 1200mg/día. Control prenatal mensual.", severidad: "Leve" },
-    proximaCita: { id: "CIT-012", pacienteId: "PAC-001", fecha: "2026-04-24", hora: "10:30", motivo: "Control prenatal — 10 semanas", estado: "Confirmada" },
-    medicamentosActivos: [
-      { id: "MED-007", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "5 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2026-04-10" },
-      { id: "MED-008", pacienteId: "PAC-001", nombre: "Multivitamínico prenatal", dosis: "1 cápsula", frecuencia: "1 vez al día con el desayuno", fechaInicio: "2026-04-10" },
-      { id: "MED-009", pacienteId: "PAC-001", nombre: "Calcio + Vitamina D3", dosis: "600 mg / 400 UI", frecuencia: "2 veces al día con alimentos", fechaInicio: "2026-04-10" },
-    ],
-  },
-  alergias: [ // AGREGAR ESTE CAMPO
-    { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
-    { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
-    { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
-    
-  ],
+  signosVitales: [],
+  citas: [],
+  visitas: [],
+  diagnosticos: [],
+  notas: [],
+  medicamentos: [],
+  recordatorios: [],
+  dashboard: undefined,
+  alergias: [],
 };
 
 // Datos para citas
@@ -2052,8 +1955,14 @@ function CitasTab() {
     cancelada:   { label: "Cancelada",   cls: "bg-red-50    text-red-700    border-red-200",    dot: "bg-red-400"    },
   };
 
-  const cambiarEstatus = (id: string, estatus: EstatusCita) =>
+  const cambiarEstatus = (id: string, estatus: EstatusCita) => {
     setCitasAgendadas((prev) => prev.map((c) => c.id === id ? { ...c, estatus } : c));
+    if (estatus === "confirmada") {
+      doctorService.confirmAppointment(id).catch(console.error);
+    } else if (estatus === "cancelada") {
+      doctorService.cancelAppointment(id, "Cancelada por el médico").catch(console.error);
+    }
+  };
 
   const guardarReprogramacion = () => {
     if (!citaReprogramando || !reprog.fecha || !reprog.horaInicio || !reprog.horaCierre) return;
@@ -2064,6 +1973,10 @@ function CitasTab() {
           : c
       )
     );
+    doctorService.rescheduleAppointment(citaReprogramando.id, {
+      fecha: reprog.fecha,
+      hora: reprog.horaInicio,
+    }).catch(console.error);
     setCitaReprogramando(null);
   };
 
@@ -2191,7 +2104,7 @@ function CitasTab() {
     }));
   };
 
-  const guardarCita = () => {
+  const guardarCita = async () => {
     if (!fechaSeleccionada) return;
     
     const tipoConsulta = catalogoTiposConsulta.find((c) => c.id === formCita.tipoConsultaId);
@@ -2213,7 +2126,35 @@ function CitasTab() {
       precioFinal: precioConDescuento,
       estatus: "pendiente" as EstatusCita,
     };
-    
+
+    // Crear expediente del paciente si se llenaron sus datos
+    if (formCita.pacienteNombre && formCita.pacienteApellidoPaterno) {
+      await doctorService.createPatientFile({
+        nombre: formCita.pacienteNombre,
+        apellidoPaterno: formCita.pacienteApellidoPaterno,
+        apellidoMaterno: formCita.pacienteApellidoMaterno,
+        fechaNacimiento: formCita.pacienteFechaNacimiento,
+        sexo: formCita.pacienteSexo,
+        telefono: formCita.pacienteTelefono,
+        email: formCita.pacienteEmail,
+      }).catch(console.error);
+    }
+
+    // Crear la cita en el servidor
+    await doctorService.createAppointment({
+      fecha: fechaSeleccionada,
+      hora: formCita.horaInicio,
+      motivo: formCita.motivo || tipoConsulta?.nombre || "",
+      especialidad: formCita.especialidad,
+      medicoEspecialista: formCita.medicoEspecialista,
+      tipoConsultaId: formCita.tipoConsultaId,
+      seguro: formCita.seguro,
+      servicios: formCita.servicios,
+      cupon: formCita.cupon,
+      descuento: descuentoAplicado,
+      precioFinal: precioConDescuento,
+    }).catch(console.error);
+
     setCitasAgendadas([...citasAgendadas, nuevaCita]);
     setMostrarFormulario(false);
     setFechaSeleccionada("");
@@ -4290,7 +4231,20 @@ function ConsultaTab() {
             </div>
 
             <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-              <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+              <button
+                onClick={async () => {
+                  await doctorService.createAppointment({
+                    fecha: new Date().toISOString().split("T")[0],
+                    hora: new Date().toTimeString().slice(0, 5),
+                    motivo: soapNote.assessment || "Consulta",
+                    diagnosticos: diagnosticos.map((d) => ({ clave: d.clave, descripcion: d.descripcion })),
+                    prescripciones: prescripciones,
+                    notas: notas.map((n) => n.contenido),
+                    signosVitales: datosClinicosForm,
+                  }).catch(console.error);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+              >
                 <Save className="w-4 h-4" />
                 Guardar Consulta
               </button>
