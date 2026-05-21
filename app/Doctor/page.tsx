@@ -52,8 +52,6 @@ import {
   Menu,
   Settings,
   Mail,
-  Baby,
-  Syringe,
   ShieldCheck,
   Sun,
   Moon,
@@ -63,9 +61,7 @@ import {
   Printer,
   Database,
   Eye,
-  EyeOff,
   User2,
-  Languages,
   Volume2,
   VolumeX,
   Laptop,
@@ -79,7 +75,7 @@ const ChevronRightIcon = ChevronRight;
 // DOCTOR SERVICE
 // ─────────────────────────────────────────────
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = "http://localhost:3001/api";
 
 const getAuthHeaders = (isMultipart = false): HeadersInit => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
@@ -145,7 +141,6 @@ const translations = {
     medicalRecord: "Expediente",
     visits: "Visitas",
     medications: "Medicamentos",
-    gynecology: "Ginecología",
     
     // Common
     save: "Guardar",
@@ -298,24 +293,6 @@ const translations = {
     markAllAsRead: "Marcar todas como leídas",
     noNotifications: "Sin notificaciones",
     viewAllReminders: "Ver todos los recordatorios de medicamentos",
-    
-    // Gynecology
-    gynecologicalHistory: "Historia ginecológica",
-    saveGynecologicalHistory: "Guardar historia ginecológica",
-    printHistory: "Imprimir historia",
-    savedSuccessfully: "Guardado correctamente",
-    menarche: "Menarquia",
-    menstrualCycle: "Ciclo menstrual",
-    lastMenstrualPeriod: "Última menstruación",
-    sexualActivity: "Actividad sexual",
-    pregnancies: "Gestaciones",
-    deliveries: "Partos",
-    cesareans: "Cesáreas",
-    abortions: "Abortos",
-    livingChildren: "Hijos vivos",
-    contraceptive: "Anticonceptivo",
-    lastPap: "Último Papanicolaou",
-    lastMammogram: "Última mamografía",
     
     // Theme
     theme: "Tema",
@@ -577,10 +554,6 @@ interface DatosPersonales {
   rfc?: string;
 }
 
-interface PacienteAlergias {
-  alergias: Alergia[];
-}
-
 interface Direccion {
   calle: string;
   numeroExterior: string;
@@ -770,7 +743,6 @@ const pacienteMock: Paciente = {
 // Datos para citas
 const especialidades = [
   "Medicina General",
-  "Ginecología y Obstetricia",
   "Pediatría",
   "Cardiología",
   "Dermatología",
@@ -795,13 +767,6 @@ const tiposSeguros = [
 
 // Catálogo de médicos especialistas
 const medicosEspecialistas = [
-  { 
-    nombre: "Dr. Carlos Rodríguez", 
-    especialidad: "Ginecología y Obstetricia", 
-    cedula: "12345678",
-    tiposConsultaId: ["consulta_general", "consulta_prenatal", "consulta_especialidad", "urgencia"],
-    serviciosId: ["consulta_gine", "ultrasonido_tv", "ultrasonido_obs", "papanicolaou", "colposcopia", "perfil_hormonal", "amh", "vph", "biopsia", "insercion_diu"]
-  },
   { 
     nombre: "Dra. Ana María López", 
     especialidad: "Medicina General", 
@@ -830,7 +795,7 @@ const medicosEspecialistas = [
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["eeg", "resonancia", "tomografia", "test_neuropsicologico"]
   },
-  { 
+  {
     nombre: "Dra. Sofía Ramírez", 
     especialidad: "Dermatología", 
     cedula: "67890123",
@@ -889,18 +854,6 @@ const serviciosDisponibles = [
   { id: "rayos_x", nombre: "Radiografía simple", precio: 400 },
   { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
   { id: "presion", nombre: "Monitoreo de presión arterial", precio: 200 },
-  
-  // Ginecología y Obstetricia
-  { id: "consulta_gine", nombre: "Consulta ginecológica", precio: 900 },
-  { id: "ultrasonido_tv", nombre: "Ultrasonido transvaginal", precio: 1400 },
-  { id: "ultrasonido_obs", nombre: "Ultrasonido obstétrico", precio: 1500 },
-  { id: "papanicolaou", nombre: "Papanicolaou", precio: 500 },
-  { id: "colposcopia", nombre: "Colposcopía + biopsia", precio: 1800 },
-  { id: "perfil_hormonal", nombre: "Perfil hormonal completo", precio: 1200 },
-  { id: "amh", nombre: "Hormona Antimülleriana (AMH)", precio: 900 },
-  { id: "vph", nombre: "Prueba VPH + genotipificación", precio: 1100 },
-  { id: "biopsia", nombre: "Biopsia endometrial", precio: 1600 },
-  { id: "insercion_diu", nombre: "Inserción de DIU", precio: 2200 },
   
   // Cardiología
   { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
@@ -983,18 +936,6 @@ const serviciosPorEspecialidad: Record<string, Array<{ id: string; nombre: strin
     { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
     { id: "presion", nombre: "Monitoreo de presión arterial", precio: 200 },
   ],
-  "Ginecología y Obstetricia": [
-    { id: "consulta", nombre: "Consulta ginecológica", precio: 900 },
-    { id: "ultrasonido_tv", nombre: "Ultrasonido transvaginal", precio: 1400 },
-    { id: "ultrasonido_obs", nombre: "Ultrasonido obstétrico", precio: 1500 },
-    { id: "papanicolaou", nombre: "Papanicolaou", precio: 500 },
-    { id: "colposcopia", nombre: "Colposcopía + biopsia", precio: 1800 },
-    { id: "perfil_hormonal", nombre: "Perfil hormonal completo", precio: 1200 },
-    { id: "amh", nombre: "Hormona Antimülleriana (AMH)", precio: 900 },
-    { id: "vph", nombre: "Prueba VPH + genotipificación", precio: 1100 },
-    { id: "biopsia", nombre: "Biopsia endometrial", precio: 1600 },
-    { id: "insercion_diu", nombre: "Inserción de DIU", precio: 2200 },
-  ],
   "Cardiología": [
     { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
     { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
@@ -1007,12 +948,6 @@ const serviciosPorEspecialidad: Record<string, Array<{ id: string; nombre: strin
     { id: "desarrollo", nombre: "Evaluación del desarrollo", precio: 600 },
     { id: "laboratorio_pediatrico", nombre: "Estudios de laboratorio pediátricos", precio: 700 },
     { id: "ultrasonido_abdominal", nombre: "Ultrasonido abdominal", precio: 800 },
-  ],
-  "Cardiologia": [
-    { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
-    { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
-    { id: "prueba_esfuerzo", nombre: "Prueba de esfuerzo", precio: 1200 },
-    { id: "holter", nombre: "Monitor Holter (24h)", precio: 800 },
   ],
   "Neurología": [
     { id: "eeg", nombre: "Electroencefalograma", precio: 900 },
@@ -1072,76 +1007,19 @@ const cuponesValidos: Record<string, number> = {
 
 // Catálogos para consulta
 const catalogoCIE10: Record<string, string> = {
-  // Ginecología y Obstetricia
-  "N80": "Endometriosis",
-  "N80.0": "Endometriosis del útero (adenomiosis)",
-  "N80.1": "Endometriosis del ovario",
-  "N80.2": "Endometriosis de la trompa de Falopio",
-  "N80.3": "Endometriosis del peritoneo pélvico",
-  "N80.4": "Endometriosis del tabique rectovaginal y de la vagina",
-  "N81": "Prolapso genital femenino",
-  "N83": "Trastornos no inflamatorios del ovario, trompa de Falopio y ligamento ancho",
-  "N83.0": "Quiste folicular del ovario",
-  "N83.1": "Quiste del cuerpo lúteo",
-  "N83.2": "Otros quistes ováricos y los no especificados",
-  "N84": "Pólipo del tracto genital femenino",
-  "N85": "Otras enfermedades no inflamatorias del útero, excepto el cuello",
-  "N85.0": "Hiperplasia endometrial",
-  "N85.2": "Hipertrofia del útero",
-  "N86": "Erosión y ectropión del cuello del útero (cervicitis)",
-  "N87": "Displasia cervical",
-  "N87.0": "Displasia leve del cuello del útero (NIC I)",
-  "N87.1": "Displasia moderada del cuello del útero (NIC II)",
-  "N87.2": "Displasia severa del cuello del útero (NIC III / CIS)",
-  "N88": "Otras enfermedades no inflamatorias del cuello del útero",
-  "N91": "Menstruación ausente, escasa y poco frecuente",
-  "N91.0": "Amenorrea primaria",
-  "N91.1": "Amenorrea secundaria",
-  "N91.3": "Oligomenorrea primaria",
-  "N92": "Menstruación excesiva, frecuente e irregular",
-  "N92.0": "Menstruación excesiva y frecuente con ciclo regular (hipermenorrea)",
-  "N92.1": "Menstruación excesiva e irregular (menometrorragia)",
-  "N92.3": "Hemorragia uterina disfuncional ovulatoria",
-  "N94": "Dolor y otras afecciones relacionadas con los órganos genitales femeninos y el ciclo menstrual",
-  "N94.0": "Dolor intermenstrual (mittelschmerz)",
-  "N94.4": "Dismenorrea primaria",
-  "N94.5": "Dismenorrea secundaria",
-  "N94.6": "Dismenorrea no especificada",
-  "N95": "Trastornos menopáusicos y perimenopáusicos",
-  "N95.1": "Estados menopáusicos y climatéricos femeninos",
-  "N97": "Infertilidad femenina",
-  "N97.0": "Infertilidad femenina asociada con anovulación",
-  "O00": "Embarazo ectópico",
-  "O02": "Otros productos anormales de la concepción",
-  "O20": "Hemorragia precoz del embarazo",
-  "O26": "Atención materna por otras enfermedades del embarazo",
-  "O28": "Hallazgos anormales en investigación prenatal de la madre",
-  "Z34": "Supervisión de embarazo normal",
-  "Z34.0": "Supervisión de primer embarazo normal",
-  "Z34.1": "Supervisión de embarazo normal, gestación múltiple",
-  "Z35": "Supervisión de embarazo de alto riesgo",
-  // ITS y tracto genital
+  // Infecciones
+  "A00": "Cólera",
+  "A01": "Fiebres tifoidea y paratifoidea",
+  "A09": "Diarrea y gastroenteritis de presunto origen infeccioso",
   "A50": "Sífilis congénita",
   "A54": "Infección gonocócica",
   "A56": "Otras enfermedades de transmisión sexual por clamidias",
   "A59": "Tricomoniasis",
   "A63": "Otras enfermedades de transmisión predominantemente sexual",
-  "B37.3": "Candidiasis vulvar y vaginal",
-  "B97.7": "Papilomavirus como causa de enfermedades clasificadas en otro lugar (VPH)",
-  "N70": "Salpingitis y ooforitis",
-  "N71": "Enfermedad inflamatoria del útero, excepto el cuello",
-  "N72": "Enfermedad inflamatoria del cuello del útero",
-  "N73": "Otras enfermedades inflamatorias pélvicas femeninas",
-  "N76": "Otras enfermedades inflamatorias de la vagina y de la vulva",
-  "N76.0": "Vaginitis aguda (colpitis)",
-  "N76.1": "Vaginitis subaguda y crónica",
-  "N89": "Otras enfermedades no inflamatorias de la vagina",
-  // Generales
-  "A00": "Cólera",
-  "A01": "Fiebres tifoidea y paratifoidea",
-  "A09": "Diarrea y gastroenteritis de presunto origen infeccioso",
   "B15": "Hepatitis aguda tipo A",
   "B16": "Hepatitis aguda tipo B",
+  "B37.3": "Candidiasis",
+  // Metabólicas
   "E10": "Diabetes mellitus tipo 1",
   "E11": "Diabetes mellitus tipo 2",
   "E55": "Deficiencia de vitamina D",
@@ -1169,69 +1047,43 @@ const catalogoCIE10: Record<string, string> = {
   "R50": "Fiebre de origen desconocido",
   "R51": "Cefalea",
   "Z00": "Examen general e investigación de personas sin quejas",
-  "Z01.4": "Examen ginecológico (general) de rutina",
   "Z13.8": "Examen de cribado para otras enfermedades especificadas",
 };
 
 const catalogoMedicamentos = [
-  // Anticonceptivos y hormonales
-  { nombre: "Ácido fólico", presentaciones: ["400 mcg", "5 mg"], vias: ["Oral"] },
-  { nombre: "Dienogest", presentaciones: ["2 mg"], vias: ["Oral"] },
-  { nombre: "Levonorgestrel/Etinilestradiol (Microgynon)", presentaciones: ["0.15 mg/0.03 mg"], vias: ["Oral"] },
-  { nombre: "Desogestrel/Etinilestradiol", presentaciones: ["0.15 mg/0.02 mg"], vias: ["Oral"] },
-  { nombre: "Norelgestromina/Etinilestradiol (Parche)", presentaciones: ["6mg/0.75mg por parche"], vias: ["Transdérmica"] },
-  { nombre: "Etonogestrel (Implante subdérmico)", presentaciones: ["68 mg"], vias: ["Subdérmica"] },
-  { nombre: "Levonorgestrel (DIU hormonal)", presentaciones: ["52 mg"], vias: ["Intrauterina"] },
-  { nombre: "Levonorgestrel (Anticoncepción emergencia)", presentaciones: ["1.5 mg"], vias: ["Oral"] },
-  { nombre: "Progesterona micronizada", presentaciones: ["100 mg", "200 mg"], vias: ["Oral", "Vaginal"] },
-  { nombre: "Medroxiprogesterona (inyectable)", presentaciones: ["150 mg/mL"], vias: ["Intramuscular"] },
-  { nombre: "Valerato de estradiol", presentaciones: ["1 mg", "2 mg"], vias: ["Oral"] },
-  { nombre: "Estradiol (gel transdérmico)", presentaciones: ["0.5 mg/g gel"], vias: ["Transdérmica"] },
-  { nombre: "Tibolona", presentaciones: ["2.5 mg"], vias: ["Oral"] },
-  // Prenatal y embarazo
-  { nombre: "Multivitamínico prenatal", presentaciones: ["1 cápsula"], vias: ["Oral"] },
-  { nombre: "Calcio + Vitamina D3", presentaciones: ["500mg/200UI", "600mg/400UI"], vias: ["Oral"] },
-  { nombre: "Sulfato ferroso", presentaciones: ["300 mg"], vias: ["Oral"] },
-  { nombre: "Hierro polimaltosado", presentaciones: ["100 mg"], vias: ["Oral"] },
-  { nombre: "Vitamina D3", presentaciones: ["400 UI", "1000 UI", "4000 UI"], vias: ["Oral"] },
-  { nombre: "Ácido docosahexaenoico (DHA)", presentaciones: ["200 mg", "400 mg"], vias: ["Oral"] },
-  { nombre: "Metildopa", presentaciones: ["250 mg", "500 mg"], vias: ["Oral"] },
-  { nombre: "Labetalol", presentaciones: ["100 mg", "200 mg"], vias: ["Oral"] },
-  { nombre: "Nifedipino (retard)", presentaciones: ["10 mg", "30 mg"], vias: ["Oral"] },
-  { nombre: "Progesterona vaginal (profilaxis parto prematuro)", presentaciones: ["200 mg", "400 mg"], vias: ["Vaginal"] },
-  // Antibióticos ginecológicos
-  { nombre: "Metronidazol", presentaciones: ["250 mg", "500 mg", "500 mg óvulos"], vias: ["Oral", "Vaginal"] },
-  { nombre: "Clindamicina", presentaciones: ["300 mg", "600 mg", "2% crema vaginal"], vias: ["Oral", "Vaginal"] },
-  { nombre: "Fluconazol", presentaciones: ["150 mg", "200 mg"], vias: ["Oral"] },
-  { nombre: "Clotrimazol", presentaciones: ["100 mg óvulo", "500 mg óvulo", "1% crema"], vias: ["Vaginal", "Tópica"] },
-  { nombre: "Doxiciclina", presentaciones: ["100 mg"], vias: ["Oral"] },
-  { nombre: "Azitromicina", presentaciones: ["250 mg", "500 mg", "1 g monodosis"], vias: ["Oral"] },
-  { nombre: "Ceftriaxona", presentaciones: ["500 mg", "1 g"], vias: ["Intramuscular", "Intravenosa"] },
-  { nombre: "Amoxicilina + Ácido clavulánico", presentaciones: ["500/125 mg", "875/125 mg"], vias: ["Oral"] },
-  // Analgésicos y AINEs
+  // Analgésicos y antiinflamatorios
   { nombre: "Naproxeno sódico", presentaciones: ["275 mg", "550 mg"], vias: ["Oral"] },
   { nombre: "Ibuprofeno", presentaciones: ["200 mg", "400 mg", "600 mg", "800 mg"], vias: ["Oral"] },
   { nombre: "Paracetamol", presentaciones: ["500 mg", "1 g"], vias: ["Oral"] },
   { nombre: "Diclofenaco", presentaciones: ["50 mg", "75 mg", "100 mg"], vias: ["Oral", "Intramuscular"] },
   { nombre: "Ketorolaco", presentaciones: ["10 mg", "30 mg"], vias: ["Oral", "Intramuscular", "Intravenosa"] },
-  // Otros ginecológicos
-  { nombre: "Ácido tranexámico", presentaciones: ["250 mg", "500 mg"], vias: ["Oral", "Intravenosa"] },
-  { nombre: "Misoprostol", presentaciones: ["200 mcg"], vias: ["Oral", "Vaginal", "Sublingual"] },
-  { nombre: "Oxitocina", presentaciones: ["5 UI/mL", "10 UI/mL"], vias: ["Intravenosa", "Intramuscular"] },
-  { nombre: "Letrozol", presentaciones: ["2.5 mg"], vias: ["Oral"] },
-  { nombre: "Clomifeno", presentaciones: ["50 mg"], vias: ["Oral"] },
-  { nombre: "Bromocriptina", presentaciones: ["2.5 mg"], vias: ["Oral"] },
-  { nombre: "Cabergolina", presentaciones: ["0.5 mg"], vias: ["Oral"] },
+  // Antibióticos
+  { nombre: "Metronidazol", presentaciones: ["250 mg", "500 mg"], vias: ["Oral"] },
+  { nombre: "Clindamicina", presentaciones: ["300 mg", "600 mg"], vias: ["Oral"] },
+  { nombre: "Fluconazol", presentaciones: ["150 mg", "200 mg"], vias: ["Oral"] },
+  { nombre: "Doxiciclina", presentaciones: ["100 mg"], vias: ["Oral"] },
+  { nombre: "Azitromicina", presentaciones: ["250 mg", "500 mg", "1 g monodosis"], vias: ["Oral"] },
+  { nombre: "Ceftriaxona", presentaciones: ["500 mg", "1 g"], vias: ["Intramuscular", "Intravenosa"] },
+  { nombre: "Amoxicilina + Ácido clavulánico", presentaciones: ["500/125 mg", "875/125 mg"], vias: ["Oral"] },
+  { nombre: "Amoxicilina", presentaciones: ["250 mg", "500 mg", "875 mg"], vias: ["Oral"] },
+  // Gastrointestinales
   { nombre: "Omeprazol", presentaciones: ["20 mg", "40 mg"], vias: ["Oral"] },
   { nombre: "Metoclopramida", presentaciones: ["10 mg"], vias: ["Oral", "Intramuscular"] },
   { nombre: "Ondansetrón", presentaciones: ["4 mg", "8 mg"], vias: ["Oral", "Intravenosa"] },
-  // Generales
-  { nombre: "Amoxicilina", presentaciones: ["250 mg", "500 mg", "875 mg"], vias: ["Oral"] },
+  // Cardiovasculares
   { nombre: "Losartán", presentaciones: ["25 mg", "50 mg", "100 mg"], vias: ["Oral"] },
-  { nombre: "Metformina", presentaciones: ["500 mg", "850 mg", "1000 mg"], vias: ["Oral"] },
   { nombre: "Atorvastatina", presentaciones: ["10 mg", "20 mg", "40 mg"], vias: ["Oral"] },
+  // Metabólicos
+  { nombre: "Metformina", presentaciones: ["500 mg", "850 mg", "1000 mg"], vias: ["Oral"] },
+  // Respiratorios
   { nombre: "Salbutamol", presentaciones: ["100 mcg/dosis"], vias: ["Inhalada"] },
   { nombre: "Prednisona", presentaciones: ["5 mg", "20 mg", "50 mg"], vias: ["Oral"] },
+  // Vitaminas y suplementos
+  { nombre: "Ácido fólico", presentaciones: ["400 mcg", "5 mg"], vias: ["Oral"] },
+  { nombre: "Calcio + Vitamina D3", presentaciones: ["500mg/200UI", "600mg/400UI"], vias: ["Oral"] },
+  { nombre: "Sulfato ferroso", presentaciones: ["300 mg"], vias: ["Oral"] },
+  { nombre: "Hierro polimaltosado", presentaciones: ["100 mg"], vias: ["Oral"] },
+  { nombre: "Vitamina D3", presentaciones: ["400 UI", "1000 UI", "4000 UI"], vias: ["Oral"] },
 ];
 
 // ─────────────────────────────────────────────
@@ -3082,13 +2934,7 @@ interface VisitaClinica {
 type SubTabConsultaId = (typeof subTabsConsulta)[number]["id"];
 
 // Mock visitas clínicas (pacientes esperando/llegados)
-const visitasClinicasMock: VisitaClinica[] = [
-  { id: "VC-001", pacienteNombre: "María Fernanda González", pacienteSexo: "Femenino", horaCita: "09:00", horaLlegada: "08:45", motivo: "Control prenatal", estatus: "llegó", especialidad: "Ginecología" },
-  { id: "VC-002", pacienteNombre: "Ana García López", pacienteSexo: "Femenino", horaCita: "09:30", motivo: "Revisión ginecológica", estatus: "esperando", especialidad: "Ginecología" },
-  { id: "VC-003", pacienteNombre: "Carlos Méndez", pacienteSexo: "Masculino", horaCita: "10:00", horaLlegada: "09:50", motivo: "Consulta general", estatus: "en_consulta", especialidad: "Medicina General" },
-  { id: "VC-004", pacienteNombre: "Laura Sánchez", pacienteSexo: "Femenino", horaCita: "10:30", horaLlegada: "10:15", motivo: "Seguimiento", estatus: "atendido", especialidad: "Ginecología" },
-  { id: "VC-005", pacienteNombre: "Roberto Torres", pacienteSexo: "Masculino", horaCita: "11:00", motivo: "Primera vez", estatus: "esperando", especialidad: "Cardiología" },
-];
+const visitasClinicasMock: VisitaClinica[] = [];
 
 function ConsultaTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("visitas");
@@ -3144,11 +2990,7 @@ function ConsultaTab() {
   const [sugerenciasMedicamento, setSugerenciasMedicamento] = useState<typeof catalogoMedicamentos>([]);
 
   // Alergias (editable por el doctor en consulta)
-  const [alergiasConsulta, setAlergiasConsulta] = useState<Alergia[]>([
-    { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
-    { id: "AL-002", tipo: "Alimento", descripcion: "Mariscos (camarón, ostión)", reaccion: "Náuseas, eritema en piel", severidad: "Moderada" },
-    { id: "AL-003", tipo: "Ambiental", descripcion: "Polen de gramíneas", reaccion: "Rinitis alérgica, estornudos", severidad: "Leve" },
-  ]);
+  const [alergiasConsulta, setAlergiasConsulta] = useState<Alergia[]>([]);
   const [mostrarFormAlergiaConsulta, setMostrarFormAlergiaConsulta] = useState(false);
   const [nuevaAlergiaConsulta, setNuevaAlergiaConsulta] = useState<Omit<Alergia, "id">>({
     tipo: "Medicamento", descripcion: "", reaccion: "", severidad: "Leve",
@@ -3847,8 +3689,8 @@ function ConsultaTab() {
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[
-                  { especialidad: "Ginecología y Obstetricia", citas: 12, ultimaCita: "2026-04-10", medico: "Dr. Carlos Rodríguez" },
-                  { especialidad: "Medicina General", citas: 3, ultimaCita: "2024-02-20", medico: "Dra. Ana María López" },
+                  { especialidad: "Medicina General", citas: 8, ultimaCita: "2026-04-10", medico: "Dra. Ana María López" },
+                  { especialidad: "Cardiología", citas: 3, ultimaCita: "2024-02-20", medico: "Dr. Roberto Martínez" },
                   { especialidad: "Nutrición", citas: 2, ultimaCita: "2024-06-05", medico: "Lic. Martha Jiménez" },
                 ].map((hist) => (
                   <div key={hist.especialidad} className="bg-card border border-border rounded-xl p-4">
@@ -4634,7 +4476,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
                           <p className="text-lg font-semibold text-foreground">{sv.frecuenciaCardiaca} <span className="text-sm font-normal text-muted-foreground">bpm</span></p>
                         </div>
                         <div className="bg-background border border-border rounded-xl p-3">
-                          <p className="text-xs text-muted-foreground mb-1">Presión Arterial</p>
+                          <p className="text-xs text-muted-foreground mb-1">Presi��n Arterial</p>
                           <p className="text-lg font-semibold text-foreground">
                             {sv.presionSistolica}/{sv.presionDiastolica} 
                             <span className="text-sm font-normal text-muted-foreground ml-1">mmHg</span>
@@ -4801,575 +4643,6 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
 }
 
 // ─────────────────────────────────────────────
-// TAB: GINECOLOGÍA
-// ─────────────────────────────────────────────
-
-interface HistoriaGinecologica {
-  menarca: string;
-  cicloRegular: string;
-  duracionCiclo: string;
-  duracionSangrado: string;
-  fechaUltimaRegla: string;
-  dismenorrea: string;
-  dismenorreaNivel: string;
-  menopausia: string;
-  fechaMenopausia: string;
-  // Anticonceptivos
-  metodoActual: string;
-  tiempoUso: string;
-  metodosAnteriores: string;
-  // Obstétrica
-  gestaciones: string;
-  partos: string;
-  cesareas: string;
-  abortos: string;
-  nacidosVivos: string;
-  // Citología
-  fechaUltimoPap: string;
-  resultadoUltimoPap: string;
-  fechaUltimaColpo: string;
-  resultadoUltimaColpo: string;
-  vph: string;
-  genotipovph: string;
-  vacunaVPH: string;
-  // Mama
-  autoexamen: string;
-  mastografia: string;
-  fechaUltimaMastografia: string;
-  // Antecedentes
-  enfermedadesPelvicas: string;
-  cirugiasPelvicas: string;
-  detallesCirugias: string;
-  its: string;
-  detallesITS: string;
-  endometriosis: string;
-  sop: string;
-  miomatosis: string;
-  // Embarazo actual
-  embarazoActual: boolean;
-  semanasGestacion: string;
-  fum: string;
-  fpp: string;
-  fcf: string;
-  numeroControles: string;
-}
-
-const historiaGinecologicaInicialMock: HistoriaGinecologica = {
-  menarca: "12",
-  cicloRegular: "Si",
-  duracionCiclo: "28",
-  duracionSangrado: "4",
-  fechaUltimaRegla: "2026-03-10",
-  dismenorrea: "Si",
-  dismenorreaNivel: "3",
-  menopausia: "No",
-  fechaMenopausia: "",
-  metodoActual: "Ninguno (embarazo actual)",
-  tiempoUso: "",
-  metodosAnteriores: "Dienogest 2mg/día (mar 2025 – dic 2025), ACO Microgynon (sep 2024 – ene 2025), preservativo",
-  gestaciones: "1",
-  partos: "0",
-  cesareas: "0",
-  abortos: "0",
-  nacidosVivos: "0",
-  fechaUltimoPap: "2024-06-05",
-  resultadoUltimoPap: "NILM (Negativo para lesión intraepitelial)",
-  fechaUltimaColpo: "2023-09-18",
-  resultadoUltimaColpo: "Zona de transformación tipo 1 — NIC I (regresión espontánea confirmada)",
-  vph: "Si (resuelto)",
-  genotipovph: "VPH 31 (positivo 2023, seguimiento negativo 2024)",
-  vacunaVPH: "Nonavalente — 2 dosis aplicadas (jun y sep 2024)",
-  autoexamen: "Mensual",
-  mastografia: "Pendiente (inicio a los 40 años)",
-  fechaUltimaMastografia: "",
-  enfermedadesPelvicas: "Endometriosis estadio II (diagnóstico feb 2025)",
-  cirugiasPelvicas: "Si",
-  detallesCirugias: "Laparoscopia diagnóstica y quirúrgica (15/02/2025): vaporización CO2 de focos endometriósicos en ovario izquierdo y ligamentos uterosacros, drenaje de endometrioma 2.1 cm",
-  its: "VPH (resuelto)",
-  detallesITS: "VPH genotipo 31 — Citología LEIBG en 2023, regresión espontánea confirmada en 2024 con citología NILM. Vacunación completa.",
-  endometriosis: "Si — Estadio II (AFS revisada)",
-  sop: "No",
-  miomatosis: "No",
-  embarazoActual: true,
-  semanasGestacion: "8",
-  fum: "2026-02-17",
-  fpp: "2026-11-24",
-  fcf: "172",
-  numeroControles: "1",
-};
-
-function GinecologiaTab() {
-  const [hg, setHg] = useState<HistoriaGinecologica>(historiaGinecologicaInicialMock);
-  const [guardado, setGuardado] = useState(false);
-  const [seccionAbierta, setSeccionAbierta] = useState<string>("menstrual");
-
-  const toggleSeccion = (id: string) =>
-    setSeccionAbierta((prev) => (prev === id ? "" : id));
-
-  const handleChange = (field: keyof HistoriaGinecologica, value: string | boolean) => {
-    setHg((prev) => ({ ...prev, [field]: value }));
-    setGuardado(false);
-  };
-
-  const handleGuardar = () => {
-    setGuardado(true);
-    setTimeout(() => setGuardado(false), 3000);
-  };
-
-  const inputCls = "w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors";
-  const selectCls = `${inputCls}`;
-  const labelCls = "block text-xs font-medium text-muted-foreground mb-1";
-
-  const secciones = [
-    { id: "menstrual", label: "Historia Menstrual", icon: <Activity className="w-4 h-4" /> },
-    { id: "anticonceptivos", label: "Anticoncepción", icon: <Shield className="w-4 h-4" /> },
-    { id: "obstetrica", label: "Historia Obstétrica", icon: <Baby className="w-4 h-4" /> },
-    { id: "citologia", label: "Citología y VPH", icon: <FileText className="w-4 h-4" /> },
-    { id: "mama", label: "Mama y Mastografía", icon: <Heart className="w-4 h-4" /> },
-    { id: "antecedentes", label: "Antecedentes Ginecológicos", icon: <ClipboardList className="w-4 h-4" /> },
-    { id: "prenatal", label: "Control Prenatal", icon: <Syringe className="w-4 h-4" /> },
-  ];
-
-  return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
-            <Heart className="w-5 h-5 text-rose-500" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">Historia Ginecológica</h3>
-            <p className="text-sm text-muted-foreground">Datos de seguimiento ginecológico y obstétrico</p>
-          </div>
-        </div>
-        <button
-          onClick={handleGuardar}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg ${guardado ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary/90"}`}
-        >
-          {guardado ? <ShieldCheck className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          {guardado ? "Guardado" : "Guardar cambios"}
-        </button>
-      </div>
-
-      {/* Tarjeta resumen embarazo */}
-      {hg.embarazoActual && (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
-            <Baby className="w-6 h-6 text-rose-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-rose-800">Embarazo en curso — {hg.semanasGestacion} semanas de gestación</p>
-            <p className="text-sm text-rose-600">FUM: {hg.fum ? fmtFecha(hg.fum) : "—"} &nbsp;·&nbsp; FPP: {hg.fpp ? fmtFecha(hg.fpp) : "—"} &nbsp;·&nbsp; FCF: {hg.fcf ? `${hg.fcf} lpm` : "—"}</p>
-          </div>
-          <span className="px-3 py-1.5 bg-rose-100 text-rose-700 rounded-full text-xs font-semibold border border-rose-200 shrink-0">
-            {hg.numeroControles} control(es)
-          </span>
-        </div>
-      )}
-
-      {/* Secciones acordeón */}
-      <div className="space-y-3">
-        {secciones.map(({ id, label, icon }) => {
-          const isOpen = seccionAbierta === id;
-          return (
-            <div key={id} className={`border rounded-2xl overflow-hidden transition-all duration-200 ${isOpen ? "border-primary/40 shadow-md" : "border-border"}`}>
-              <button
-                onClick={() => toggleSeccion(id)}
-                className="w-full text-left flex items-center justify-between gap-4 px-5 py-4 bg-card hover:bg-muted/30 transition-colors"
-                aria-expanded={isOpen}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isOpen ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                    {icon}
-                  </div>
-                  <span className="font-medium text-foreground text-sm">{label}</span>
-                </div>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              {isOpen && (
-                <div className="px-5 pb-6 pt-2 border-t border-border bg-card">
-                  {/* MENSTRUAL */}
-                  {id === "menstrual" && (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-                      <div>
-                        <label className={labelCls}>Edad de menarca (años)</label>
-                        <input type="number" className={inputCls} value={hg.menarca} onChange={(e) => handleChange("menarca", e.target.value)} min={8} max={20} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Ciclo regular</label>
-                        <select className={selectCls} value={hg.cicloRegular} onChange={(e) => handleChange("cicloRegular", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Si">Sí</option>
-                          <option value="No">No</option>
-                          <option value="Irregular">Irregular</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Duración del ciclo (días)</label>
-                        <input type="number" className={inputCls} value={hg.duracionCiclo} onChange={(e) => handleChange("duracionCiclo", e.target.value)} min={21} max={45} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Duración del sangrado (días)</label>
-                        <input type="number" className={inputCls} value={hg.duracionSangrado} onChange={(e) => handleChange("duracionSangrado", e.target.value)} min={1} max={10} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Fecha de última regla (FUR)</label>
-                        <input type="date" className={inputCls} value={hg.fechaUltimaRegla} onChange={(e) => handleChange("fechaUltimaRegla", e.target.value)} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Dismenorrea</label>
-                        <select className={selectCls} value={hg.dismenorrea} onChange={(e) => handleChange("dismenorrea", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Leve">Leve</option>
-                          <option value="Si">Sí — moderada/severa</option>
-                        </select>
-                      </div>
-                      {hg.dismenorrea === "Si" && (
-                        <div>
-                          <label className={labelCls}>Intensidad del dolor (EVA 1-10)</label>
-                          <input type="range" min={1} max={10} className="w-full" value={hg.dismenorreaNivel} onChange={(e) => handleChange("dismenorreaNivel", e.target.value)} />
-                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                            <span>1 — Leve</span>
-                            <span className="font-semibold text-primary">{hg.dismenorreaNivel}/10</span>
-                            <span>10 — Severo</span>
-                          </div>
-                        </div>
-                      )}
-                      <div>
-                        <label className={labelCls}>Menopausia</label>
-                        <select className={selectCls} value={hg.menopausia} onChange={(e) => handleChange("menopausia", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Perimenopausia">Perimenopausia</option>
-                          <option value="Si">Sí</option>
-                        </select>
-                      </div>
-                      {hg.menopausia === "Si" && (
-                        <div>
-                          <label className={labelCls}>Fecha de menopausia</label>
-                          <input type="date" className={inputCls} value={hg.fechaMenopausia} onChange={(e) => handleChange("fechaMenopausia", e.target.value)} />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ANTICONCEPTIVOS */}
-                  {id === "anticonceptivos" && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-4">
-                      <div>
-                        <label className={labelCls}>Método anticonceptivo actual</label>
-                        <select className={selectCls} value={hg.metodoActual} onChange={(e) => handleChange("metodoActual", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Ninguno">Ninguno</option>
-                          <option value="Ninguno (embarazo actual)">Ninguno (embarazo actual)</option>
-                          <option value="ACO combinada">ACO combinada</option>
-                          <option value="Progestágeno solo">Progestágeno solo (minipíldora)</option>
-                          <option value="Dienogest">Dienogest (endometriosis)</option>
-                          <option value="DIU de cobre">DIU de cobre</option>
-                          <option value="DIU hormonal (Mirena)">DIU hormonal (Mirena)</option>
-                          <option value="Implante subdérmico">Implante subdérmico</option>
-                          <option value="Inyectable mensual">Inyectable mensual</option>
-                          <option value="Inyectable trimestral">Inyectable trimestral</option>
-                          <option value="Parche anticonceptivo">Parche anticonceptivo</option>
-                          <option value="Anillo vaginal">Anillo vaginal (NuvaRing)</option>
-                          <option value="Preservativo">Preservativo</option>
-                          <option value="Ligadura de trompas">Ligadura de trompas</option>
-                          <option value="Vasectomia pareja">Vasectomía de la pareja</option>
-                          <option value="Abstinencia">Abstinencia / método natural</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Tiempo de uso</label>
-                        <input type="text" className={inputCls} value={hg.tiempoUso} onChange={(e) => handleChange("tiempoUso", e.target.value)} placeholder="Ej: 2 años, 6 meses..." />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className={labelCls}>Métodos anticonceptivos anteriores</label>
-                        <textarea rows={3} className={`${inputCls} resize-none`} value={hg.metodosAnteriores} onChange={(e) => handleChange("metodosAnteriores", e.target.value)} placeholder="Descripción de métodos previos y duración..." />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* OBSTÉTRICA */}
-                  {id === "obstetrica" && (
-                    <div className="space-y-4 pt-4">
-                      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                        {(
-                          [
-                            { field: "gestaciones", label: "Gestaciones (G)" },
-                            { field: "partos", label: "Partos (P)" },
-                            { field: "cesareas", label: "Cesáreas (C)" },
-                            { field: "abortos", label: "Abortos (A)" },
-                            { field: "nacidosVivos", label: "Nacidos vivos" },
-                          ] as { field: keyof HistoriaGinecologica; label: string }[]
-                        ).map(({ field, label }) => (
-                          <div key={String(field)}>
-                            <label className={labelCls}>{label}</label>
-                            <input
-                              type="number"
-                              min={0}
-                              className={inputCls}
-                              value={String(hg[field])}
-                              onChange={(e) => handleChange(field, e.target.value)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="bg-muted/30 rounded-xl p-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fórmula obstétrica</p>
-                        <p className="font-mono text-lg font-bold text-foreground">
-                          G{hg.gestaciones} P{hg.partos} C{hg.cesareas} A{hg.abortos} V{hg.nacidosVivos}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CITOLOGÍA */}
-                  {id === "citologia" && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-4">
-                      <div>
-                        <label className={labelCls}>Fecha último Papanicolaou</label>
-                        <input type="date" className={inputCls} value={hg.fechaUltimoPap} onChange={(e) => handleChange("fechaUltimoPap", e.target.value)} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Resultado Papanicolaou</label>
-                        <select className={selectCls} value={hg.resultadoUltimoPap} onChange={(e) => handleChange("resultadoUltimoPap", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="NILM (Negativo para lesión intraepitelial)">NILM — Negativo</option>
-                          <option value="ASC-US">ASC-US</option>
-                          <option value="ASC-H">ASC-H</option>
-                          <option value="LEIBG (NIC I)">LEIBG (NIC I)</option>
-                          <option value="LEIAG (NIC II-III)">LEIAG (NIC II-III)</option>
-                          <option value="Carcinoma">Carcinoma in situ / invasor</option>
-                          <option value="No realizado">No realizado</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Fecha última Colposcopía</label>
-                        <input type="date" className={inputCls} value={hg.fechaUltimaColpo} onChange={(e) => handleChange("fechaUltimaColpo", e.target.value)} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Resultado Colposcopía</label>
-                        <input type="text" className={inputCls} value={hg.resultadoUltimaColpo} onChange={(e) => handleChange("resultadoUltimaColpo", e.target.value)} placeholder="Ej: Zona de transformación tipo 1, NIC I..." />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Prueba VPH</label>
-                        <select className={selectCls} value={hg.vph} onChange={(e) => handleChange("vph", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Negativo">Negativo</option>
-                          <option value="Positivo">Positivo</option>
-                          <option value="Si (resuelto)">Positivo previo (resuelto)</option>
-                          <option value="No realizado">No realizado</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Genotipo VPH (si aplica)</label>
-                        <input type="text" className={inputCls} value={hg.genotipovph} onChange={(e) => handleChange("genotipovph", e.target.value)} placeholder="Ej: VPH 16, VPH 18, VPH 31..." />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className={labelCls}>Vacuna VPH</label>
-                        <select className={selectCls} value={hg.vacunaVPH} onChange={(e) => handleChange("vacunaVPH", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No aplicada">No aplicada</option>
-                          <option value="Bivalente — esquema completo">Bivalente — esquema completo</option>
-                          <option value="Tetravalente — esquema completo">Tetravalente — esquema completo</option>
-                          <option value="Nonavalente — 1 dosis">Nonavalente — 1 dosis</option>
-                          <option value="Nonavalente — 2 dosis aplicadas (jun y sep 2024)">Nonavalente — 2 dosis aplicadas (jun y sep 2024)</option>
-                          <option value="Nonavalente — esquema completo">Nonavalente — esquema completo</option>
-                          <option value="Incompleta">Incompleta</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* MAMA */}
-                  {id === "mama" && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-4">
-                      <div>
-                        <label className={labelCls}>Autoexamen mamario</label>
-                        <select className={selectCls} value={hg.autoexamen} onChange={(e) => handleChange("autoexamen", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Mensual">Mensual</option>
-                          <option value="Ocasional">Ocasional</option>
-                          <option value="No realiza">No realiza</option>
-                          <option value="No sabe">No sabe realizarlo</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Mastografía</label>
-                        <select className={selectCls} value={hg.mastografia} onChange={(e) => handleChange("mastografia", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Normal">Normal</option>
-                          <option value="BIRADS 0">BIRADS 0 — Estudio incompleto</option>
-                          <option value="BIRADS 1">BIRADS 1 — Normal</option>
-                          <option value="BIRADS 2">BIRADS 2 — Hallazgos benignos</option>
-                          <option value="BIRADS 3">BIRADS 3 — Probable benigno</option>
-                          <option value="BIRADS 4">BIRADS 4 — Sospechoso</option>
-                          <option value="BIRADS 5">BIRADS 5 — Altamente sospechoso</option>
-                          <option value="Pendiente (inicio a los 40 años)">Pendiente (inicio a los 40 años)</option>
-                          <option value="No realizada">No realizada</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Fecha última mastografía</label>
-                        <input type="date" className={inputCls} value={hg.fechaUltimaMastografia} onChange={(e) => handleChange("fechaUltimaMastografia", e.target.value)} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ANTECEDENTES */}
-                  {id === "antecedentes" && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-4">
-                      <div>
-                        <label className={labelCls}>Endometriosis</label>
-                        <select className={selectCls} value={hg.endometriosis} onChange={(e) => handleChange("endometriosis", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Si — Estadio I">Estadio I — Mínima</option>
-                          <option value="Si — Estadio II (AFS revisada)">Estadio II — Leve</option>
-                          <option value="Si — Estadio III">Estadio III — Moderada</option>
-                          <option value="Si — Estadio IV">Estadio IV — Severa</option>
-                          <option value="Sospecha clínica">Sospecha clínica (sin confirmar)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Síndrome de ovario poliquístico (SOP)</label>
-                        <select className={selectCls} value={hg.sop} onChange={(e) => handleChange("sop", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Si">Sí</option>
-                          <option value="En estudio">En estudio</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Miomatosis uterina</label>
-                        <select className={selectCls} value={hg.miomatosis} onChange={(e) => handleChange("miomatosis", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Si">Sí</option>
-                          <option value="Intramural">Intramural</option>
-                          <option value="Submucoso">Submucoso</option>
-                          <option value="Subseroso">Subseroso</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Cirugías pélvicas previas</label>
-                        <select className={selectCls} value={hg.cirugiasPelvicas} onChange={(e) => handleChange("cirugiasPelvicas", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="No">No</option>
-                          <option value="Si">Sí</option>
-                        </select>
-                      </div>
-                      {hg.cirugiasPelvicas === "Si" && (
-                        <div className="md:col-span-2">
-                          <label className={labelCls}>Detalles de cirugías pélvicas</label>
-                          <textarea rows={3} className={`${inputCls} resize-none`} value={hg.detallesCirugias} onChange={(e) => handleChange("detallesCirugias", e.target.value)} placeholder="Fecha, tipo de cirugía, hallazgos..." />
-                        </div>
-                      )}
-                      <div>
-                        <label className={labelCls}>Infecciones de transmisión sexual (ITS)</label>
-                        <select className={selectCls} value={hg.its} onChange={(e) => handleChange("its", e.target.value)}>
-                          <option value="">Seleccionar</option>
-                          <option value="Ninguna">Ninguna</option>
-                          <option value="VPH (resuelto)">VPH (resuelto)</option>
-                          <option value="Herpes genital">Herpes genital</option>
-                          <option value="Gonorrea">Gonorrea</option>
-                          <option value="Clamidia">Clamidia</option>
-                          <option value="Sifilis">Sífilis</option>
-                          <option value="VIH">VIH</option>
-                          <option value="Vaginosis bacteriana recurrente">Vaginosis bacteriana recurrente</option>
-                          <option value="Candidiasis recurrente">Candidiasis recurrente</option>
-                        </select>
-                      </div>
-                      {hg.its !== "Ninguna" && hg.its !== "" && (
-                        <div className="md:col-span-2">
-                          <label className={labelCls}>Detalles de ITS</label>
-                          <textarea rows={2} className={`${inputCls} resize-none`} value={hg.detallesITS} onChange={(e) => handleChange("detallesITS", e.target.value)} placeholder="Tratamiento, evolución, estado actual..." />
-                        </div>
-                      )}
-                      <div className="md:col-span-2">
-                        <label className={labelCls}>Otras enfermedades pélvicas relevantes</label>
-                        <textarea rows={2} className={`${inputCls} resize-none`} value={hg.enfermedadesPelvicas} onChange={(e) => handleChange("enfermedadesPelvicas", e.target.value)} placeholder="EIP, quistes ováricos, pólipos, etc." />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PRENATAL */}
-                  {id === "prenatal" && (
-                    <div className="space-y-4 pt-4">
-                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-xl">
-                        <input
-                          type="checkbox"
-                          id="embarazo-actual"
-                          checked={hg.embarazoActual}
-                          onChange={(e) => handleChange("embarazoActual", e.target.checked)}
-                          className="w-4 h-4 accent-primary"
-                        />
-                        <label htmlFor="embarazo-actual" className="text-sm font-medium text-foreground cursor-pointer">
-                          Embarazo actual en curso
-                        </label>
-                      </div>
-
-                      {hg.embarazoActual && (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <div>
-                            <label className={labelCls}>Semanas de gestación (SDG)</label>
-                            <input type="number" min={1} max={42} className={inputCls} value={hg.semanasGestacion} onChange={(e) => handleChange("semanasGestacion", e.target.value)} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Fecha de última menstruación (FUM)</label>
-                            <input type="date" className={inputCls} value={hg.fum} onChange={(e) => handleChange("fum", e.target.value)} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Fecha probable de parto (FPP)</label>
-                            <input type="date" className={inputCls} value={hg.fpp} onChange={(e) => handleChange("fpp", e.target.value)} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Frecuencia cardíaca fetal (FCF)</label>
-                            <input type="text" className={inputCls} value={hg.fcf} onChange={(e) => handleChange("fcf", e.target.value)} placeholder="lpm" />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Número de controles prenatales</label>
-                            <input type="number" min={0} className={inputCls} value={hg.numeroControles} onChange={(e) => handleChange("numeroControles", e.target.value)} />
-                          </div>
-                        </div>
-                      )}
-
-                      {!hg.embarazoActual && (
-                        <div className="text-center py-10 text-muted-foreground">
-                          <Baby className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                          <p className="text-sm">Sin embarazo activo registrado</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap gap-3 pt-2 border-t border-border">
-        <button
-          onClick={handleGuardar}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg ${guardado ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary/90"}`}
-        >
-          {guardado ? <ShieldCheck className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          {guardado ? "Guardado correctamente" : "Guardar historia ginecológica"}
-        </button>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-border text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-colors">
-          <FileText className="w-4 h-4" />
-          Imprimir historia
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
 // PANEL: CONFIGURACIÓN
 // ─────────────────────────────────────────────
 
@@ -5406,10 +4679,10 @@ const configInicial: ConfiguracionState = {
   impresionMembrete: true,
   guardadoAutomatico: true,
   sesionRecordada: false,
-  nombreDoctor: "Dr. Rodríguez",
-  especialidad: "Ginecología y Obstetricia",
-  cedulaProfesional: "12345678",
-  clinica: "Clínica Salud Femenina",
+  nombreDoctor: "Dra. Ana María López",
+  especialidad: "Medicina General",
+  cedulaProfesional: "23456789",
+  clinica: "Clínica Médica Integral",
 };
 
 function Switch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -5678,7 +4951,6 @@ function ConfiguracionPanel({
                   </button>
                   <button className="w-full flex items-center gap-3 px-4 py-3 border border-border rounded-xl text-sm text-foreground hover:bg-muted/40 transition-colors">
                     <FileText className="w-4 h-4 text-muted-foreground" />
-                    {t("gynecologicalHistory")}
                   </button>
                 </div>
               </div>
@@ -5751,17 +5023,6 @@ function ConfiguracionPanel({
 
 const tabIds = ["dashboard", "datos", "signos", "citas", "consulta", "expediente", "visitas", "medicamentos"] as const;
 type TabId = (typeof tabIds)[number];
-
-const tabIcons = {
-  dashboard: LayoutDashboard,
-  datos: User,
-  signos: Activity,
-  citas: Calendar,
-  consulta: Stethoscope,
-  expediente: FolderOpen,
-  visitas: ClipboardList,
-  medicamentos: Pill,
-};
 
 function useLocalizedTabs(t: (key: TranslationKey) => string) {
   return [
