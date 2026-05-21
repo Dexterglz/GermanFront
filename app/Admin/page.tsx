@@ -9,8 +9,6 @@ import {
   LayoutDashboard,
   Stethoscope,
   HeartPulse,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   Shield,
   Search,
@@ -37,7 +35,7 @@ import {
 // TYPES
 // ─────────────────────────────────────────────
 
-type Role = "doctor" | "assistant" | "admin"
+type Role = "doctor" | "assistant" | "admin" | "patient"
 
 type Permission = {
   id: string
@@ -48,6 +46,7 @@ type Permission = {
 
 type StaffMember = {
   id: string
+  user_id?: string
   name: string
   email: string
   phone: string
@@ -57,6 +56,19 @@ type StaffMember = {
   status: "active" | "inactive"
   permissions: Record<string, boolean>
   createdAt: string
+  // Doctor fields
+  cedula_profesional?: string
+  consultorio?: string
+  correo_profesional?: string
+  // Patient fields
+  fecha_nacimiento?: string
+  sexo?: string
+  curp?: string
+  direccion?: string
+  tipo_sangre?: string
+  alergias?: string
+  contacto_emergencia?: string
+  telefono_contacto_emergencia?: string
 }
 
 // ─────────────────────────────────────────────
@@ -126,57 +138,25 @@ const DEFAULT_ADMIN_PERMISSIONS: Record<string, boolean> = {
   export_reports: true, manage_staff: true, system_settings: true, manage_roles: true,
 }
 
-const INITIAL_STAFF: StaffMember[] = [
-  {
-    id: "1", name: "Dr. Carlos Mendoza", email: "c.mendoza@clinica.mx", phone: "+52 55 1234-5678",
-    role: "doctor", specialty: "Cardiología", department: "Cardiología", status: "active",
-    permissions: { ...DEFAULT_DOCTOR_PERMISSIONS, view_reports: true, export_reports: true },
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2", name: "Dra. Sofía Ramírez", email: "s.ramirez@clinica.mx", phone: "+52 55 2345-6789",
-    role: "doctor", specialty: "Pediatría", department: "Pediatría", status: "active",
-    permissions: { ...DEFAULT_DOCTOR_PERMISSIONS, manage_staff: true },
-    createdAt: "2024-02-20",
-  },
-  {
-    id: "3", name: "Laura Torres", email: "l.torres@clinica.mx", phone: "+52 55 3456-7890",
-    role: "assistant", department: "Recepción", status: "active",
-    permissions: { ...DEFAULT_ASSISTANT_PERMISSIONS, edit_patients: true },
-    createdAt: "2024-03-10",
-  },
-  {
-    id: "4", name: "Miguel Herrera", email: "m.herrera@clinica.mx", phone: "+52 55 4567-8901",
-    role: "assistant", department: "Administración", status: "inactive",
-    permissions: { ...DEFAULT_ASSISTANT_PERMISSIONS },
-    createdAt: "2024-03-22",
-  },
-  {
-    id: "5", name: "Ana García López", email: "a.garcia@clinica.mx", phone: "+52 55 5678-9012",
-    role: "admin", department: "Dirección General", status: "active",
-    permissions: { ...DEFAULT_ADMIN_PERMISSIONS },
-    createdAt: "2024-01-05",
-  },
-  {
-    id: "6", name: "Roberto Sánchez", email: "r.sanchez@clinica.mx", phone: "+52 55 6789-0123",
-    role: "admin", department: "Sistemas", status: "active",
-    permissions: { ...DEFAULT_ADMIN_PERMISSIONS, system_settings: true },
-    createdAt: "2024-02-10",
-  },
-]
-
 const SPECIALTIES = ["Cardiología","Pediatría","Neurología","Ginecología","Ortopedia","Dermatología","Oftalmología","Medicina General"]
 const DEPARTMENTS = ["Cardiología","Pediatría","Neurología","Ginecología","Ortopedia","Dermatología","Recepción","Administración","Enfermería"]
+
+import { User, Building2 } from "lucide-react"
 
 const NAV_ITEMS = [
   { id: "dashboard",    label: "Dashboard",        icon: LayoutDashboard },
   { id: "staff",        label: "Todo el Personal", icon: Users },
   { id: "doctors",      label: "Doctores",         icon: Stethoscope },
+  { id: "patients",     label: "Pacientes",        icon: User },
   { id: "assistants",   label: "Asistentes",       icon: HeartPulse },
   { id: "admins",       label: "Administradores",  icon: Shield },
   { id: "register",     label: "Registrar Nuevo",  icon: UserPlus },
   { id: "permissions",  label: "Permisos y Roles", icon: Shield },
+  { id: "institution",  label: "Institución",      icon: Building2 },
 ]
+
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+const SEXOS = ["Masculino", "Femenino", "Otro"]
 
 function groupByCategory(permissions: Permission[]) {
   return permissions.reduce<Record<string, Permission[]>>((acc, p) => {
@@ -287,6 +267,7 @@ function Sidebar({
 
 function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (tab: string) => void }) {
   const doctors    = staff.filter((s) => s.role === "doctor")
+  const patients   = staff.filter((s) => s.role === "patient")
   const assistants = staff.filter((s) => s.role === "assistant")
   const admins     = staff.filter((s) => s.role === "admin")
   const active     = staff.filter((s) => s.status === "active")
@@ -295,10 +276,10 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
   const stats = [
     { label: "Total Personal", value: staff.length,      icon: Users,        color: "bg-primary/10 text-primary",      tab: "staff" },
     { label: "Doctores",       value: doctors.length,    icon: Stethoscope,  color: "bg-accent/10 text-accent",         tab: "doctors" },
+    { label: "Pacientes",      value: patients.length,   icon: User,         color: "bg-emerald-500/10 text-emerald-600", tab: "patients" },
     { label: "Asistentes",     value: assistants.length, icon: HeartPulse,   color: "bg-primary/10 text-primary",       tab: "assistants" },
     { label: "Administradores",value: admins.length,     icon: Shield,       color: "bg-amber-500/10 text-amber-600",   tab: "admins" },
     { label: "Activos",        value: active.length,     icon: CheckCircle,  color: "bg-green-500/10 text-green-600",   tab: "staff" },
-    { label: "Inactivos",      value: inactive.length,   icon: XCircle,      color: "bg-destructive/10 text-destructive", tab: "staff" },
   ]
 
   const getRoleLabel = (role: Role) => {
@@ -344,7 +325,7 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
       </div>
 
       {/* Secciones separadas por rol */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-5">
         {/* Doctores */}
         <div className="bg-card border border-border rounded-xl">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -368,6 +349,37 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
                     <p className="text-xs text-muted-foreground">{member.specialty}</p>
+                  </div>
+                  <span className={cn("w-2 h-2 rounded-full shrink-0", member.status === "active" ? "bg-green-500" : "bg-destructive")} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Pacientes */}
+        <div className="bg-card border border-border rounded-xl">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-sm font-semibold text-foreground">Pacientes</h2>
+            </div>
+            <button onClick={() => onNavigate("patients")} className="text-xs text-primary hover:underline">
+              Ver todos
+            </button>
+          </div>
+          <div className="divide-y divide-border max-h-64 overflow-y-auto">
+            {patients.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No hay pacientes registrados</p>
+            ) : (
+              patients.map((member) => (
+                <div key={member.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-emerald-600">{initials(member.name)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">{member.tipo_sangre} - {member.sexo}</p>
                   </div>
                   <span className={cn("w-2 h-2 rounded-full shrink-0", member.status === "active" ? "bg-green-500" : "bg-destructive")} />
                 </div>
@@ -451,23 +463,27 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
           </button>
         </div>
         <div className="divide-y divide-border">
-          {staff.slice(0, 5).map((member) => (
-            <div key={member.id} className="flex items-center gap-3 px-5 py-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-primary">{initials(member.name)}</span>
+          {staff.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No hay personal registrado</p>
+          ) : (
+            staff.slice(0, 5).map((member) => (
+              <div key={member.id} className="flex items-center gap-3 px-5 py-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-primary">{initials(member.name)}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+                  <p className="text-xs text-muted-foreground">{member.department}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", getRoleColor(member.role))}>
+                    {getRoleLabel(member.role)}
+                  </span>
+                  <span className={cn("w-2 h-2 rounded-full", member.status === "active" ? "bg-green-500" : "bg-destructive")} />
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-                <p className="text-xs text-muted-foreground">{member.department}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", getRoleColor(member.role))}>
-                  {getRoleLabel(member.role)}
-                </span>
-                <span className={cn("w-2 h-2 rounded-full", member.status === "active" ? "bg-green-500" : "bg-destructive")} />
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -506,6 +522,8 @@ function StaffTable({
 
   const title = filterRole === "doctor"
     ? "Doctores"
+    : filterRole === "patient"
+    ? "Pacientes"
     : filterRole === "assistant"
     ? "Asistentes"
     : filterRole === "admin"
@@ -513,12 +531,14 @@ function StaffTable({
     : "Todo el Personal"
 
   const subtitle = filterRole === "doctor"
-    ? "Gestión de médicos registrados en el sistema"
+    ? "Gestion de medicos registrados en el sistema"
+    : filterRole === "patient"
+    ? "Gestion de pacientes registrados en el sistema"
     : filterRole === "assistant"
-    ? "Gestión de personal de apoyo"
+    ? "Gestion de personal de apoyo"
     : filterRole === "admin"
-    ? "Gestión de administradores del sistema"
-    : "Lista completa de personal médico y administrativo"
+    ? "Gestion de administradores del sistema"
+    : "Lista completa de personal medico y administrativo"
 
   return (
     <div className="space-y-6">
@@ -603,27 +623,35 @@ function StaffTable({
                             ? "bg-accent/10 text-accent" 
                             : member.role === "admin" 
                             ? "bg-amber-500/10 text-amber-600" 
+                            : member.role === "patient"
+                            ? "bg-emerald-500/10 text-emerald-600"
                             : "bg-primary/10 text-primary"
                         )}>
                           {member.role === "doctor"
                             ? <Stethoscope className="w-3 h-3" />
                             : member.role === "admin"
                             ? <Shield className="w-3 h-3" />
+                            : member.role === "patient"
+                            ? <User className="w-3 h-3" />
                             : <HeartPulse className="w-3 h-3" />}
-                          {member.role === "doctor" ? "Doctor" : member.role === "admin" ? "Admin" : "Asistente"}
+                          {member.role === "doctor" ? "Doctor" : member.role === "admin" ? "Admin" : member.role === "patient" ? "Paciente" : "Asistente"}
                         </span>
-                        <p className="text-xs text-muted-foreground mt-1">{member.department}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{member.role === "patient" ? member.tipo_sangre : member.department}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-border rounded-full h-1.5 w-16">
-                            <div
-                              className="bg-primary h-1.5 rounded-full"
-                              style={{ width: `${(activePerms / totalPerms) * 100}%` }}
-                            />
+                        {member.role === "patient" ? (
+                          <span className="text-xs text-muted-foreground">N/A</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-border rounded-full h-1.5 w-16">
+                              <div
+                                className="bg-primary h-1.5 rounded-full"
+                                style={{ width: `${totalPerms > 0 ? (activePerms / totalPerms) * 100 : 0}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground">{activePerms}/{totalPerms}</span>
                           </div>
-                          <span className="text-xs text-muted-foreground">{activePerms}/{totalPerms}</span>
-                        </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className={cn(
@@ -697,65 +725,226 @@ function StaffTable({
 // ─────────────────────────────────────────────
 
 function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => void }) {
-  const [role, setRole]           = useState<Role>("doctor")
-  const [form, setForm]           = useState({ name: "", email: "", phone: "", specialty: "", department: "" })
-  const [permissions, setPerms]   = useState<Record<string, boolean>>({ ...DEFAULT_DOCTOR_PERMISSIONS })
-  const [success, setSuccess]     = useState(false)
-  const [errors, setErrors]       = useState<Record<string, string>>({})
+  const [role, setRole] = useState<Role>("doctor")
+  const [form, setForm] = useState({
+    // Common fields
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    specialty: "",
+    department: "",
+    // Doctor specific fields
+    cedula_profesional: "",
+    consultorio: "",
+    correo_profesional: "",
+    // Patient specific fields
+    fecha_nacimiento: "",
+    sexo: "",
+    curp: "",
+    direccion: "",
+    tipo_sangre: "",
+    alergias: "",
+    contacto_emergencia: "",
+    telefono_contacto_emergencia: "",
+  })
+  const [permissions, setPerms] = useState<Record<string, boolean>>({ ...DEFAULT_DOCTOR_PERMISSIONS })
+  const [success, setSuccess] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState("")
 
-  const availablePermissions = role === "doctor" 
-    ? DOCTOR_PERMISSIONS 
-    : role === "admin" 
-    ? ADMIN_PERMISSIONS 
+  const availablePermissions = role === "doctor"
+    ? DOCTOR_PERMISSIONS
+    : role === "admin"
+    ? ADMIN_PERMISSIONS
     : ASSISTANT_PERMISSIONS
 
   const handleRoleChange = (r: Role) => {
     setRole(r)
-    setPerms(
-      r === "doctor" 
-        ? { ...DEFAULT_DOCTOR_PERMISSIONS } 
-        : r === "admin" 
-        ? { ...DEFAULT_ADMIN_PERMISSIONS } 
-        : { ...DEFAULT_ASSISTANT_PERMISSIONS }
-    )
+    if (r === "patient") {
+      setPerms({})
+    } else {
+      setPerms(
+        r === "doctor"
+          ? { ...DEFAULT_DOCTOR_PERMISSIONS }
+          : r === "admin"
+          ? { ...DEFAULT_ADMIN_PERMISSIONS }
+          : { ...DEFAULT_ASSISTANT_PERMISSIONS }
+      )
+    }
   }
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.name.trim())     e.name       = "Nombre requerido"
-    if (!form.email.trim())    e.email      = "Email requerido"
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Email inválido"
-    if (!form.phone.trim())    e.phone      = "Teléfono requerido"
-    if (!form.department)      e.department = "Departamento requerido"
-    if (role === "doctor" && !form.specialty) e.specialty = "Especialidad requerida"
+    if (!form.name.trim()) e.name = "Nombre requerido"
+    if (!form.email.trim()) e.email = "Email requerido"
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Email invalido"
+    if (!form.password.trim()) e.password = "Password requerido"
+    else if (form.password.length < 6) e.password = "Password debe tener al menos 6 caracteres"
+    if (!form.phone.trim()) e.phone = "Telefono requerido"
+
+    if (role === "doctor") {
+      if (!form.specialty) e.specialty = "Especialidad requerida"
+      if (!form.cedula_profesional.trim()) e.cedula_profesional = "Cedula profesional requerida"
+      if (!form.consultorio.trim()) e.consultorio = "Consultorio requerido"
+      if (!form.department) e.department = "Departamento requerido"
+    }
+
+    if (role === "patient") {
+      if (!form.fecha_nacimiento) e.fecha_nacimiento = "Fecha de nacimiento requerida"
+      if (!form.sexo) e.sexo = "Sexo requerido"
+      if (!form.curp.trim()) e.curp = "CURP requerido"
+      if (!form.direccion.trim()) e.direccion = "Direccion requerida"
+      if (!form.tipo_sangre) e.tipo_sangre = "Tipo de sangre requerido"
+      if (!form.contacto_emergencia.trim()) e.contacto_emergencia = "Contacto de emergencia requerido"
+      if (!form.telefono_contacto_emergencia.trim()) e.telefono_contacto_emergencia = "Telefono de emergencia requerido"
+    }
+
+    if (role === "assistant" || role === "admin") {
+      if (!form.department) e.department = "Departamento requerido"
+    }
+
     return e
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
-    if (Object.keys(errs).length > 0) { setErrors(errs); return }
-    onRegister({
-      id: Date.now().toString(),
-      name: form.name, email: form.email, phone: form.phone,
-      role,
-      specialty: role === "doctor" ? form.specialty : undefined,
-      department: form.department,
-      status: "active",
-      permissions,
-      createdAt: new Date().toISOString().split("T")[0],
-    })
-    setForm({ name: "", email: "", phone: "", specialty: "", department: "" })
-    setPerms(
-      role === "doctor" 
-        ? { ...DEFAULT_DOCTOR_PERMISSIONS } 
-        : role === "admin" 
-        ? { ...DEFAULT_ADMIN_PERMISSIONS } 
-        : { ...DEFAULT_ASSISTANT_PERMISSIONS }
-    )
-    setErrors({})
-    setSuccess(true)
-    setTimeout(() => setSuccess(false), 3000)
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      return
+    }
+
+    setLoading(true)
+    setApiError("")
+
+    try {
+      // Step 1: Create user first
+      const userResponse = await fetch("http://localhost:3000/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          role: role,
+        }),
+      })
+
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al crear usuario")
+      }
+
+      const userData = await userResponse.json()
+      const userId = userData.id || userData.user_id || userData.data?.id
+
+      // Step 2: Create doctor or patient based on role
+      if (role === "doctor") {
+        const doctorResponse = await fetch("http://localhost:3000/api/doctors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            nombre_completo: form.name,
+            especialidad: form.specialty,
+            cedula_profesional: form.cedula_profesional,
+            telefono: form.phone,
+            consultorio: form.consultorio,
+            correo_profesional: form.correo_profesional || form.email,
+          }),
+        })
+
+        if (!doctorResponse.ok) {
+          const errorData = await doctorResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || "Error al crear doctor")
+        }
+      } else if (role === "patient") {
+        const patientResponse = await fetch("http://localhost:3000/api/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            nombre_completo: form.name,
+            fecha_nacimiento: form.fecha_nacimiento,
+            sexo: form.sexo,
+            curp: form.curp,
+            telefono: form.phone,
+            direccion: form.direccion,
+            tipo_sangre: form.tipo_sangre,
+            alergias: form.alergias || "",
+            contacto_emergencia: form.contacto_emergencia,
+            telefono_contacto_emergencia: form.telefono_contacto_emergencia,
+          }),
+        })
+
+        if (!patientResponse.ok) {
+          const errorData = await patientResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || "Error al crear paciente")
+        }
+      }
+
+      // Add to local state
+      onRegister({
+        id: userId || Date.now().toString(),
+        user_id: userId,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        role,
+        specialty: role === "doctor" ? form.specialty : undefined,
+        department: form.department || (role === "patient" ? "Pacientes" : ""),
+        status: "active",
+        permissions,
+        createdAt: new Date().toISOString().split("T")[0],
+        cedula_profesional: form.cedula_profesional,
+        consultorio: form.consultorio,
+        correo_profesional: form.correo_profesional,
+        fecha_nacimiento: form.fecha_nacimiento,
+        sexo: form.sexo,
+        curp: form.curp,
+        direccion: form.direccion,
+        tipo_sangre: form.tipo_sangre,
+        alergias: form.alergias,
+        contacto_emergencia: form.contacto_emergencia,
+        telefono_contacto_emergencia: form.telefono_contacto_emergencia,
+      })
+
+      // Reset form
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        phone: "",
+        specialty: "",
+        department: "",
+        cedula_profesional: "",
+        consultorio: "",
+        correo_profesional: "",
+        fecha_nacimiento: "",
+        sexo: "",
+        curp: "",
+        direccion: "",
+        tipo_sangre: "",
+        alergias: "",
+        contacto_emergencia: "",
+        telefono_contacto_emergencia: "",
+      })
+      setPerms(
+        role === "doctor"
+          ? { ...DEFAULT_DOCTOR_PERMISSIONS }
+          : role === "admin"
+          ? { ...DEFAULT_ADMIN_PERMISSIONS }
+          : { ...DEFAULT_ASSISTANT_PERMISSIONS }
+      )
+      setErrors({})
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Error al registrar")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const permsByCategory = groupByCategory(availablePermissions)
@@ -763,27 +952,34 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground text-balance">Registrar Nuevo Personal</h1>
-        <p className="text-sm text-muted-foreground mt-1">Complete los datos y asigne permisos al nuevo miembro.</p>
+        <h1 className="text-2xl font-bold text-foreground text-balance">Registrar Nuevo</h1>
+        <p className="text-sm text-muted-foreground mt-1">Complete los datos para registrar un nuevo doctor, paciente o personal.</p>
       </div>
 
       {success && (
         <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium">
           <Check className="w-4 h-4 shrink-0" />
-          Miembro registrado exitosamente.
+          Registro exitoso.
+        </div>
+      )}
+
+      {apiError && (
+        <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-4 py-3 text-sm font-medium">
+          <X className="w-4 h-4 shrink-0" />
+          {apiError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Role selector */}
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">Tipo de Rol</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {(["doctor", "assistant", "admin"] as Role[]).map((r) => {
-              const Icon = r === "doctor" ? Stethoscope : r === "admin" ? Shield : HeartPulse
+          <h2 className="text-sm font-semibold text-foreground">Tipo de Registro</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(["doctor", "patient", "assistant", "admin"] as Role[]).map((r) => {
+              const Icon = r === "doctor" ? Stethoscope : r === "patient" ? User : r === "admin" ? Shield : HeartPulse
               const isSelected = role === r
-              const label = r === "doctor" ? "Doctor" : r === "admin" ? "Administrador" : "Asistente"
-              const desc = r === "doctor" ? "Médico especialista" : r === "admin" ? "Control total del sistema" : "Personal de apoyo"
+              const label = r === "doctor" ? "Doctor" : r === "patient" ? "Paciente" : r === "admin" ? "Administrador" : "Asistente"
+              const desc = r === "doctor" ? "Medico especialista" : r === "patient" ? "Paciente del sistema" : r === "admin" ? "Control total" : "Personal de apoyo"
               return (
                 <button
                   key={r}
@@ -810,31 +1006,276 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
           </div>
         </div>
 
-        {/* Personal data */}
+        {/* Account credentials */}
+        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">Credenciales de Cuenta</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Correo electronico *</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="correo@ejemplo.com"
+                className={cn(
+                  "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                  errors.email ? "border-destructive" : "border-input"
+                )}
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Password *</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="Minimo 6 caracteres"
+                className={cn(
+                  "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                  errors.password ? "border-destructive" : "border-input"
+                )}
+              />
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Personal data - Common fields */}
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
           <h2 className="text-sm font-semibold text-foreground">Datos Personales</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { key: "name",       label: "Nombre completo *",    type: "text",  placeholder: "Ej. Dr. Juan García" },
-              { key: "email",      label: "Correo electrónico *", type: "email", placeholder: "doctor@clinica.mx" },
-              { key: "phone",      label: "Teléfono *",           type: "tel",   placeholder: "+52 55 0000-0000" },
-            ].map(({ key, label, type, placeholder }) => (
-              <div key={key} className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">{label}</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nombre completo *</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Ej. Juan Garcia Lopez"
+                className={cn(
+                  "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                  errors.name ? "border-destructive" : "border-input"
+                )}
+              />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Telefono *</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="+52 55 0000-0000"
+                className={cn(
+                  "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                  errors.phone ? "border-destructive" : "border-input"
+                )}
+              />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Doctor specific fields */}
+        {role === "doctor" && (
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Datos del Doctor</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Especialidad *</label>
+                <select
+                  value={form.specialty}
+                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.specialty ? "border-destructive" : "border-input"
+                  )}
+                >
+                  <option value="">Seleccionar especialidad</option>
+                  {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                {errors.specialty && <p className="text-xs text-destructive">{errors.specialty}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Cedula Profesional *</label>
                 <input
-                  type={type}
-                  value={form[key as keyof typeof form]}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  placeholder={placeholder}
+                  type="text"
+                  value={form.cedula_profesional}
+                  onChange={(e) => setForm({ ...form, cedula_profesional: e.target.value })}
+                  placeholder="Ej. 12345678"
                   className={cn(
                     "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
-                    errors[key] ? "border-destructive" : "border-input"
+                    errors.cedula_profesional ? "border-destructive" : "border-input"
                   )}
                 />
-                {errors[key] && <p className="text-xs text-destructive">{errors[key]}</p>}
+                {errors.cedula_profesional && <p className="text-xs text-destructive">{errors.cedula_profesional}</p>}
               </div>
-            ))}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Consultorio *</label>
+                <input
+                  type="text"
+                  value={form.consultorio}
+                  onChange={(e) => setForm({ ...form, consultorio: e.target.value })}
+                  placeholder="Ej. Consultorio 101"
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.consultorio ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.consultorio && <p className="text-xs text-destructive">{errors.consultorio}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Correo Profesional</label>
+                <input
+                  type="email"
+                  value={form.correo_profesional}
+                  onChange={(e) => setForm({ ...form, correo_profesional: e.target.value })}
+                  placeholder="doctor@clinica.mx"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Departamento *</label>
+                <select
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.department ? "border-destructive" : "border-input"
+                  )}
+                >
+                  <option value="">Seleccionar departamento</option>
+                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                {errors.department && <p className="text-xs text-destructive">{errors.department}</p>}
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* Patient specific fields */}
+        {role === "patient" && (
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Datos del Paciente</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Fecha de Nacimiento *</label>
+                <input
+                  type="date"
+                  value={form.fecha_nacimiento}
+                  onChange={(e) => setForm({ ...form, fecha_nacimiento: e.target.value })}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.fecha_nacimiento ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.fecha_nacimiento && <p className="text-xs text-destructive">{errors.fecha_nacimiento}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Sexo *</label>
+                <select
+                  value={form.sexo}
+                  onChange={(e) => setForm({ ...form, sexo: e.target.value })}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.sexo ? "border-destructive" : "border-input"
+                  )}
+                >
+                  <option value="">Seleccionar sexo</option>
+                  {SEXOS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                {errors.sexo && <p className="text-xs text-destructive">{errors.sexo}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">CURP *</label>
+                <input
+                  type="text"
+                  value={form.curp}
+                  onChange={(e) => setForm({ ...form, curp: e.target.value.toUpperCase() })}
+                  placeholder="AAAA000000AAAAAA00"
+                  maxLength={18}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition uppercase",
+                    errors.curp ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.curp && <p className="text-xs text-destructive">{errors.curp}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Tipo de Sangre *</label>
+                <select
+                  value={form.tipo_sangre}
+                  onChange={(e) => setForm({ ...form, tipo_sangre: e.target.value })}
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.tipo_sangre ? "border-destructive" : "border-input"
+                  )}
+                >
+                  <option value="">Seleccionar tipo</option>
+                  {BLOOD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                {errors.tipo_sangre && <p className="text-xs text-destructive">{errors.tipo_sangre}</p>}
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground">Direccion *</label>
+                <input
+                  type="text"
+                  value={form.direccion}
+                  onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                  placeholder="Calle, Numero, Colonia, Ciudad"
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.direccion ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.direccion && <p className="text-xs text-destructive">{errors.direccion}</p>}
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground">Alergias</label>
+                <input
+                  type="text"
+                  value={form.alergias}
+                  onChange={(e) => setForm({ ...form, alergias: e.target.value })}
+                  placeholder="Ej. Penicilina, Polen, etc. (dejar vacio si no aplica)"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Contacto de Emergencia *</label>
+                <input
+                  type="text"
+                  value={form.contacto_emergencia}
+                  onChange={(e) => setForm({ ...form, contacto_emergencia: e.target.value })}
+                  placeholder="Nombre del contacto"
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.contacto_emergencia ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.contacto_emergencia && <p className="text-xs text-destructive">{errors.contacto_emergencia}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Telefono de Emergencia *</label>
+                <input
+                  type="tel"
+                  value={form.telefono_contacto_emergencia}
+                  onChange={(e) => setForm({ ...form, telefono_contacto_emergencia: e.target.value })}
+                  placeholder="+52 55 0000-0000"
+                  className={cn(
+                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+                    errors.telefono_contacto_emergencia ? "border-destructive" : "border-input"
+                  )}
+                />
+                {errors.telefono_contacto_emergencia && <p className="text-xs text-destructive">{errors.telefono_contacto_emergencia}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Assistant/Admin department */}
+        {(role === "assistant" || role === "admin") && (
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Datos del {role === "admin" ? "Administrador" : "Asistente"}</h2>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Departamento *</label>
               <select
@@ -850,78 +1291,72 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
               </select>
               {errors.department && <p className="text-xs text-destructive">{errors.department}</p>}
             </div>
-
-            {role === "doctor" && (
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-medium text-muted-foreground">Especialidad *</label>
-                <select
-                  value={form.specialty}
-                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                  className={cn(
-                    "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
-                    errors.specialty ? "border-destructive" : "border-input"
-                  )}
-                >
-                  <option value="">Seleccionar especialidad</option>
-                  {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-                {errors.specialty && <p className="text-xs text-destructive">{errors.specialty}</p>}
-              </div>
-            )}
           </div>
-        </div>
+        )}
 
-        {/* Permissions */}
-        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Permisos del Rol</h2>
-            <span className="text-xs text-muted-foreground">
-              {Object.values(permissions).filter(Boolean).length} activos
-            </span>
-          </div>
-          <div className="space-y-5">
-            {Object.entries(permsByCategory).map(([category, perms]) => (
-              <div key={category}>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{category}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {perms.map((perm) => (
-                    <label
-                      key={perm.id}
-                      className={cn(
-                        "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                        permissions[perm.id] ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/20"
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        className="sr-only"
-                        checked={!!permissions[perm.id]}
-                        onChange={(e) => setPerms({ ...permissions, [perm.id]: e.target.checked })}
-                      />
-                      <div className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors",
-                        permissions[perm.id] ? "bg-primary border-primary" : "border-border bg-background"
-                      )}>
-                        {permissions[perm.id] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground">{perm.label}</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{perm.description}</p>
-                      </div>
-                    </label>
-                  ))}
+        {/* Permissions - Only for non-patients */}
+        {role !== "patient" && (
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">Permisos del Rol</h2>
+              <span className="text-xs text-muted-foreground">
+                {Object.values(permissions).filter(Boolean).length} activos
+              </span>
+            </div>
+            <div className="space-y-5">
+              {Object.entries(permsByCategory).map(([category, perms]) => (
+                <div key={category}>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{category}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {perms.map((perm) => (
+                      <label
+                        key={perm.id}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          permissions[perm.id] ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/20"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={!!permissions[perm.id]}
+                          onChange={(ev) => setPerms({ ...permissions, [perm.id]: ev.target.checked })}
+                        />
+                        <div className={cn(
+                          "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                          permissions[perm.id] ? "bg-primary border-primary" : "border-border bg-background"
+                        )}>
+                          {permissions[perm.id] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground">{perm.label}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{perm.description}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <UserPlus className="w-4 h-4" />
-          Registrar Personal
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              Registrando...
+            </>
+          ) : (
+            <>
+              <UserPlus className="w-4 h-4" />
+              Registrar {role === "doctor" ? "Doctor" : role === "patient" ? "Paciente" : role === "admin" ? "Administrador" : "Asistente"}
+            </>
+          )}
         </button>
       </form>
     </div>
@@ -1170,34 +1605,38 @@ function PermissionsView({
                 <span className="text-xs text-muted-foreground ml-auto">{staff.filter(s => s.role === "doctor").length}</span>
               </div>
               <div className="divide-y divide-border">
-                {staff.filter(s => s.role === "doctor").map((m) => {
-                  const isSelected  = selected?.id === m.id
-                  const activePerms = Object.values(m.permissions).filter(Boolean).length
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => handleSelect(m)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
-                        isSelected ? "bg-primary/5 border-l-accent" : "hover:bg-muted/40 border-l-transparent"
-                      )}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-accent">{initials(m.name)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
-                        <span className="text-xs text-muted-foreground truncate">{m.specialty}</span>
-                      </div>
-                      <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                        m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
-                      )}>
-                        {activePerms}
-                      </span>
-                    </button>
-                  )
-                })}
+                {staff.filter(s => s.role === "doctor").length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No hay doctores</p>
+                ) : (
+                  staff.filter(s => s.role === "doctor").map((m) => {
+                    const isSelected  = selected?.id === m.id
+                    const activePerms = Object.values(m.permissions).filter(Boolean).length
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleSelect(m)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
+                          isSelected ? "bg-primary/5 border-l-accent" : "hover:bg-muted/40 border-l-transparent"
+                        )}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-accent">{initials(m.name)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+                          <span className="text-xs text-muted-foreground truncate">{m.specialty}</span>
+                        </div>
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                          m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {activePerms}
+                        </span>
+                      </button>
+                    )
+                  })
+                )}
               </div>
             </div>
 
@@ -1209,34 +1648,38 @@ function PermissionsView({
                 <span className="text-xs text-muted-foreground ml-auto">{staff.filter(s => s.role === "assistant").length}</span>
               </div>
               <div className="divide-y divide-border">
-                {staff.filter(s => s.role === "assistant").map((m) => {
-                  const isSelected  = selected?.id === m.id
-                  const activePerms = Object.values(m.permissions).filter(Boolean).length
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => handleSelect(m)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
-                        isSelected ? "bg-primary/5 border-l-primary" : "hover:bg-muted/40 border-l-transparent"
-                      )}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-primary">{initials(m.name)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
-                        <span className="text-xs text-muted-foreground truncate">{m.department}</span>
-                      </div>
-                      <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                        m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
-                      )}>
-                        {activePerms}
-                      </span>
-                    </button>
-                  )
-                })}
+                {staff.filter(s => s.role === "assistant").length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No hay asistentes</p>
+                ) : (
+                  staff.filter(s => s.role === "assistant").map((m) => {
+                    const isSelected  = selected?.id === m.id
+                    const activePerms = Object.values(m.permissions).filter(Boolean).length
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleSelect(m)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
+                          isSelected ? "bg-primary/5 border-l-primary" : "hover:bg-muted/40 border-l-transparent"
+                        )}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-primary">{initials(m.name)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+                          <span className="text-xs text-muted-foreground truncate">{m.department}</span>
+                        </div>
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                          m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {activePerms}
+                        </span>
+                      </button>
+                    )
+                  })
+                )}
               </div>
             </div>
 
@@ -1248,34 +1691,38 @@ function PermissionsView({
                 <span className="text-xs text-muted-foreground ml-auto">{staff.filter(s => s.role === "admin").length}</span>
               </div>
               <div className="divide-y divide-border">
-                {staff.filter(s => s.role === "admin").map((m) => {
-                  const isSelected  = selected?.id === m.id
-                  const activePerms = Object.values(m.permissions).filter(Boolean).length
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => handleSelect(m)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
-                        isSelected ? "bg-amber-500/5 border-l-amber-500" : "hover:bg-muted/40 border-l-transparent"
-                      )}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-amber-600">{initials(m.name)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
-                        <span className="text-xs text-muted-foreground truncate">{m.department}</span>
-                      </div>
-                      <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                        m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
-                      )}>
-                        {activePerms}
-                      </span>
-                    </button>
-                  )
-                })}
+                {staff.filter(s => s.role === "admin").length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No hay administradores</p>
+                ) : (
+                  staff.filter(s => s.role === "admin").map((m) => {
+                    const isSelected  = selected?.id === m.id
+                    const activePerms = Object.values(m.permissions).filter(Boolean).length
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleSelect(m)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2",
+                          isSelected ? "bg-amber-500/5 border-l-amber-500" : "hover:bg-muted/40 border-l-transparent"
+                        )}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-amber-600">{initials(m.name)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+                          <span className="text-xs text-muted-foreground truncate">{m.department}</span>
+                        </div>
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                          m.status === "active" ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {activePerms}
+                        </span>
+                      </button>
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -1372,14 +1819,483 @@ function PermissionsView({
 }
 
 // ─────────────────────────────────────────────
+// INSTITUTION FORM
+// ─────────────────────────────────────────────
+
+type Institution = {
+  id?: string | number
+  nombre_institucion: string
+  razon_social: string
+  rfc: string
+  regimen_fiscal: string
+  uso_cfdi: string
+  direccion: string
+  telefono: string
+  correo_institucional: string
+}
+
+const REGIMENES_FISCALES = [
+  "601 - General de Ley Personas Morales",
+  "603 - Personas Morales con Fines no Lucrativos",
+  "605 - Sueldos y Salarios e Ingresos Asimilados a Salarios",
+  "606 - Arrendamiento",
+  "607 - Régimen de Enajenación o Adquisición de Bienes",
+  "608 - Demás ingresos",
+  "609 - Consolidación",
+  "610 - Residentes en el Extranjero sin Establecimiento Permanente en México",
+  "611 - Ingresos por Dividendos (socios y accionistas)",
+  "612 - Personas Físicas con Actividades Empresariales y Profesionales",
+  "614 - Ingresos por intereses",
+  "615 - Régimen de los ingresos por obtención de premios",
+  "616 - Sin obligaciones fiscales",
+  "620 - Sociedades Cooperativas de Producción que optan por diferir sus ingresos",
+  "621 - Incorporación Fiscal",
+  "622 - Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras",
+  "623 - Opcional para Grupos de Sociedades",
+  "624 - Coordinados",
+  "625 - Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas",
+  "626 - Régimen Simplificado de Confianza",
+]
+
+const USOS_CFDI = [
+  "G01 - Adquisición de mercancias",
+  "G02 - Devoluciones, descuentos o bonificaciones",
+  "G03 - Gastos en general",
+  "I01 - Construcciones",
+  "I02 - Mobilario y equipo de oficina por inversiones",
+  "I03 - Equipo de transporte",
+  "I04 - Equipo de computo y accesorios",
+  "I05 - Dados, troqueles, moldes, matrices y herramental",
+  "I06 - Comunicaciones telefónicas",
+  "I07 - Comunicaciones satelitales",
+  "I08 - Otra maquinaria y equipo",
+  "D01 - Honorarios médicos, dentales y gastos hospitalarios",
+  "D02 - Gastos médicos por incapacidad o discapacidad",
+  "D03 - Gastos funerales",
+  "D04 - Donativos",
+  "D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)",
+  "D06 - Aportaciones voluntarias al SAR",
+  "D07 - Primas por seguros de gastos médicos",
+  "D08 - Gastos de transportación escolar obligatoria",
+  "D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones",
+  "D10 - Pagos por servicios educativos (colegiaturas)",
+  "S01 - Sin efectos fiscales",
+  "CP01 - Pagos",
+  "CN01 - Nómina",
+]
+
+function InstitutionForm() {
+  const emptyForm: Institution = {
+    nombre_institucion: "",
+    razon_social: "",
+    rfc: "",
+    regimen_fiscal: "",
+    uso_cfdi: "",
+    direccion: "",
+    telefono: "",
+    correo_institucional: "",
+  }
+
+  const [form, setForm]           = useState<Institution>(emptyForm)
+  const [institutions, setInstitutions] = useState<Institution[]>([])
+  const [loading, setLoading]     = useState(false)
+  const [fetching, setFetching]   = useState(true)
+  const [success, setSuccess]     = useState(false)
+  const [apiError, setApiError]   = useState("")
+  const [errors, setErrors]       = useState<Partial<Record<keyof Institution, string>>>({})
+  const [editingId, setEditingId] = useState<string | number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null)
+
+  // Fetch existing institutions on mount
+  useEffect(() => {
+    const fetchInstitutions = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/institutions")
+        if (res.ok) {
+          const data = await res.json()
+          setInstitutions(Array.isArray(data) ? data : data.data ?? [])
+        }
+      } catch {
+        // silently ignore if API is not available
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchInstitutions()
+  }, [])
+
+  const validate = () => {
+    const e: Partial<Record<keyof Institution, string>> = {}
+    if (!form.nombre_institucion.trim()) e.nombre_institucion = "Nombre de institución requerido"
+    if (!form.razon_social.trim()) e.razon_social = "Razón social requerida"
+    if (!form.rfc.trim()) e.rfc = "RFC requerido"
+    else if (!/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/.test(form.rfc.toUpperCase())) e.rfc = "RFC con formato inválido"
+    if (!form.regimen_fiscal) e.regimen_fiscal = "Régimen fiscal requerido"
+    if (!form.uso_cfdi) e.uso_cfdi = "Uso de CFDI requerido"
+    if (!form.direccion.trim()) e.direccion = "Dirección requerida"
+    if (!form.telefono.trim()) e.telefono = "Teléfono requerido"
+    if (!form.correo_institucional.trim()) e.correo_institucional = "Correo institucional requerido"
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo_institucional)) e.correo_institucional = "Correo inválido"
+    return e
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    setLoading(true)
+    setApiError("")
+
+    try {
+      const payload = { ...form, rfc: form.rfc.toUpperCase() }
+      const url     = editingId
+        ? `http://localhost:3000/api/institutions/${editingId}`
+        : "http://localhost:3000/api/institutions"
+      const method  = editingId ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.message || "Error al guardar la institución")
+      }
+
+      const saved = await res.json()
+      const savedInstitution: Institution = saved.data ?? saved
+
+      if (editingId) {
+        setInstitutions((prev) => prev.map((i) => (i.id === editingId ? savedInstitution : i)))
+      } else {
+        setInstitutions((prev) => [savedInstitution, ...prev])
+      }
+
+      setForm(emptyForm)
+      setErrors({})
+      setEditingId(null)
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Error al guardar")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEdit = (inst: Institution) => {
+    setForm({ ...inst })
+    setEditingId(inst.id ?? null)
+    setErrors({})
+    setApiError("")
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleDelete = async (id: string | number) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/institutions/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Error al eliminar")
+      setInstitutions((prev) => prev.filter((i) => i.id !== id))
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Error al eliminar")
+    } finally {
+      setConfirmDelete(null)
+    }
+  }
+
+  const handleCancel = () => {
+    setForm(emptyForm)
+    setEditingId(null)
+    setErrors({})
+    setApiError("")
+  }
+
+  const inputClass = (field: keyof Institution) =>
+    cn(
+      "w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition",
+      errors[field] ? "border-destructive" : "border-input"
+    )
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground text-balance">Institución</h1>
+        <p className="text-sm text-muted-foreground mt-1">Gestiona los datos fiscales y de contacto de la institución médica.</p>
+      </div>
+
+      {success && (
+        <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium">
+          <Check className="w-4 h-4 shrink-0" />
+          {editingId ? "Institución actualizada correctamente." : "Institución registrada correctamente."}
+        </div>
+      )}
+
+      {apiError && (
+        <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-4 py-3 text-sm font-medium">
+          <X className="w-4 h-4 shrink-0" />
+          {apiError}
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Datos generales */}
+        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Datos Generales</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nombre de la Institución *</label>
+              <input
+                type="text"
+                value={form.nombre_institucion}
+                onChange={(e) => setForm({ ...form, nombre_institucion: e.target.value })}
+                placeholder="Ej. Clínica MediRecord"
+                className={inputClass("nombre_institucion")}
+              />
+              {errors.nombre_institucion && <p className="text-xs text-destructive">{errors.nombre_institucion}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Razón Social *</label>
+              <input
+                type="text"
+                value={form.razon_social}
+                onChange={(e) => setForm({ ...form, razon_social: e.target.value })}
+                placeholder="Ej. MediRecord S.A. de C.V."
+                className={inputClass("razon_social")}
+              />
+              {errors.razon_social && <p className="text-xs text-destructive">{errors.razon_social}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">RFC *</label>
+              <input
+                type="text"
+                value={form.rfc}
+                onChange={(e) => setForm({ ...form, rfc: e.target.value.toUpperCase() })}
+                placeholder="Ej. MED000101ABC"
+                maxLength={13}
+                className={cn(inputClass("rfc"), "uppercase")}
+              />
+              {errors.rfc && <p className="text-xs text-destructive">{errors.rfc}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Teléfono *</label>
+              <input
+                type="tel"
+                value={form.telefono}
+                onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                placeholder="+52 55 0000-0000"
+                className={inputClass("telefono")}
+              />
+              {errors.telefono && <p className="text-xs text-destructive">{errors.telefono}</p>}
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Correo Institucional *</label>
+              <input
+                type="email"
+                value={form.correo_institucional}
+                onChange={(e) => setForm({ ...form, correo_institucional: e.target.value })}
+                placeholder="contacto@institucion.mx"
+                className={inputClass("correo_institucional")}
+              />
+              {errors.correo_institucional && <p className="text-xs text-destructive">{errors.correo_institucional}</p>}
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">Dirección *</label>
+              <input
+                type="text"
+                value={form.direccion}
+                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                placeholder="Calle, Número, Colonia, Ciudad, Estado, CP"
+                className={inputClass("direccion")}
+              />
+              {errors.direccion && <p className="text-xs text-destructive">{errors.direccion}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Datos fiscales */}
+        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">Datos Fiscales</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Régimen Fiscal *</label>
+              <select
+                value={form.regimen_fiscal}
+                onChange={(e) => setForm({ ...form, regimen_fiscal: e.target.value })}
+                className={inputClass("regimen_fiscal")}
+              >
+                <option value="">Seleccionar régimen fiscal</option>
+                {REGIMENES_FISCALES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              {errors.regimen_fiscal && <p className="text-xs text-destructive">{errors.regimen_fiscal}</p>}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Uso de CFDI *</label>
+              <select
+                value={form.uso_cfdi}
+                onChange={(e) => setForm({ ...form, uso_cfdi: e.target.value })}
+                className={inputClass("uso_cfdi")}
+              >
+                <option value="">Seleccionar uso de CFDI</option>
+                {USOS_CFDI.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+              {errors.uso_cfdi && <p className="text-xs text-destructive">{errors.uso_cfdi}</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold border border-border text-muted-foreground bg-background hover:bg-muted transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Cancelar edición
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                {editingId ? "Actualizando..." : "Registrando..."}
+              </>
+            ) : (
+              <>
+                {editingId ? <Save className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}
+                {editingId ? "Guardar cambios" : "Registrar Institución"}
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+
+      {/* Institutions list */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Instituciones Registradas</h2>
+          {!fetching && (
+            <span className="text-xs text-muted-foreground">{institutions.length} registros</span>
+          )}
+        </div>
+
+        {fetching ? (
+          <div className="bg-card border border-border rounded-xl py-10 flex items-center justify-center gap-2">
+            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <span className="text-sm text-muted-foreground">Cargando instituciones...</span>
+          </div>
+        ) : institutions.length === 0 ? (
+          <div className="bg-card border border-border rounded-xl py-16 text-center">
+            <Building2 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No hay instituciones registradas aún.</p>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Institución</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">RFC</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Contacto</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden xl:table-cell">Uso CFDI</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {institutions.map((inst) => (
+                    <tr key={inst.id ?? inst.rfc} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Building2 className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{inst.nombre_institucion}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">{inst.razon_social}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <span className="font-mono text-xs bg-muted px-2 py-1 rounded">{inst.rfc}</span>
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <p className="text-foreground text-xs">{inst.correo_institucional}</p>
+                        <p className="text-xs text-muted-foreground">{inst.telefono}</p>
+                      </td>
+                      <td className="px-4 py-3 hidden xl:table-cell">
+                        <span className="text-xs text-muted-foreground">{inst.uso_cfdi.split(" - ")[0]}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleEdit(inst)}
+                            title="Editar"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          {confirmDelete === (inst.id ?? inst.rfc) ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleDelete(inst.id ?? inst.rfc!)}
+                                className="text-xs px-2 py-1 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
+                              >
+                                Sí
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded-lg hover:bg-border transition-colors"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete(inst.id ?? inst.rfc!)}
+                              title="Eliminar"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
 // ROOT PAGE
 // ─────────────────────────────────────────────
 
 export default function AdminPage() {
   const [activeTab, setActiveTab]           = useState("dashboard")
-  const [collapsed, setCollapsed]           = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [staff, setStaff]                   = useState<StaffMember[]>(INITIAL_STAFF)
+  const [staff, setStaff]                   = useState<StaffMember[]>([])
   const [editingMember, setEditingMember]   = useState<StaffMember | null>(null)
 
   const handleRegister     = (member: StaffMember)  => setStaff((prev) => [member, ...prev])
@@ -1397,10 +2313,12 @@ export default function AdminPage() {
       case "dashboard":   return <Dashboard staff={staff} onNavigate={handleTabChange} />
       case "staff":       return <StaffTable staff={staff} onEdit={setEditingMember} onDelete={handleDelete} onToggleStatus={handleToggleStatus} />
       case "doctors":     return <StaffTable staff={staff} filterRole="doctor" onEdit={setEditingMember} onDelete={handleDelete} onToggleStatus={handleToggleStatus} />
+      case "patients":    return <StaffTable staff={staff} filterRole="patient" onEdit={setEditingMember} onDelete={handleDelete} onToggleStatus={handleToggleStatus} />
       case "assistants":  return <StaffTable staff={staff} filterRole="assistant" onEdit={setEditingMember} onDelete={handleDelete} onToggleStatus={handleToggleStatus} />
       case "admins":      return <StaffTable staff={staff} filterRole="admin" onEdit={setEditingMember} onDelete={handleDelete} onToggleStatus={handleToggleStatus} />
       case "register":    return <RegisterForm onRegister={handleRegister} />
       case "permissions": return <PermissionsView staff={staff} onUpdate={handleSave} />
+      case "institution": return <InstitutionForm />
       default:            return <Dashboard staff={staff} onNavigate={handleTabChange} />
     }
   }
@@ -1423,8 +2341,6 @@ export default function AdminPage() {
         <Sidebar
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((v) => !v)}
         />
       </div>
 

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+
 function HeartPulseIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -9,6 +10,7 @@ function HeartPulseIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+
 function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -74,8 +76,7 @@ export default function Login() {
   const router = useRouter()
 
   const [form, setForm] = useState({
-    nombre: "",
-    correo: "",
+    email: "",
     password: ""
   })
 
@@ -97,10 +98,10 @@ export default function Login() {
   const validar = () => {
     const errores: Record<string, string> = {}
 
-    if (!form.correo) {
-      errores.correo = "El correo es obligatorio"
-    } else if (!/\S+@\S+\.\S+/.test(form.correo)) {
-      errores.correo = "Correo inválido"
+    if (!form.email) {
+      errores.email = "El correo es obligatorio"
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      errores.email = "Correo inválido"
     }
 
     if (!form.password) {
@@ -117,28 +118,46 @@ export default function Login() {
     setErrorLogin("")
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const response = await fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password
+        })
+      })
 
-      if (form.correo === "doctor@test.com" && form.password === "123456") {
-        localStorage.setItem("rol", "doctor")
-        router.push("/doctor")
-      } else if (form.correo === "admin@test.com" && form.password === "123456") {
-        localStorage.setItem("rol", "admin")
-        router.push("/admin")
-      } else if (form.correo === "asistente@test.com" && form.password === "123456") {
-        localStorage.setItem("rol", "asistente")
-        router.push("/asistente")
-      } else if (form.correo === "institucion@test.com" && form.password === "123456") {
-        localStorage.setItem("rol", "institucion")
-        router.push("/institucion")
-      } else if (form.correo === "user@test.com" && form.password === "123456") {
-        localStorage.setItem("rol", "user")
-        router.push("/user")
-      } else {
-        setErrorLogin("Credenciales incorrectas")
+      const data = await response.json()
+
+      console.log(data)
+
+      if (!response.ok) {
+        setErrorLogin(data.message || "Credenciales incorrectas")
+        setLoading(false)
+        return
       }
-    } catch {
-      setErrorLogin("Error al iniciar sesión")
+
+      // Guardar token y usuario
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+
+      // Redirecciones por rol
+      if (data.user.role === "admin") {
+        router.push("/Admin")
+      } else if (data.user.role === "doctor") {
+        router.push("/Doctor")
+      } else if (data.user.role === "patient") {
+        router.push("/User")
+      } else if (data.user.role === "institution") {
+        router.push("/Institucion")
+      } else {
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      console.error(error)
+      setErrorLogin("Error al conectar con el servidor")
     }
 
     setLoading(false)
@@ -158,13 +177,23 @@ export default function Login() {
   }
 
   useEffect(() => {
-    const rol = localStorage.getItem("rol")
+    const token = localStorage.getItem("token")
+    const userStr = localStorage.getItem("user")
 
-    if (rol === "doctor") router.push("/doctor")
-    if (rol === "admin") router.push("/admin")
-    if (rol === "asistente") router.push("/asistente")
-    if (rol === "institucion") router.push("/institucion")
-    if (rol === "user") router.push("/user")
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.role === "admin") router.push("/Admin")
+        else if (user.role === "doctor") router.push("/Doctor")
+        else if (user.role === "patient") router.push("/User")
+        else if (user.role === "institution") router.push("/Institucion")
+        else router.push("/dashboard")
+      } catch {
+        // Token inválido, limpiar
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      }
+    }
   }, [router])
 
   return (
@@ -206,7 +235,7 @@ export default function Login() {
               </div>
               <div>
                 <p className="font-semibold text-sm">Confiabilidad</p>
-                <p className="text-teal-200/70 text-xs">Los mejores medicos</p>
+                <p className="text-teal-200/70 text-xs">Los mejores médicos</p>
               </div>
             </div>
             
@@ -215,7 +244,7 @@ export default function Login() {
                 <StethoscopeIcon className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-semibold text-sm">Consulatas medicas al momento </p>
+                <p className="font-semibold text-sm">Consultas médicas al momento</p>
                 <p className="text-teal-200/70 text-xs">Acceso inmediato a expedientes</p>
               </div>
             </div>
@@ -226,7 +255,7 @@ export default function Login() {
               </div>
               <div>
                 <p className="font-semibold text-sm">Multi-usuario</p>
-                <p className="text-teal-200/70 text-xs">Doctores, asistentes</p>
+                <p className="text-teal-200/70 text-xs">Doctores, asistentes e instituciones</p>
               </div>
             </div>
           </div>
@@ -256,9 +285,9 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Correo */}
+            {/* Email */}
             <div className="space-y-2">
-              <label htmlFor="correo" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                 Correo electrónico
               </label>
               <div className="relative">
@@ -266,23 +295,23 @@ export default function Login() {
                   <MailIcon className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  id="correo"
+                  id="email"
                   type="email"
-                  name="correo"
+                  name="email"
                   placeholder="doctor@hospital.com"
-                  value={form.correo}
+                  value={form.email}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3.5 bg-white border-2 rounded-xl text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none ${
-                    errores.correo 
+                    errores.email 
                       ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10" 
                       : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
                   }`}
                 />
               </div>
-              {errores.correo && (
+              {errores.email && (
                 <p className="text-red-500 text-sm flex items-center gap-1.5">
                   <span className="inline-block w-1 h-1 bg-red-500 rounded-full" />
-                  {errores.correo}
+                  {errores.email}
                 </p>
               )}
             </div>
@@ -335,22 +364,6 @@ export default function Login() {
               )}
             </div>
 
-            {/* Remember & Forgot 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 focus:ring-offset-0 cursor-pointer"
-                />
-                <span className="text-slate-600 group-hover:text-slate-800 transition-colors">
-                  Recordarme
-                </span>
-              </label>
-              <a href="#" className="text-teal-600 hover:text-teal-700 font-medium transition-colors">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-*/}
             {/* Error login */}
             {errorLogin && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
@@ -387,34 +400,9 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo credentials 
-          <div className="mt-8 p-4 bg-slate-100 rounded-xl border border-slate-200">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Credenciales de prueba
-            </p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Doctor:</span>
-                <code className="px-2 py-0.5 bg-white rounded text-slate-700 text-xs">doctor@test.com</code>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Admin:</span>
-                <code className="px-2 py-0.5 bg-white rounded text-slate-700 text-xs">admin@test.com</code>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Asistente:</span>
-                <code className="px-2 py-0.5 bg-white rounded text-slate-700 text-xs">asistente@test.com</code>
-              </div>
-              <div className="flex items-center justify-between pt-1 border-t border-slate-200 mt-2">
-                <span className="text-slate-600">Contraseña:</span>
-                <code className="px-2 py-0.5 bg-white rounded text-slate-700 text-xs">123456</code>
-              </div>
-            </div>
-          </div>
-*/}
           {/* Footer */}
           <p className="mt-8 text-center text-sm text-slate-500">
-            © 2026 Extraño a mi ex  Todos los derechos reservados.
+            © 2026 Expediente Clínico Electrónico. Todos los derechos reservados.
           </p>
         </div>
       </div>
