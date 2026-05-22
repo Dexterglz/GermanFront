@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -60,6 +59,28 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+
+// ─────────────────────────────────────────────
+// PACIENTE SERVICE
+// ─────────────────────────────────────────────
+
+const API_BASE_URL = "http://localhost:3001/api";
+
+const getAuthHeaders = (isMultipart = false): HeadersInit => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (!isMultipart) headers["Content-Type"] = "application/json";
+  return headers;
+};
+
+const patientService = {
+
+  claimPatient: (data: Record<string, unknown>) =>
+    fetch(`${API_BASE_URL}/patients/claim`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data),}).then((r) => r.json()),
+
+  getMyRecord: () =>
+    fetch(`${API_BASE_URL}/patients/me`, { method: "GET", headers: getAuthHeaders(), }).then((r) => r.json()),
+};
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -227,89 +248,47 @@ interface HistorialGinecologico {
 // ─────────────────────────────────────────────
 
 const pacienteMock: Paciente = {
-  id: "PAC-001",
+  id: "",
   datosPersonales: {
-    id: "DP-001",
-    nombre: "María Fernanda",
-    apellidoPaterno: "González",
-    apellidoMaterno: "Martínez",
-    fechaNacimiento: "1992-03-15",
+    id: "",
+    nombre: "",
+    apellidoPaterno: "",
+    apellidoMaterno: "",
+    fechaNacimiento: "",
     sexo: "Femenino",
-    curp: "GOMF920315MDFRRT01",
-    rfc: "GOMF920315AB1",
+    curp: "",
+    rfc: "",
   },
   direccion: {
-    calle: "Av. Paseo de la Reforma",
-    numeroExterior: "505",
-    numeroInterior: "12A",
-    colonia: "Cuauhtémoc",
-    ciudad: "Ciudad de México",
-    estado: "CDMX",
-    codigoPostal: "06500",
-    pais: "México",
+    calle: "",
+    numeroExterior: "",
+    numeroInterior: "",
+    colonia: "",
+    ciudad: "",
+    estado: "",
+    codigoPostal: "",
+    pais: "",
   },
   contacto: {
-    telefono: "55 8765 4321",
-    telefonoEmergencia: "55 1234 5678",
-    email: "maria.gonzalez@email.com",
-    nombreContactoEmergencia: "Roberto González (Padre)",
+    telefono: "",
+    telefonoEmergencia: "",
+    email: "",
+    nombreContactoEmergencia: "",
   },
   datosFiscales: {
-    razonSocial: "María Fernanda González Martínez",
-    rfc: "GOMF920315AB1",
-    usoCFDI: "G03 - Gastos en general",
-    regimenFiscal: "612 - Personas Físicas con Actividades Empresariales",
+    razonSocial: "",
+    rfc: "",
+    usoCFDI: "",
+    regimenFiscal: "",
   },
-  signosVitales: [
-    { id: "SV-001", fecha: "2024-01-15T09:30:00Z", peso: 62.5, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 68, presionSistolica: 115, presionDiastolica: 72, grasaCorporal: 22.5, indiceMasaCorporal: 22.9 },
-    { id: "SV-002", fecha: "2024-02-20T10:00:00Z", peso: 61.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 112, presionDiastolica: 70, grasaCorporal: 21.8, indiceMasaCorporal: 22.7 },
-    { id: "SV-003", fecha: "2024-03-10T11:15:00Z", peso: 61.2, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 66, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 21.2, indiceMasaCorporal: 22.5 },
-  ],
-  citas: [
-    { id: "CIT-001", pacienteId: "PAC-001", fecha: "2026-03-05", hora: "09:00", motivo: "Revisión ginecológica anual", estado: "Completada", notas: "Paciente en excelente estado de salud." },
-    { id: "CIT-002", pacienteId: "PAC-001", fecha: "2026-04-24", hora: "10:30", motivo: "Control prenatal", estado: "Confirmada" },
-    { id: "CIT-003", pacienteId: "PAC-001", fecha: "2026-05-15", hora: "16:00", motivo: "Ultrasonido estructural", estado: "Pendiente" },
-  ],
-  visitas: [
-    {
-      id: "VIS-001", pacienteId: "PAC-001", fecha: "2024-01-15T09:30:00Z", motivo: "Revisión de rutina",
-      observaciones: "Paciente refiere bienestar general. Se recomienda continuar con suplementación de ácido fólico.",
-      signosVitales: { id: "SV-001", fecha: "2024-01-15T09:30:00Z", peso: 62.5, estatura: 165, temperatura: 36.4, frecuenciaCardiaca: 68, presionSistolica: 115, presionDiastolica: 72, indiceMasaCorporal: 22.9 },
-    },
-    {
-      id: "VIS-002", pacienteId: "PAC-001", fecha: "2024-02-20T10:00:00Z", motivo: "Seguimiento nutricional",
-      observaciones: "Mejoría notable en hábitos alimenticios. Continuar con plan actual.",
-      signosVitales: { id: "SV-002", fecha: "2024-02-20T10:00:00Z", peso: 61.8, estatura: 165, temperatura: 36.5, frecuenciaCardiaca: 70, presionSistolica: 112, presionDiastolica: 70, indiceMasaCorporal: 22.7 },
-    },
-  ],
-  diagnosticos: [
-    { id: "DX-001", pacienteId: "PAC-001", fecha: "2024-01-15", descripcion: "Control prenatal normal", tratamiento: "Ácido fólico 5mg diario. Sulfato ferroso 300mg cada 24 horas.", severidad: "Leve" },
-    { id: "DX-002", pacienteId: "PAC-001", fecha: "2024-02-20", descripcion: "Deficiencia leve de vitamina D", tratamiento: "Vitamina D3 4000 UI diarias por 8 semanas.", severidad: "Leve" },
-  ],
-  notas: [
-    { id: "NM-001", pacienteId: "PAC-001", fecha: "2024-01-15T09:45:00Z", contenido: "Paciente cooperadora. Refiere adherencia adecuada al tratamiento prenatal. Se solicitan laboratorios de control para próxima cita." },
-    { id: "NM-002", pacienteId: "PAC-001", fecha: "2024-02-20T10:20:00Z", contenido: "Resultados de laboratorio dentro de parámetros normales. Paciente en excelente estado de ánimo. Continuar seguimiento mensual." },
-  ],
-  medicamentos: [
-    { id: "MED-001", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "5 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
-    { id: "MED-002", pacienteId: "PAC-001", nombre: "Sulfato ferroso", dosis: "300 mg", frecuencia: "1 vez al día con alimentos", fechaInicio: "2024-01-15" },
-    { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "4000 UI", frecuencia: "1 vez al día", fechaInicio: "2024-02-20" },
-  ],
-  recordatorios: [
-    { id: "REC-001", medicamentoId: "MED-001", hora: "08:00", activo: true },
-    { id: "REC-002", medicamentoId: "MED-002", hora: "13:00", activo: true },
-    { id: "REC-003", medicamentoId: "MED-003", hora: "20:00", activo: true },
-  ],
-  dashboard: {
-    pacienteId: "PAC-001",
-    ultimoRegistro: { id: "SV-003", fecha: "2024-03-10T11:15:00Z", peso: 61.2, estatura: 165, temperatura: 36.6, frecuenciaCardiaca: 66, presionSistolica: 110, presionDiastolica: 68, grasaCorporal: 21.2, indiceMasaCorporal: 22.5 },
-    ultimoDiagnostico: { id: "DX-002", pacienteId: "PAC-001", fecha: "2024-02-20", descripcion: "Deficiencia leve de vitamina D", tratamiento: "Vitamina D3 4000 UI diarias por 8 semanas.", severidad: "Leve" },
-    proximaCita: { id: "CIT-002", pacienteId: "PAC-001", fecha: "2026-04-24", hora: "10:30", motivo: "Control prenatal", estado: "Confirmada" },
-    medicamentosActivos: [
-      { id: "MED-001", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "5 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
-      { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "4000 UI", frecuencia: "1 vez al día", fechaInicio: "2024-02-20" },
-    ],
-  },
+  signosVitales: [],
+  citas: [],
+  visitas: [],
+  diagnosticos: [],
+  notas: [],
+  medicamentos: [],
+  recordatorios: [],
+  dashboard: undefined,
 };
 
 // ─────────────────────────────────────────────
@@ -1066,6 +1045,9 @@ type TabId = (typeof tabs)[number]["id"];
 export default function Page() {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  //const [paciente, setPaciente] = useState<Paciente | null>(null);
+  //const [loading, setLoading] = useState(true);
+  //const [error, setError] = useState("");
   const paciente = pacienteMock;
   const dp = paciente.datosPersonales;
   const nombreCompleto = [dp.nombre, dp.apellidoPaterno, dp.apellidoMaterno].filter(Boolean).join(" ");
@@ -1073,11 +1055,51 @@ export default function Page() {
 
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    router.replace("/login");
-  };
+// useEffect(() => {
+//   loadPatient();
+// }, []);
+
+// const loadPatient = async () => {
+//   try {
+//     setLoading(true);
+
+//     const response = await patientService.getMyRecord();
+
+//     if (response.success) {
+//       setPaciente(response.data);
+//     } else {
+//       setError(response.message || "No se pudo cargar");
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     setError("Error de conexión");
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", headers: getAuthHeaders() })
+    } catch { /* ignore */ }
+    finally {
+      localStorage.clear()
+      sessionStorage.clear()
+      router.replace("/login")
+    }
+  }
+
+// if (loading) {
+//   return <div className="p-10">Cargando expediente...</div>;
+// }
+
+// if (error) {
+//   return <div className="p-10 text-red-500">{error}</div>;
+// }
+
+// if (!paciente) {
+//   return <div className="p-10">No existe expediente</div>;
+// }
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -1169,10 +1191,8 @@ export default function Page() {
                 <Menu className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-foreground">{tabs.find(t => t.id === activeTab)?.label}</h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">
-                  Expediente de {dp.nombre} {dp.apellidoPaterno}
-                </p>
+                <h1 className="text-xl font-bold text-foreground">{tabs.find((t) => t.id === activeTab)?.label}</h1>
+                <p className="text-sm text-muted-foreground hidden sm:block">Expediente de {dp?.nombre ?? ""} {dp?.apellidoPaterno ?? ""}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
