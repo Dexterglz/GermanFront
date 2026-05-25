@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "../lib/utils"
+
 import {
   Users,
   UserPlus,
@@ -25,12 +26,14 @@ import {
   UserX,
   ClipboardList,
   Plus,
+  ChevronRight,
+  Phone,
 } from "lucide-react"
 
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
-const API_BASE_URL = "http://localhost:3001/api"
+const API_BASE_URL = "http://localhost:3003/api"
 
 function getAuthToken(): string | null {
   if (typeof window !== "undefined") {
@@ -82,19 +85,19 @@ type StaffMember = {
 const SPECIALTIES = ["Cardiología", "Pediatría", "Neurología", "Ginecología", "Ortopedia", "Dermatología", "Oftalmología", "Medicina General"]
 const DEPARTMENTS = ["Cardiología", "Pediatría", "Neurología", "Ginecología", "Ortopedia", "Dermatología", "Recepción", "Administración", "Enfermería"]
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-const SEXOS       = ["Masculino", "Femenino", "Otro"]
+const SEXOS = ["Masculino", "Femenino", "Otro"]
 
 const NAV_ITEMS = [
-  { id: "dashboard",    label: "Dashboard",        icon: LayoutDashboard },
-  { id: "staff",        label: "Todo el Personal", icon: Users },
-  { id: "doctors",      label: "Doctores",         icon: Stethoscope },
-  { id: "patients",     label: "Pacientes",        icon: User },
-  { id: "assistants",   label: "Asistentes",       icon: HeartPulse },
-  { id: "admins",       label: "Administradores",  icon: Shield },
-  { id: "register",     label: "Registrar Nuevo",  icon: UserPlus },
-  { id: "institution",  label: "Institución",      icon: Building2 },
-  { id: "branches",     label: "Sucursales",       icon: GitBranch },
-  { id: "affiliations", label: "Afiliaciones",     icon: ClipboardList },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "staff", label: "Todo el Personal", icon: Users },
+  { id: "doctors", label: "Doctores", icon: Stethoscope },
+  { id: "patients", label: "Pacientes", icon: User },
+  { id: "assistants", label: "Asistentes", icon: HeartPulse },
+  { id: "admins", label: "Administradores", icon: Shield },
+  { id: "register", label: "Registrar Nuevo", icon: UserPlus },
+  { id: "institution", label: "Institución", icon: Building2 },
+  { id: "branches", label: "Sucursales", icon: GitBranch },
+  { id: "affiliations", label: "Afiliaciones", icon: ClipboardList },
 ]
 
 function initials(name: string) {
@@ -166,6 +169,8 @@ function Sidebar({ activeTab, onTabChange }: { activeTab: string; onTabChange: (
   )
 }
 
+
+
 // ─────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────
@@ -215,34 +220,34 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
     fetchDashboardData()
   }, [])
 
-  const doctors    = staff.filter((s) => s.role === "doctor")
-  const patients   = staff.filter((s) => s.role === "patient")
+  const doctors = staff.filter((s) => s.role === "doctor")
+  const patients = staff.filter((s) => s.role === "patient")
   const assistants = staff.filter((s) => s.role === "assistant")
-  const admins     = staff.filter((s) => s.role === "admin")
-  const active     = staff.filter((s) => s.status === "active")
+  const admins = staff.filter((s) => s.role === "admin")
+  const active = staff.filter((s) => s.status === "active")
 
   const stats = [
-    { label: "Total Personal",         value: summary.totalUsers    || staff.length,     icon: Users,        color: "bg-primary/10 text-primary",         tab: "staff"        },
-    { label: "Doctores",               value: summary.totalDoctors  || doctors.length,   icon: Stethoscope,  color: "bg-accent/10 text-accent",            tab: "doctors"      },
-    { label: "Pacientes",              value: summary.totalPatients || patients.length,  icon: User,         color: "bg-emerald-500/10 text-emerald-600",  tab: "patients"     },
-    { label: "Asistentes",             value: assistants.length,                         icon: HeartPulse,   color: "bg-primary/10 text-primary",          tab: "assistants"   },
-    { label: "Instituciones",          value: summary.totalInstitutions || 0,            icon: Building2,    color: "bg-amber-500/10 text-amber-600",      tab: "institution"  },
-    { label: "Sucursales",             value: summary.totalBranches || 0,               icon: GitBranch,    color: "bg-sky-500/10 text-sky-600",          tab: "branches"     },
-    { label: "Afiliaciones pendientes",value: summary.pendingAffiliations || 0,          icon: ClipboardList,color: "bg-orange-500/10 text-orange-600",    tab: "affiliations" },
-    { label: "Activos",                value: active.length,                             icon: CheckCircle,  color: "bg-green-500/10 text-green-600",      tab: "staff"        },
+    { label: "Total Personal", value: summary.totalUsers || staff.length, icon: Users, color: "bg-primary/10 text-primary", tab: "staff" },
+    { label: "Doctores", value: summary.totalDoctors || doctors.length, icon: Stethoscope, color: "bg-accent/10 text-accent", tab: "doctors" },
+    { label: "Pacientes", value: summary.totalPatients || patients.length, icon: User, color: "bg-emerald-500/10 text-emerald-600", tab: "patients" },
+    { label: "Asistentes", value: assistants.length, icon: HeartPulse, color: "bg-primary/10 text-primary", tab: "assistants" },
+    { label: "Instituciones", value: summary.totalInstitutions || 0, icon: Building2, color: "bg-amber-500/10 text-amber-600", tab: "institution" },
+    { label: "Sucursales", value: summary.totalBranches || 0, icon: GitBranch, color: "bg-sky-500/10 text-sky-600", tab: "branches" },
+    { label: "Afiliaciones pendientes", value: summary.pendingAffiliations || 0, icon: ClipboardList, color: "bg-orange-500/10 text-orange-600", tab: "affiliations" },
+    { label: "Activos", value: active.length, icon: CheckCircle, color: "bg-green-500/10 text-green-600", tab: "staff" },
   ]
 
   const getRoleColor = (role: Role) => {
-    if (role === "doctor")    return "bg-accent/10 text-accent"
-    if (role === "admin")     return "bg-amber-500/10 text-amber-600"
-    if (role === "patient")   return "bg-emerald-500/10 text-emerald-600"
+    if (role === "doctor") return "bg-accent/10 text-accent"
+    if (role === "admin") return "bg-amber-500/10 text-amber-600"
+    if (role === "patient") return "bg-emerald-500/10 text-emerald-600"
     return "bg-primary/10 text-primary"
   }
 
   const getRoleLabel = (role: Role) => {
-    if (role === "doctor")    return "Doctor"
-    if (role === "admin")     return "Admin"
-    if (role === "patient")   return "Paciente"
+    if (role === "doctor") return "Doctor"
+    if (role === "admin") return "Admin"
+    if (role === "patient") return "Paciente"
     return "Asistente"
   }
 
@@ -351,11 +356,11 @@ function Dashboard({ staff, onNavigate }: { staff: StaffMember[]; onNavigate: (t
 // ─────────────────────────────────────────────
 
 function StaffTable({ staff, filterRole }: { staff: StaffMember[]; filterRole?: Role }) {
-  const [search, setSearch]             = useState("")
+  const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
 
   const filtered = staff.filter((m) => {
-    const matchRole   = filterRole ? m.role === filterRole : true
+    const matchRole = filterRole ? m.role === filterRole : true
     const matchSearch = [m.name, m.email, m.department].some((v) =>
       v?.toLowerCase().includes(search.toLowerCase())
     )
@@ -442,10 +447,10 @@ function StaffTable({ staff, filterRole }: { staff: StaffMember[]; filterRole?: 
                     <td className="px-4 py-3">
                       <span className={cn(
                         "inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium",
-                        member.role === "doctor"  ? "bg-accent/10 text-accent"
-                        : member.role === "admin" ? "bg-amber-500/10 text-amber-600"
-                        : member.role === "patient" ? "bg-emerald-500/10 text-emerald-600"
-                        : "bg-primary/10 text-primary"
+                        member.role === "doctor" ? "bg-accent/10 text-accent"
+                          : member.role === "admin" ? "bg-amber-500/10 text-amber-600"
+                            : member.role === "patient" ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-primary/10 text-primary"
                       )}>
                         {member.role === "doctor" ? "Doctor" : member.role === "admin" ? "Admin" : member.role === "patient" ? "Paciente" : "Asistente"}
                       </span>
@@ -486,7 +491,7 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
     contacto_emergencia: "", telefono_contacto_emergencia: "",
   })
   const [success, setSuccess] = useState(false)
-  const [errors, setErrors]   = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [apiError, setApiError] = useState("")
 
@@ -536,8 +541,9 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
           body: JSON.stringify({
             email: form.email, password: form.password, role: "DOCTOR",
             firstName: form.name.split(" ")[0],
-            lastName:  form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
+            lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
             cedula: form.cedula_profesional,
+            phone: form.phone,
           }),
         })
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || "Error al registrar doctor") }
@@ -548,14 +554,14 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
         // POST /api/patients
         const payload: Record<string, unknown> = {
           firstName: form.name.split(" ")[0],
-          lastName:  form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
+          lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
           birthDate: form.fecha_nacimiento,
           gender: form.sexo === "Masculino" ? "MALE" : form.sexo === "Femenino" ? "FEMALE" : "OTHER",
         }
-        if (form.tipo_sangre)                    payload.bloodType              = form.tipo_sangre
-        if (form.contacto_emergencia)            payload.emergencyContactName   = form.contacto_emergencia
-        if (form.telefono_contacto_emergencia)   payload.emergencyContactPhone  = form.telefono_contacto_emergencia
-        if (form.curp)                           { payload.nationalId = form.curp; payload.nationalIdType = "CURP" }
+        if (form.tipo_sangre) payload.bloodType = form.tipo_sangre
+        if (form.contacto_emergencia) payload.emergencyContactName = form.contacto_emergencia
+        if (form.telefono_contacto_emergencia) payload.emergencyContactPhone = form.telefono_contacto_emergencia
+        if (form.curp) { payload.nationalId = form.curp; payload.nationalIdType = "CURP" }
 
         const res = await fetch(`${API_BASE_URL}/patients`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload) })
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || "Error al crear paciente") }
@@ -567,11 +573,18 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
         const regRes = await fetch(`${API_BASE_URL}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password, role: "SECRETARY", firstName: form.name.split(" ")[0], lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0] }),
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+            role: "SECRETARY",
+            firstName: form.name.split(" ")[0],
+            lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
+            phone: form.phone
+          }),
         })
         if (!regRes.ok) { const d = await regRes.json().catch(() => ({})); throw new Error(d.message || "Error al registrar asistente") }
-        const regData  = await regRes.json()
-        const userId   = regData.data?.id
+        const regData = await regRes.json()
+        const userId = regData.data?.id
 
         const staffPayload: Record<string, unknown> = { userId, firstName: form.name.split(" ")[0], lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0], staffRole: "SECRETARY" }
         if (form.phone) staffPayload.phone = form.phone
@@ -587,7 +600,14 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
         const res = await fetch(`${API_BASE_URL}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password, role: "INSTITUTION_ADMIN", firstName: form.name.split(" ")[0], lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0] }),
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+            role: "INSTITUTION_ADMIN",
+            firstName: form.name.split(" ")[0],
+            lastName: form.name.split(" ").slice(1).join(" ") || form.name.split(" ")[0],
+            phone: form.phone
+          }),
         })
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || "Error al registrar administrador") }
         const userData = await res.json()
@@ -635,7 +655,7 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
             {(["doctor", "patient", "assistant", "admin"] as Role[]).map((r) => {
               const Icon = r === "doctor" ? Stethoscope : r === "patient" ? User : r === "admin" ? Shield : HeartPulse
               const label = r === "doctor" ? "Doctor" : r === "patient" ? "Paciente" : r === "admin" ? "Administrador" : "Asistente"
-              const desc  = r === "doctor" ? "Médico especialista" : r === "patient" ? "Paciente del sistema" : r === "admin" ? "Control total" : "Personal de apoyo"
+              const desc = r === "doctor" ? "Médico especialista" : r === "patient" ? "Paciente del sistema" : r === "admin" ? "Control total" : "Personal de apoyo"
               const isSelected = role === r
               return (
                 <button key={r} type="button" onClick={() => handleRoleChange(r)}
@@ -688,7 +708,7 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Teléfono *</label>
-              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+52 55 0000-0000" className={inputClass("phone")} />
+              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+52 55 0000-0000" maxLength={13} className={inputClass("phone")} />
               {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
             </div>
           </div>
@@ -766,7 +786,7 @@ function RegisterForm({ onRegister }: { onRegister: (member: StaffMember) => voi
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Teléfono de Emergencia *</label>
-                <input type="tel" value={form.telefono_contacto_emergencia} onChange={(e) => setForm({ ...form, telefono_contacto_emergencia: e.target.value })} placeholder="+52 55 0000-0000" className={inputClass("telefono_contacto_emergencia")} />
+                <input type="tel" value={form.telefono_contacto_emergencia} onChange={(e) => setForm({ ...form, telefono_contacto_emergencia: e.target.value })} maxLength={13} placeholder="+52 55 0000-0000" className={inputClass("telefono_contacto_emergencia")} />
                 {errors.telefono_contacto_emergencia && <p className="text-xs text-destructive">{errors.telefono_contacto_emergencia}</p>}
               </div>
             </div>
@@ -819,23 +839,23 @@ type Institution = {
 }
 
 const INSTITUTION_TYPES = [
-  { value: "HOSPITAL",   label: "Hospital"   },
-  { value: "CLINIC",     label: "Clínica"    },
+  { value: "HOSPITAL", label: "Hospital" },
+  { value: "CLINIC", label: "Clínica" },
   { value: "LABORATORY", label: "Laboratorio" },
-  { value: "PHARMACY",   label: "Farmacia"   },
-  { value: "OTHER",      label: "Otro"       },
+  { value: "PHARMACY", label: "Farmacia" },
+  { value: "OTHER", label: "Otro" },
 ]
 
 function InstitutionForm() {
   const emptyForm: Institution = { name: "", legalName: "", rfc: "", phone: "", email: "", institutionType: "CLINIC" }
 
-  const [form, setForm]             = useState<Institution>(emptyForm)
+  const [form, setForm] = useState<Institution>(emptyForm)
   const [institutions, setInstitutions] = useState<Institution[]>([])
-  const [loading, setLoading]       = useState(false)
-  const [fetching, setFetching]     = useState(true)
-  const [success, setSuccess]       = useState(false)
-  const [apiError, setApiError]     = useState("")
-  const [errors, setErrors]         = useState<Partial<Record<keyof Institution, string>>>({})
+  const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
+  const [success, setSuccess] = useState(false)
+  const [apiError, setApiError] = useState("")
+  const [errors, setErrors] = useState<Partial<Record<keyof Institution, string>>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -871,9 +891,9 @@ function InstitutionForm() {
       // POST /api/institutions
       const payload: Record<string, unknown> = { name: form.name, institutionType: form.institutionType }
       if (form.legalName) payload.legalName = form.legalName
-      if (form.rfc)       payload.rfc       = form.rfc.toUpperCase()
-      if (form.phone)     payload.phone     = form.phone
-      if (form.email)     payload.email     = form.email
+      if (form.rfc) payload.rfc = form.rfc.toUpperCase()
+      if (form.phone) payload.phone = form.phone
+      if (form.email) payload.email = form.email
 
       const res = await fetch(`${API_BASE_URL}/institutions`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload) })
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || "Error al registrar institución") }
@@ -1033,25 +1053,25 @@ function InstitutionForm() {
 type Branch = { id: string; name: string; phone?: string; email?: string; institutionId?: string; institutionName?: string }
 
 function BranchesView() {
-  const [branches, setBranches]           = useState<Branch[]>([])
-  const [institutions, setInstitutions]   = useState<{ id: string; name: string }[]>([])
-  const [submitting, setSubmitting]       = useState(false)
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([])
+  const [submitting, setSubmitting] = useState(false)
   const [assignLoading, setAssignLoading] = useState(false)
   const [branchUserLoading, setBranchUserLoading] = useState(false)
-  const [success, setSuccess]             = useState("")
-  const [apiError, setApiError]           = useState("")
+  const [success, setSuccess] = useState("")
+  const [apiError, setApiError] = useState("")
 
   const emptyBranchForm = { institutionId: "", name: "", phone: "", email: "" }
-  const [branchForm, setBranchForm]       = useState(emptyBranchForm)
-  const [branchErrors, setBranchErrors]   = useState<Record<string, string>>({})
-  const [assignForm, setAssignForm]       = useState({ staffId: "", branchId: "" })
+  const [branchForm, setBranchForm] = useState(emptyBranchForm)
+  const [branchErrors, setBranchErrors] = useState<Record<string, string>>({})
+  const [assignForm, setAssignForm] = useState({ staffId: "", branchId: "" })
   const [branchUserForm, setBranchUserForm] = useState({ branchId: "", userId: "", role: "BRANCH_ADMIN" })
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/institutions`, { headers: getAuthHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setInstitutions((Array.isArray(d) ? d : d.data ?? []).map((i: Record<string, unknown>) => ({ id: i.id as string, name: i.name as string }))) })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const showSuccess = (msg: string) => { setSuccess(msg); setTimeout(() => setSuccess(""), 3000) }
@@ -1071,7 +1091,7 @@ function BranchesView() {
       const res = await fetch(`${API_BASE_URL}/institutions/${branchForm.institutionId}/branches`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload) })
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || "Error al crear sucursal") }
       const data = await res.json()
-      const nb   = data.data ?? data
+      const nb = data.data ?? data
       setBranches(prev => [{ id: nb.id, name: nb.name, phone: nb.phone, email: nb.email, institutionId: branchForm.institutionId, institutionName: institutions.find(i => i.id === branchForm.institutionId)?.name }, ...prev])
       setBranchForm(emptyBranchForm); setBranchErrors({})
       showSuccess("Sucursal creada correctamente.")
@@ -1116,7 +1136,7 @@ function BranchesView() {
         <p className="text-sm text-muted-foreground mt-1">Crea sucursales, asigna staff y agrega usuarios.</p>
       </div>
 
-      {success  && <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium"><Check className="w-4 h-4 shrink-0" />{success}</div>}
+      {success && <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium"><Check className="w-4 h-4 shrink-0" />{success}</div>}
       {apiError && <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-4 py-3 text-sm font-medium"><X className="w-4 h-4 shrink-0" />{apiError}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1256,14 +1276,14 @@ type Affiliation = {
 }
 
 function AffiliationsView() {
-  const [affiliations, setAffiliations]   = useState<Affiliation[]>([])
-  const [loading, setLoading]             = useState(true)
-  const [success, setSuccess]             = useState("")
-  const [apiError, setApiError]           = useState("")
-  const [rejectId, setRejectId]           = useState<string | null>(null)
-  const [rejectReason, setRejectReason]   = useState("")
+  const [affiliations, setAffiliations] = useState<Affiliation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [success, setSuccess] = useState("")
+  const [apiError, setApiError] = useState("")
+  const [rejectId, setRejectId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState("")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [instUserForm, setInstUserForm]   = useState({ institutionId: "", userId: "", role: "INSTITUTION_ADMIN" })
+  const [instUserForm, setInstUserForm] = useState({ institutionId: "", userId: "", role: "INSTITUTION_ADMIN" })
   const [instUserLoading, setInstUserLoading] = useState(false)
 
   useEffect(() => {
@@ -1271,7 +1291,7 @@ function AffiliationsView() {
     fetch(`${API_BASE_URL}/affiliations`, { headers: getAuthHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setAffiliations(Array.isArray(d) ? d : (d.data ?? [])) })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false))
   }, [])
 
@@ -1331,7 +1351,7 @@ function AffiliationsView() {
         <p className="text-sm text-muted-foreground mt-1">Aprueba o rechaza solicitudes. Agrega usuarios a instituciones.</p>
       </div>
 
-      {success  && <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium"><Check className="w-4 h-4 shrink-0" />{success}</div>}
+      {success && <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 rounded-lg px-4 py-3 text-sm font-medium"><Check className="w-4 h-4 shrink-0" />{success}</div>}
       {apiError && <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-4 py-3 text-sm font-medium"><X className="w-4 h-4 shrink-0" />{apiError}</div>}
 
       {/* Add institution user */}
@@ -1442,9 +1462,63 @@ function AffiliationsView() {
 // ─────────────────────────────────────────────
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab]             = useState("dashboard")
+  const [showQuickRegister, setShowQuickRegister] = useState(false)
+  const [activeTab, setActiveTab] = useState("dashboard")
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [staff, setStaff]                     = useState<StaffMember[]>([])
+  const [staff, setStaff] = useState<StaffMember[]>([])
+
+
+
+  // Luego este componente:
+  function QuickRegisterModal({
+    isOpen,
+    onClose,
+    onSelect,
+  }: {
+    isOpen: boolean
+    onClose: () => void
+    onSelect: (role: Role) => void
+  }) {
+    if (!isOpen) return null
+
+    const roles: Array<{ value: Role; label: string; icon: React.ComponentType<any> }> = [
+      { value: "doctor", label: "Registrar Doctor", icon: Stethoscope },
+      { value: "patient", label: "Registrar Paciente", icon: User },
+      { value: "assistant", label: "Registrar Asistente", icon: HeartPulse },
+      { value: "admin", label: "Registrar Administrador", icon: Shield },
+    ]
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-foreground">¿Qué tipo de usuario deseas registrar?</h2>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {roles.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => {
+                  onSelect(value)
+                  onClose()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted/50 hover:border-primary/30 transition-all text-left"
+              >
+                <Icon className="w-5 h-5 text-primary shrink-0" />
+                <span className="text-sm font-medium text-foreground">{label}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     // GET /api/staff
@@ -1465,29 +1539,30 @@ export default function AdminPage() {
           createdAt: (m.createdAt as string)?.split("T")[0] || new Date().toISOString().split("T")[0],
         })))
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
-  const handleRegister  = (member: StaffMember) => setStaff((prev) => [member, ...prev])
+  const handleRegister = (member: StaffMember) => setStaff((prev) => [member, ...prev])
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
     setMobileSidebarOpen(false)
   }
 
+
   const renderContent = () => {
     switch (activeTab) {
-      case "dashboard":    return <Dashboard staff={staff} onNavigate={handleTabChange} />
-      case "staff":        return <StaffTable staff={staff} />
-      case "doctors":      return <StaffTable staff={staff} filterRole="doctor" />
-      case "patients":     return <StaffTable staff={staff} filterRole="patient" />
-      case "assistants":   return <StaffTable staff={staff} filterRole="assistant" />
-      case "admins":       return <StaffTable staff={staff} filterRole="admin" />
-      case "register":     return <RegisterForm onRegister={handleRegister} />
-      case "institution":  return <InstitutionForm />
-      case "branches":     return <BranchesView />
+      case "dashboard": return <Dashboard staff={staff} onNavigate={handleTabChange} />
+      case "staff": return <StaffTable staff={staff} />
+      case "doctors": return <StaffTable staff={staff} filterRole="doctor" />
+      case "patients": return <StaffTable staff={staff} filterRole="patient" />
+      case "assistants": return <StaffTable staff={staff} filterRole="assistant" />
+      case "admins": return <StaffTable staff={staff} filterRole="admin" />
+      case "register": return <RegisterForm onRegister={handleRegister} />
+      case "institution": return <InstitutionForm />
+      case "branches": return <BranchesView />
       case "affiliations": return <AffiliationsView />
-      default:             return <Dashboard staff={staff} onNavigate={handleTabChange} />
+      default: return <Dashboard staff={staff} onNavigate={handleTabChange} />
     }
   }
 
@@ -1518,6 +1593,23 @@ export default function AdminPage() {
         <div className="max-w-6xl mx-auto p-4 lg:p-8">
           {renderContent()}
         </div>
+
+        {/*         <button
+          onClick={() => setShowQuickRegister(true)}
+          className="fixed bottom-8 right-8 z-40 flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg"
+        >
+          <Plus className="w-5 h-5" />
+          Nuevo Usuario
+        </button> */}
+
+        <QuickRegisterModal
+          isOpen={showQuickRegister}
+          onClose={() => setShowQuickRegister(false)}
+          onSelect={(role) => {
+            setActiveTab("register")
+            // Opcionalmente podrías pre-seleccionar el rol en RegisterForm
+          }}
+        />
       </main>
     </div>
   )

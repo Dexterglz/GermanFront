@@ -75,7 +75,7 @@ const ChevronRightIcon = ChevronRight;
 // DOCTOR SERVICE
 // ─────────────────────────────────────────────
 
-const BASE_URL = "http://localhost:3001/api";
+const BASE_URL = "http://localhost:3003/api";
 
 const getAuthHeaders = (isMultipart = false): HeadersInit => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
@@ -131,7 +131,7 @@ const translations = {
     appName: "MediRecord",
     appSubtitle: "Sistema de Expedientes",
     yearsOld: "años",
-    
+
     // Tabs
     dashboard: "Resumen",
     generalData: "Datos Generales",
@@ -141,7 +141,7 @@ const translations = {
     medicalRecord: "Expediente",
     visits: "Visitas",
     medications: "Medicamentos",
-    
+
     // Common
     save: "Guardar",
     cancel: "Cancelar",
@@ -153,13 +153,13 @@ const translations = {
     print: "Imprimir",
     close: "Cerrar",
     new: "Nuevo",
-    
+
     // Dashboard
     nextAppointment: "Próxima cita",
     lastDiagnosis: "Último diagnóstico",
     activeMedications: "Medicamentos activos",
     latestVitals: "Últimos signos vitales",
-    
+
     // Vital Signs
     weight: "Peso",
     height: "Estatura",
@@ -168,7 +168,7 @@ const translations = {
     bloodPressure: "Presión arterial",
     bodyFat: "Grasa corporal",
     bmi: "IMC",
-    
+
     // Appointments
     pending: "Pendiente",
     confirmed: "Confirmada",
@@ -186,7 +186,7 @@ const translations = {
     discount: "Descuento",
     basePrice: "Precio base",
     finalPrice: "Precio final",
-    
+
     // Consultation
     consultationReason: "Motivo de consulta",
     clinicalData: "Datos clínicos",
@@ -195,14 +195,14 @@ const translations = {
     treatment: "Tratamiento",
     medicalNote: "Nota médica",
     saveConsultation: "Guardar consulta",
-    
+
     // Medical Record
     medicalHistory: "Historial médico",
     diagnoses: "Diagnósticos",
     Visits: "Visitas",
     notes: "Notas",
     date: "Fecha",
-    
+
     // Medications
     medication: "Medicamento",
     dose: "Dosis",
@@ -212,7 +212,7 @@ const translations = {
     reminders: "Recordatorios",
     active: "Activo",
     inactive: "Inactivo",
-    
+
     // Patient Data
     personalData: "Datos personales",
     address: "Dirección",
@@ -236,7 +236,7 @@ const translations = {
     state: "Estado",
     postalCode: "Código postal",
     country: "País",
-    
+
     // Settings
     settings: "Configuración",
     customizeExperience: "Personaliza tu experiencia",
@@ -286,21 +286,21 @@ const translations = {
     rememberSessionDescription: "Mantener sesión iniciada",
     changePassword: "Cambiar contraseña",
     exportData: "Exportar datos",
-    
+
     // Notifications
     notificationsTitle: "Notificaciones",
     newNotifications: "nuevas",
     markAllAsRead: "Marcar todas como leídas",
     noNotifications: "Sin notificaciones",
     viewAllReminders: "Ver todos los recordatorios de medicamentos",
-    
+
     // Theme
     theme: "Tema",
     openMenu: "Abrir menú",
-    
+
     // Patient file
     patientFile: "Expediente de",
-    
+
     // BMI categories
     bmiUnderweight: "Bajo peso",
     bmiNormal: "Normal",
@@ -314,7 +314,7 @@ const translations = {
     appName: "MediRecord",
     appSubtitle: "Medical Records System",
     yearsOld: "years old",
-    
+
     // Tabs
     dashboard: "Dashboard",
     generalData: "General Data",
@@ -325,7 +325,7 @@ const translations = {
     visits: "Visits",
     medications: "Medications",
     gynecology: "Gynecology",
-    
+
     // Common
     save: "Save",
     cancel: "Cancel",
@@ -337,13 +337,13 @@ const translations = {
     print: "Print",
     close: "Close",
     new: "New",
-    
+
     // Dashboard
     nextAppointment: "Next appointment",
     lastDiagnosis: "Last diagnosis",
     activeMedications: "Active medications",
     latestVitals: "Latest vital signs",
-    
+
     // Vital Signs
     weight: "Weight",
     height: "Height",
@@ -352,7 +352,7 @@ const translations = {
     bloodPressure: "Blood pressure",
     bodyFat: "Body fat",
     bmi: "BMI",
-    
+
     // Appointments
     pending: "Pending",
     confirmed: "Confirmed",
@@ -370,7 +370,7 @@ const translations = {
     discount: "Discount",
     basePrice: "Base price",
     finalPrice: "Final price",
-    
+
     // Consultation
     consultationReason: "Reason for consultation",
     clinicalData: "Clinical data",
@@ -379,14 +379,14 @@ const translations = {
     treatment: "Treatment",
     medicalNote: "Medical note",
     saveConsultation: "Save consultation",
-    
+
     // Medical Record
     medicalHistory: "Medical history",
     diagnoses: "Diagnoses",
     Visits: "Visits",
     notes: "Notes",
     date: "Date",
-    
+
     // Medications
     medication: "Medication",
     dose: "Dose",
@@ -396,7 +396,7 @@ const translations = {
     reminders: "Reminders",
     active: "Active",
     inactive: "Inactive",
-    
+
     // Patient Data
     personalData: "Personal data",
     address: "Address",
@@ -420,7 +420,7 @@ const translations = {
     state: "State",
     postalCode: "Postal code",
     country: "Country",
-    
+
     // Settings
     settings: "Settings",
     customizeExperience: "Customize your experience",
@@ -470,14 +470,14 @@ const translations = {
     rememberSessionDescription: "Keep session active",
     changePassword: "Change password",
     exportData: "Export data",
-    
+
     // Notifications
     notificationsTitle: "Notifications",
     newNotifications: "new",
     markAllAsRead: "Mark all as read",
     noNotifications: "No notifications",
     viewAllReminders: "View all medication reminders",
-    
+
     // Gynecology
     gynecologicalHistory: "Gynecological history",
     saveGynecologicalHistory: "Save gynecological history",
@@ -495,14 +495,14 @@ const translations = {
     contraceptive: "Contraceptive",
     lastPap: "Last Pap smear",
     lastMammogram: "Last mammogram",
-    
+
     // Theme
     theme: "Theme",
     openMenu: "Open menu",
-    
+
     // Patient file
     patientFile: "Patient file:",
-    
+
     // BMI categories
     bmiUnderweight: "Underweight",
     bmiNormal: "Normal",
@@ -767,79 +767,79 @@ const tiposSeguros = [
 
 // Catálogo de médicos especialistas
 const medicosEspecialistas = [
-  { 
-    nombre: "Dra. Ana María López", 
-    especialidad: "Medicina General", 
+  {
+    nombre: "Dra. Ana María López",
+    especialidad: "Medicina General",
     cedula: "23456789",
     tiposConsultaId: ["consulta_general", "consulta_seguimiento", "chequeo_preventivo", "urgencia"],
     serviciosId: ["laboratorio_general", "analisis_sangre", "rayos_x", "ekg", "presion"]
   },
-  { 
-    nombre: "Dr. Roberto Martínez", 
-    especialidad: "Cardiología", 
+  {
+    nombre: "Dr. Roberto Martínez",
+    especialidad: "Cardiología",
     cedula: "34567890",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["ekg", "ecocardiograma", "prueba_esfuerzo", "holter", "analisis_lipidos"]
   },
-  { 
-    nombre: "Dra. Patricia Hernández", 
-    especialidad: "Pediatría", 
+  {
+    nombre: "Dra. Patricia Hernández",
+    especialidad: "Pediatría",
     cedula: "45678901",
     tiposConsultaId: ["consulta_general", "consulta_seguimiento", "chequeo_preventivo"],
     serviciosId: ["vacunas", "desarrollo", "laboratorio_pediatrico", "ultrasonido_abdominal"]
   },
-  { 
-    nombre: "Dr. Eduardo Sánchez", 
-    especialidad: "Neurología", 
+  {
+    nombre: "Dr. Eduardo Sánchez",
+    especialidad: "Neurología",
     cedula: "56789012",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["eeg", "resonancia", "tomografia", "test_neuropsicologico"]
   },
   {
-    nombre: "Dra. Sofía Ramírez", 
-    especialidad: "Dermatología", 
+    nombre: "Dra. Sofía Ramírez",
+    especialidad: "Dermatología",
     cedula: "67890123",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["biopsia_piel", "microscopia", "fotografia", "analisis_lunar"]
   },
-  { 
-    nombre: "Dr. Javier Torres", 
-    especialidad: "Traumatología", 
+  {
+    nombre: "Dr. Javier Torres",
+    especialidad: "Traumatología",
     cedula: "78901234",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["rayos_x", "resonancia_musculo", "ultrasonido_musculo", "infiltracion"]
   },
-  { 
-    nombre: "Dra. Laura Medina", 
-    especialidad: "Oftalmología", 
+  {
+    nombre: "Dra. Laura Medina",
+    especialidad: "Oftalmología",
     cedula: "89012345",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["refraccion", "tonometria", "campo_visual", "tomografia_ocular"]
   },
-  { 
-    nombre: "Dr. Miguel Ángel Flores", 
-    especialidad: "Otorrinolaringología", 
+  {
+    nombre: "Dr. Miguel Ángel Flores",
+    especialidad: "Otorrinolaringología",
     cedula: "90123456",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["audiometria", "impedanciometria", "videoendoscopia", "timpanometria"]
   },
-  { 
-    nombre: "Dra. Isabel Vega", 
-    especialidad: "Psiquiatría", 
+  {
+    nombre: "Dra. Isabel Vega",
+    especialidad: "Psiquiatría",
     cedula: "01234567",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["evaluacion_psicologica", "test_personalidad", "manejo_conducta"]
   },
-  { 
-    nombre: "Dr. Fernando Gutiérrez", 
-    especialidad: "Endocrinología", 
+  {
+    nombre: "Dr. Fernando Gutiérrez",
+    especialidad: "Endocrinología",
     cedula: "11223344",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["glucosa", "hemoglobina_glicada", "perfil_tiroideo", "analisis_insulina"]
   },
-  { 
-    nombre: "Dra. Carmen Ortiz", 
-    especialidad: "Reumatología", 
+  {
+    nombre: "Dra. Carmen Ortiz",
+    especialidad: "Reumatología",
     cedula: "22334455",
     tiposConsultaId: ["consulta_general", "consulta_especialidad", "consulta_seguimiento"],
     serviciosId: ["factor_reumatoide", "ana", "esr", "ultrasonido_articular"]
@@ -854,59 +854,59 @@ const serviciosDisponibles = [
   { id: "rayos_x", nombre: "Radiografía simple", precio: 400 },
   { id: "ekg", nombre: "Electrocardiograma", precio: 350 },
   { id: "presion", nombre: "Monitoreo de presión arterial", precio: 200 },
-  
+
   // Cardiología
   { id: "ecocardiograma", nombre: "Ecocardiograma", precio: 1500 },
   { id: "prueba_esfuerzo", nombre: "Prueba de esfuerzo", precio: 1200 },
   { id: "holter", nombre: "Monitor Holter (24h)", precio: 800 },
   { id: "analisis_lipidos", nombre: "Análisis de lípidos", precio: 600 },
-  
+
   // Pediatría
   { id: "vacunas", nombre: "Administración de vacunas", precio: 300 },
   { id: "desarrollo", nombre: "Evaluación del desarrollo", precio: 600 },
   { id: "laboratorio_pediatrico", nombre: "Estudios de laboratorio pediátricos", precio: 700 },
   { id: "ultrasonido_abdominal", nombre: "Ultrasonido abdominal", precio: 800 },
-  
+
   // Neurología
   { id: "eeg", nombre: "Electroencefalograma", precio: 900 },
   { id: "resonancia", nombre: "Resonancia magnética", precio: 2500 },
   { id: "tomografia", nombre: "Tomografía computada", precio: 1800 },
   { id: "test_neuropsicologico", nombre: "Test neuropsicológico", precio: 1200 },
-  
+
   // Dermatología
   { id: "biopsia_piel", nombre: "Biopsia de piel", precio: 1000 },
   { id: "microscopia", nombre: "Microscopía dermoscópica", precio: 600 },
   { id: "fotografia", nombre: "Fotografía dermatológica", precio: 400 },
   { id: "analisis_lunar", nombre: "Análisis de lunares", precio: 800 },
-  
+
   // Traumatología
   { id: "resonancia_musculo", nombre: "Resonancia de tejido blando", precio: 2200 },
   { id: "ultrasonido_musculo", nombre: "Ultrasonido musculoesquelético", precio: 900 },
   { id: "infiltracion", nombre: "Infiltración articular", precio: 1500 },
-  
+
   // Oftalmología
   { id: "refraccion", nombre: "Refracción óptica", precio: 300 },
   { id: "tonometria", nombre: "Tonometría (glaucoma)", precio: 400 },
   { id: "campo_visual", nombre: "Campo visual automatizado", precio: 600 },
   { id: "tomografia_ocular", nombre: "Tomografía OCT", precio: 1200 },
-  
+
   // Otorrinolaringología
   { id: "audiometria", nombre: "Audiometría", precio: 600 },
   { id: "impedanciometria", nombre: "Impedanciometría", precio: 400 },
   { id: "videoendoscopia", nombre: "Videoendoscopia nasofaríngea", precio: 900 },
   { id: "timpanometria", nombre: "Timpanometría", precio: 350 },
-  
+
   // Psiquiatría
   { id: "evaluacion_psicologica", nombre: "Evaluación psicológica", precio: 1000 },
   { id: "test_personalidad", nombre: "Test de personalidad", precio: 800 },
   { id: "manejo_conducta", nombre: "Manejo de conducta", precio: 1200 },
-  
+
   // Endocrinología
   { id: "glucosa", nombre: "Prueba de glucosa", precio: 200 },
   { id: "hemoglobina_glicada", nombre: "Hemoglobina glicada", precio: 400 },
   { id: "perfil_tiroideo", nombre: "Perfil tiroideo completo", precio: 700 },
   { id: "analisis_insulina", nombre: "Análisis de insulina", precio: 600 },
-  
+
   // Reumatología
   { id: "factor_reumatoide", nombre: "Factor reumatoide", precio: 500 },
   { id: "ana", nombre: "Anticuerpos antinucleares (ANA)", precio: 800 },
@@ -1142,8 +1142,8 @@ function presionCategoria(sis: number, dia: number) {
 const getTiposConsultaPorMedico = (nombreMedico: string) => {
   const medico = medicosEspecialistas.find((m) => m.nombre === nombreMedico);
   if (!medico) return [];
-  
-  return catalogoTiposConsulta.filter((tc) => 
+
+  return catalogoTiposConsulta.filter((tc) =>
     medico.tiposConsultaId.includes(tc.id)
   );
 };
@@ -1152,8 +1152,8 @@ const getTiposConsultaPorMedico = (nombreMedico: string) => {
 const getServiciosPorMedico = (nombreMedico: string) => {
   const medico = medicosEspecialistas.find((m) => m.nombre === nombreMedico);
   if (!medico) return [];
-  
-  return serviciosDisponibles.filter((servicio) => 
+
+  return serviciosDisponibles.filter((servicio) =>
     medico.serviciosId.includes(servicio.id)
   );
 };
@@ -1171,34 +1171,34 @@ function AvatarPaciente({ nombre, sexo, size = 48, animated = true }: { nombre: 
     <div className="relative group">
       {/* Animated ring around avatar */}
       {animated && (
-        <div 
+        <div
           className={`absolute -inset-1 bg-gradient-to-r from-primary via-pink-500 to-primary rounded-2xl opacity-0 group-hover:opacity-75 blur transition-all duration-500`}
           style={{ animation: animated ? 'spin 3s linear infinite' : 'none' }}
         />
       )}
-      
-      <div 
+
+      <div
         className={`${sizeClass} bg-gradient-to-br ${bgColor} flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 relative overflow-hidden border-2 border-white/30 transition-all duration-300 group-hover:scale-105`}
         style={{ animation: animated ? 'pulse 2s ease-in-out infinite' : 'none' }}
       >
         {/* Animated background shimmer */}
         {animated && (
-          <div 
+          <div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
             style={{ animation: 'shimmer 2s ease-in-out infinite', transform: 'translateX(-100%)' }}
           />
         )}
-        
+
         {/* Face emoji based on sex with subtle animation */}
         <div className="relative z-10 flex flex-col items-center justify-center">
-          <span 
+          <span
             className={`${size >= 56 ? 'text-2xl' : 'text-lg'}`}
             style={{ animation: animated ? 'bounce 1s ease-in-out infinite' : 'none' }}
           >
             {sexo === "Femenino" ? "👩" : sexo === "Masculino" ? "👨" : "🧑"}
           </span>
         </div>
-        
+
         {/* Subtle floating particles */}
         {animated && (
           <>
@@ -1208,14 +1208,14 @@ function AvatarPaciente({ nombre, sexo, size = 48, animated = true }: { nombre: 
           </>
         )}
       </div>
-      
+
       {/* Online indicator pulse */}
       {animated && (
         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-lg">
           <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
         </span>
       )}
-      
+
       <style jsx>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
@@ -1304,7 +1304,7 @@ const severidadConfig: Record<string, { cls: string; dot: string; bg: string }> 
 
 function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
   const sv = dashboard.ultimoRegistro;
-  
+
   const vitales = [
     { icon: <Heart className="w-6 h-6 text-rose-500" />, label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica}`, unit: "mmHg", status: presionCategoria(sv.presionSistolica, sv.presionDiastolica).label, statusColor: presionCategoria(sv.presionSistolica, sv.presionDiastolica).cls },
     { icon: <Activity className="w-6 h-6 text-primary" />, label: "Frec. cardíaca", value: `${sv.frecuenciaCardiaca}`, unit: "bpm" },
@@ -1751,24 +1751,24 @@ function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] })
 // TAB: CITAS (con calendario y formulario)
 // ─────────────────────────────────────────────
 
-  // Función para obtener especialidades únicas de los médicos
-  const obtenerEspecialidadesMedicos = () => {
-    const especialidadesUnicas = new Set(medicosEspecialistas.map((m) => m.especialidad));
-    return Array.from(especialidadesUnicas).sort();
-  };
+// Función para obtener especialidades únicas de los médicos
+const obtenerEspecialidadesMedicos = () => {
+  const especialidadesUnicas = new Set(medicosEspecialistas.map((m) => m.especialidad));
+  return Array.from(especialidadesUnicas).sort();
+};
 
-  // Función para obtener médicos filtrados por especialidad
-  const getMedicosPorEspecialidad = (especialidadFiltro: string) => {
-    if (!especialidadFiltro) return medicosEspecialistas;
-    return medicosEspecialistas.filter((m) => m.especialidad === especialidadFiltro);
-  };
+// Función para obtener médicos filtrados por especialidad
+const getMedicosPorEspecialidad = (especialidadFiltro: string) => {
+  if (!especialidadFiltro) return medicosEspecialistas;
+  return medicosEspecialistas.filter((m) => m.especialidad === especialidadFiltro);
+};
 
 function CitasTab() {
   const [mesActual, setMesActual] = useState(new Date());
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [citasAgendadas, setCitasAgendadas] = useState<CitaAgendada[]>([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>("");
-  
+
   const [formCita, setFormCita] = useState({
     tipoConsultaId: "consulta_general",
     especialidad: "Medicina General",
@@ -1788,7 +1788,7 @@ function CitasTab() {
     pacienteFechaNacimiento: "",
     pacienteSexo: "Femenino" as "Masculino" | "Femenino" | "Otro",
     especialidadMedico: "",
-    
+
   });
   const [descuentoAplicado, setDescuentoAplicado] = useState(0);
   const [cuponValido, setCuponValido] = useState<boolean | null>(null);
@@ -1801,10 +1801,10 @@ function CitasTab() {
   const [reprog, setReprog] = useState({ fecha: "", horaInicio: "09:00", horaCierre: "09:30" });
 
   const estatusConfig: Record<EstatusCita, { label: string; cls: string; dot: string }> = {
-    pendiente:   { label: "Pendiente",   cls: "bg-amber-50  text-amber-700  border-amber-200",  dot: "bg-amber-400"  },
-    confirmada:  { label: "Confirmada",  cls: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
-    llego:       { label: "Llegó",       cls: "bg-blue-50   text-blue-700   border-blue-200",   dot: "bg-blue-400"   },
-    cancelada:   { label: "Cancelada",   cls: "bg-red-50    text-red-700    border-red-200",    dot: "bg-red-400"    },
+    pendiente: { label: "Pendiente", cls: "bg-amber-50  text-amber-700  border-amber-200", dot: "bg-amber-400" },
+    confirmada: { label: "Confirmada", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
+    llego: { label: "Llegó", cls: "bg-blue-50   text-blue-700   border-blue-200", dot: "bg-blue-400" },
+    cancelada: { label: "Cancelada", cls: "bg-red-50    text-red-700    border-red-200", dot: "bg-red-400" },
   };
 
   const cambiarEstatus = (id: string, estatus: EstatusCita) => {
@@ -1850,9 +1850,9 @@ function CitasTab() {
     const ultimoDia = new Date(año, mes + 1, 0);
     const diasEnMes = ultimoDia.getDate();
     const diaInicioSemana = primerDia.getDay();
-    
+
     const dias: Array<{ fecha: string; dia: number; esOtroMes: boolean }> = [];
-    
+
     const mesAnterior = new Date(año, mes, 0);
     const diasMesAnterior = mesAnterior.getDate();
     for (let i = diaInicioSemana - 1; i >= 0; i--) {
@@ -1860,18 +1860,18 @@ function CitasTab() {
       const fechaStr = `${año}-${String(mes).padStart(2, "0")}-${String(diaNum).padStart(2, "0")}`;
       dias.push({ fecha: fechaStr, dia: diaNum, esOtroMes: true });
     }
-    
+
     for (let dia = 1; dia <= diasEnMes; dia++) {
       const fechaStr = `${año}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
       dias.push({ fecha: fechaStr, dia, esOtroMes: false });
     }
-    
+
     const diasRestantes = 42 - dias.length;
     for (let dia = 1; dia <= diasRestantes; dia++) {
       const fechaStr = `${año}-${String(mes + 2).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
       dias.push({ fecha: fechaStr, dia, esOtroMes: true });
     }
-    
+
     return dias;
   };
 
@@ -1907,11 +1907,11 @@ function CitasTab() {
     const citasDelDia = obtenerCitasDelDia(fechaStr);
     const horasLibres = obtenerHorasLibres(fechaStr);
     const tieneUrgencia = citasDelDia.some((c) => c.tipo === "urgencia");
-    
+
     const fecha = new Date(fechaStr + "T12:00:00");
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
+
     if (fecha < hoy) return { tipo: "pasado" as const, citasCount: citasDelDia.length, horasLibres: 0 };
     if (fecha.getDay() === 0) return { tipo: "domingo" as const, citasCount: 0, horasLibres: 0 };
     if (tieneUrgencia) return { tipo: "urgencia" as const, citasCount: citasDelDia.length, horasLibres: horasLibres.length };
@@ -1958,7 +1958,7 @@ function CitasTab() {
 
   const guardarCita = async () => {
     if (!fechaSeleccionada) return;
-    
+
     const tipoConsulta = catalogoTiposConsulta.find((c) => c.id === formCita.tipoConsultaId);
     const nuevaCita: CitaAgendada = {
       id: `CITA-${Date.now()}`,
@@ -2115,7 +2115,7 @@ function CitasTab() {
 
             let colorFondo = "";
             let textColor = "text-foreground";
-            
+
             if (!esOtroMes && estadoDia) {
               switch (estadoDia.tipo) {
                 case "disponible":
@@ -2172,30 +2172,28 @@ function CitasTab() {
                     {dia}
                   </span>
                   {!esOtroMes && estadoDia && estadoDia.tipo !== "pasado" && estadoDia.tipo !== "domingo" && (
-                    <span className={`text-[9px] font-semibold px-1 py-0.5 rounded ${
-                      estadoDia.tipo === "disponible" ? "bg-emerald-200 text-emerald-800" :
-                      estadoDia.tipo === "parcial" ? "bg-amber-200 text-amber-800" :
-                      estadoDia.tipo === "lleno" ? "bg-red-200 text-red-800" :
-                      "bg-red-300 text-red-900"
-                    }`}>
+                    <span className={`text-[9px] font-semibold px-1 py-0.5 rounded ${estadoDia.tipo === "disponible" ? "bg-emerald-200 text-emerald-800" :
+                        estadoDia.tipo === "parcial" ? "bg-amber-200 text-amber-800" :
+                          estadoDia.tipo === "lleno" ? "bg-red-200 text-red-800" :
+                            "bg-red-300 text-red-900"
+                      }`}>
                       {estadoDia.tipo === "disponible" ? "Libre" :
-                       estadoDia.tipo === "parcial" ? `${estadoDia.horasLibres}h` :
-                       estadoDia.tipo === "lleno" ? "Lleno" : "Urg"}
+                        estadoDia.tipo === "parcial" ? `${estadoDia.horasLibres}h` :
+                          estadoDia.tipo === "lleno" ? "Lleno" : "Urg"}
                     </span>
                   )}
                 </div>
-                
+
                 {!esOtroMes && citasDelDia.length > 0 && (
                   <div className="w-full space-y-0.5 overflow-hidden flex-1">
                     {citasDelDia.slice(0, 2).map((cita) => (
-                      <div 
-                        key={cita.id} 
-                        className={`text-[9px] leading-tight font-medium truncate w-full px-1 py-0.5 rounded ${
-                          cita.estatus === "cancelada" ? "bg-red-200 text-red-900 line-through" :
-                          cita.estatus === "confirmada" ? "bg-emerald-200 text-emerald-900" :
-                          cita.estatus === "llego" ? "bg-blue-200 text-blue-900" :
-                          cita.tipo === "urgencia" ? "bg-red-200 text-red-900" : "bg-amber-200 text-amber-900"
-                        }`}
+                      <div
+                        key={cita.id}
+                        className={`text-[9px] leading-tight font-medium truncate w-full px-1 py-0.5 rounded ${cita.estatus === "cancelada" ? "bg-red-200 text-red-900 line-through" :
+                            cita.estatus === "confirmada" ? "bg-emerald-200 text-emerald-900" :
+                              cita.estatus === "llego" ? "bg-blue-200 text-blue-900" :
+                                cita.tipo === "urgencia" ? "bg-red-200 text-red-900" : "bg-amber-200 text-amber-900"
+                          }`}
                       >
                         {cita.horaInicio}-{cita.horaCierre}
                       </div>
@@ -2205,13 +2203,13 @@ function CitasTab() {
                     )}
                   </div>
                 )}
-                
+
                 {!esOtroMes && citasDelDia.length === 0 && estadoDia?.tipo === "disponible" && (
                   <div className="flex-1 flex items-center justify-center w-full">
                     <span className="text-[9px] text-emerald-600 font-medium">Agendar</span>
                   </div>
                 )}
-                
+
                 {!esOtroMes && estadoDia?.tipo === "domingo" && (
                   <div className="flex-1 flex items-center justify-center w-full">
                     <span className="text-[9px] text-muted-foreground/50">Cerrado</span>
@@ -2458,7 +2456,7 @@ function CitasTab() {
                   <UserPlus className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold text-foreground">Datos del Paciente</span>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">Nombre(s)</label>
@@ -2491,7 +2489,7 @@ function CitasTab() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">Fecha de nacimiento</label>
@@ -2525,7 +2523,7 @@ function CitasTab() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Correo electronico</label>
                   <input
@@ -2537,7 +2535,7 @@ function CitasTab() {
                   />
                 </div>
               </div>
-              
+
               {/* Especialidad del Médico - NUEVO CAMPO */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -2547,8 +2545,8 @@ function CitasTab() {
                 <select
                   value={formCita.especialidadMedico}
                   onChange={(e) => {
-                    setFormCita({ 
-                      ...formCita, 
+                    setFormCita({
+                      ...formCita,
                       especialidadMedico: e.target.value,
                       medicoEspecialista: "", // Limpiar selección de médico
                       especialidad: e.target.value // Actualizar especialidad
@@ -2563,7 +2561,7 @@ function CitasTab() {
                 </select>
               </div>
 
-              
+
               {/* Médico especialista */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -2576,9 +2574,9 @@ function CitasTab() {
                     const med = getMedicosPorEspecialidad(formCita.especialidadMedico).find(
                       (m) => m.nombre === e.target.value
                     );
-                    setFormCita({ 
-                      ...formCita, 
-                      medicoEspecialista: e.target.value, 
+                    setFormCita({
+                      ...formCita,
+                      medicoEspecialista: e.target.value,
                       especialidad: med?.especialidad || formCita.especialidad,
                       tipoConsultaId: "", // AGREGAR ESTA LÍNEA - resetea el tipo de consulta
                       servicios: []
@@ -2617,7 +2615,7 @@ function CitasTab() {
                   <Stethoscope className="w-4 h-4 text-primary" />
                   Tipo de consulta
                 </label>
-                
+
                 {!formCita.medicoEspecialista ? (
                   <div className="p-4 bg-muted/30 border border-border rounded-xl text-center text-muted-foreground text-sm">
                     Selecciona un médico primero para ver sus tipos de consulta
@@ -2632,11 +2630,10 @@ function CitasTab() {
                       <button
                         key={tc.id}
                         onClick={() => setFormCita({ ...formCita, tipoConsultaId: tc.id })}
-                        className={`flex items-center justify-center px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                          formCita.tipoConsultaId === tc.id
+                        className={`flex items-center justify-center px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${formCita.tipoConsultaId === tc.id
                             ? "bg-primary/10 border-primary text-foreground"
                             : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                        }`}
+                          }`}
                       >
                         <span>{tc.nombre}</span>
                       </button>
@@ -2645,7 +2642,7 @@ function CitasTab() {
                 )}
               </div>
 
-              
+
               {/* Motivo de la cita */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -2684,8 +2681,8 @@ function CitasTab() {
                     Servicios adicionales
                   </label>
                   <span className="text-xs text-muted-foreground">
-                    {!formCita.medicoEspecialista 
-                      ? "Selecciona un médico" 
+                    {!formCita.medicoEspecialista
+                      ? "Selecciona un médico"
                       : `${getServiciosPorMedico(formCita.medicoEspecialista).length} disponibles`
                     }
                   </span>
@@ -2705,11 +2702,10 @@ function CitasTab() {
                       <button
                         key={servicio.id}
                         onClick={() => toggleServicio(servicio.id)}
-                        className={`flex flex-col items-start justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                          formCita.servicios.includes(servicio.id)
+                        className={`flex flex-col items-start justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${formCita.servicios.includes(servicio.id)
                             ? "bg-primary/10 border-primary text-foreground"
                             : "bg-background border-border text-muted-foreground hover:bg-muted/50"
-                        }`}
+                          }`}
                       >
                         <span className="truncate text-left w-full">{servicio.nombre}</span>
                         <span className="text-xs font-semibold mt-1">${servicio.precio.toLocaleString()}</span>
@@ -2732,9 +2728,8 @@ function CitasTab() {
                       setFormCita({ ...formCita, cupon: e.target.value });
                       validarCupon(e.target.value);
                     }}
-                    className={`flex-1 border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase ${
-                      cuponValido === true ? "border-emerald-500" : cuponValido === false ? "border-red-500" : "border-border"
-                    }`}
+                    className={`flex-1 border rounded-xl px-3 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase ${cuponValido === true ? "border-emerald-500" : cuponValido === false ? "border-red-500" : "border-border"
+                      }`}
                     placeholder="Ingresa tu cupón"
                   />
                   {cuponValido === true && (
@@ -2938,10 +2933,10 @@ const visitasClinicasMock: VisitaClinica[] = [];
 
 function ConsultaTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTabConsultaId>("visitas");
-  
+
   // Estado para visitas clínicas
   const [visitasClinicas, setVisitasClinicas] = useState<VisitaClinica[]>(visitasClinicasMock);
-  
+
   // Estado para SOAP
   const [soapNote, setSoapNote] = useState<SOAPNote>({
     subjective: "",
@@ -2954,14 +2949,14 @@ function ConsultaTab() {
     peso: "", estatura: "", frecuenciaCardiaca: "", presionSistolica: "", presionDiastolica: "",
     imc: "", masaCorporal: "", grasaCorporal: "", frecuenciaRespiratoria: "", temperatura: "",
   });
-  
+
   const [diagnosticos, setDiagnosticos] = useState<DiagnosticoItem[]>([]);
   const [nuevaClave, setNuevaClave] = useState("");
   const [nuevoDiagnostico, setNuevoDiagnostico] = useState("");
-  const [sugerenciasCIE, setSugerenciasCIE] = useState<Array<{clave: string; descripcion: string}>>([]);
+  const [sugerenciasCIE, setSugerenciasCIE] = useState<Array<{ clave: string; descripcion: string }>>([]);
   const [busquedaDiagPor, setBusquedaDiagPor] = useState<"clave" | "nombre">("clave");
-  const [sugerenciasNombre, setSugerenciasNombre] = useState<Array<{clave: string; descripcion: string}>>([]);
-  
+  const [sugerenciasNombre, setSugerenciasNombre] = useState<Array<{ clave: string; descripcion: string }>>([]);
+
   // Búsqueda por nombre de diagnóstico
   const handleNombreChange = (value: string) => {
     setNuevoDiagnostico(value);
@@ -2975,13 +2970,13 @@ function ConsultaTab() {
       setSugerenciasNombre([]);
     }
   };
-  
+
   // Estado para tipo de medicamento: comercial vs principio activo
   const [tipoMedicamento, setTipoMedicamento] = useState<"comercial" | "principioActivo">("comercial");
-  
+
   const [notas, setNotas] = useState<NotaItem[]>([]);
   const [nuevaNota, setNuevaNota] = useState("");
-  
+
   const [prescripciones, setPrescripciones] = useState<PrescripcionItem[]>([]);
   const [prescripcionForm, setPrescripcionForm] = useState({
     medicamento: "", dosis: "", frecuencia: "", duracion: "", via: "", indicaciones: "",
@@ -3096,11 +3091,10 @@ function ConsultaTab() {
             <button
               key={id}
               onClick={() => setActiveSubTab(id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors rounded-t-xl ${
-                activeSubTab === id
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors rounded-t-xl ${activeSubTab === id
                   ? "border-primary text-foreground bg-primary/5"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -3153,7 +3147,7 @@ function ConsultaTab() {
                   atendido: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", label: "Atendido" },
                 };
                 const cfg = estatusConfig[visita.estatus];
-                
+
                 return (
                   <div key={visita.id} className={`p-4 rounded-2xl border ${cfg.bg} transition-all hover:shadow-md`}>
                     <div className="flex items-center justify-between gap-4">
@@ -3177,17 +3171,17 @@ function ConsultaTab() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text}`}>
                           {cfg.label}
                         </span>
-                        
+
                         {/* Acciones según estado */}
                         <div className="flex gap-1">
                           {visita.estatus === "esperando" && (
                             <button
-                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                              onClick={() => setVisitasClinicas(prev => prev.map(v =>
                                 v.id === visita.id ? { ...v, estatus: "llegó" as const, horaLlegada: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) } : v
                               ))}
                               className="px-3 py-1.5 bg-blue-500 text-white rounded-xl text-xs font-medium hover:bg-blue-600 transition-colors"
@@ -3197,7 +3191,7 @@ function ConsultaTab() {
                           )}
                           {visita.estatus === "llegó" && (
                             <button
-                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                              onClick={() => setVisitasClinicas(prev => prev.map(v =>
                                 v.id === visita.id ? { ...v, estatus: "en_consulta" as const } : v
                               ))}
                               className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-medium hover:bg-primary/90 transition-colors"
@@ -3207,7 +3201,7 @@ function ConsultaTab() {
                           )}
                           {visita.estatus === "en_consulta" && (
                             <button
-                              onClick={() => setVisitasClinicas(prev => prev.map(v => 
+                              onClick={() => setVisitasClinicas(prev => prev.map(v =>
                                 v.id === visita.id ? { ...v, estatus: "atendido" as const } : v
                               ))}
                               className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-xs font-medium hover:bg-emerald-600 transition-colors"
@@ -3327,7 +3321,7 @@ function ConsultaTab() {
               </div>
               <h3 className="text-lg font-semibold text-foreground">Datos Clínicos</h3>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[
                 { field: "peso", label: "Peso (kg)", icon: Scale, placeholder: "70.5" },
@@ -3530,27 +3524,25 @@ function ConsultaTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setBusquedaDiagPor("clave")}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      busquedaDiagPor === "clave"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${busquedaDiagPor === "clave"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/70"
-                    }`}
+                      }`}
                   >
                     Clave CIE-10
                   </button>
                   <button
                     onClick={() => setBusquedaDiagPor("nombre")}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      busquedaDiagPor === "nombre"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${busquedaDiagPor === "nombre"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/70"
-                    }`}
+                      }`}
                   >
                     Nombre
                   </button>
                 </div>
               </div>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
                 {busquedaDiagPor === "clave" ? (
                   <div className="space-y-1.5 relative">
@@ -3793,21 +3785,19 @@ function ConsultaTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setTipoMedicamento("comercial")}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      tipoMedicamento === "comercial"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${tipoMedicamento === "comercial"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/70"
-                    }`}
+                      }`}
                   >
                     Nombre Comercial
                   </button>
                   <button
                     onClick={() => setTipoMedicamento("principioActivo")}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      tipoMedicamento === "principioActivo"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${tipoMedicamento === "principioActivo"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/70"
-                    }`}
+                      }`}
                   >
                     Principio Activo
                   </button>
@@ -4333,7 +4323,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
   const [fechaFiltro, setFechaFiltro] = useState("");
   const [visitaExpandida, setVisitaExpandida] = useState<string | null>(null);
 
-  const visitasOrdenadas = [...visitas].sort((a, b) => 
+  const visitasOrdenadas = [...visitas].sort((a, b) =>
     new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
   );
 
@@ -4402,13 +4392,12 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
           {visitasFiltradas.map((visita) => {
             const isExpanded = visitaExpandida === visita.id;
             const sv = visita.signosVitales;
-            
+
             return (
               <div
                 key={visita.id}
-                className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
-                  isExpanded ? "border-primary/40 shadow-md" : "border-border"
-                }`}
+                className={`border rounded-2xl overflow-hidden transition-all duration-200 ${isExpanded ? "border-primary/40 shadow-md" : "border-border"
+                  }`}
               >
                 {/* Header de la visita */}
                 <button
@@ -4417,9 +4406,8 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
                   aria-expanded={isExpanded}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      isExpanded ? "bg-primary/10" : "bg-muted"
-                    }`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isExpanded ? "bg-primary/10" : "bg-muted"
+                      }`}>
                       <Stethoscope className={`w-5 h-5 ${isExpanded ? "text-primary" : "text-muted-foreground"}`} />
                     </div>
                     <div className="text-left">
@@ -4429,9 +4417,8 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
                       </p>
                     </div>
                   </div>
-                  <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
-                    isExpanded ? "rotate-180" : ""
-                  }`} />
+                  <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
+                    }`} />
                 </button>
 
                 {/* Contenido expandido */}
@@ -4478,7 +4465,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
                         <div className="bg-background border border-border rounded-xl p-3">
                           <p className="text-xs text-muted-foreground mb-1">Presi��n Arterial</p>
                           <p className="text-lg font-semibold text-foreground">
-                            {sv.presionSistolica}/{sv.presionDiastolica} 
+                            {sv.presionSistolica}/{sv.presionDiastolica}
                             <span className="text-sm font-normal text-muted-foreground ml-1">mmHg</span>
                           </p>
                           <p className={`text-xs mt-1 ${presionCategoria(sv.presionSistolica, sv.presionDiastolica).cls}`}>
@@ -4580,11 +4567,10 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
                     key={rec.id}
                     onClick={() => toggleRec(rec.id)}
                     title={estaActivo ? "Desactivar recordatorio" : "Activar recordatorio"}
-                    className={`inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-xl border transition-all cursor-pointer select-none ${
-                      estaActivo
+                    className={`inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-xl border transition-all cursor-pointer select-none ${estaActivo
                         ? "bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
                         : "bg-muted text-muted-foreground border-border hover:bg-muted/70"
-                    }`}
+                      }`}
                   >
                     {estaActivo ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
                     {rec.hora}
@@ -5128,7 +5114,7 @@ export default function Page() {
 
   //Cerrar sesión
 
-  const router = useRouter(); 
+  const router = useRouter();
   const handleLogout = () => {
     localStorage.removeItem("rol");
     localStorage.removeItem("token");
@@ -5138,347 +5124,346 @@ export default function Page() {
 
   return (
     <LanguageContext.Provider value={{ idioma: config.idioma, t }}>
-    <div className="min-h-screen bg-background font-sans">
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      <div className="min-h-screen bg-background font-sans">
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
-                <Stethoscope className="w-5 h-5 text-sidebar-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">{t("appName")}</h1>
-                <p className="text-xs text-sidebar-foreground/60">{t("appSubtitle")}</p>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="flex flex-col h-full">
+            <div className="p-6 border-b border-sidebar-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
+                  <Stethoscope className="w-5 h-5 text-sidebar-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">{t("appName")}</h1>
+                  <p className="text-xs text-sidebar-foreground/60">{t("appSubtitle")}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => {
-                  setActiveTab(id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === id
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </button>
-            ))}
-          </nav>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
-            <LogOut className="w-5 h-5" />
-            Cerrar sesión
-          </button>
-          <div className="p-4 border-t border-sidebar-border space-y-1">
-            <div className="px-4 py-2 flex items-center justify-between">
-              <span className="text-xs text-sidebar-foreground/40 font-medium">{t("theme")}</span>
-              <div className="flex items-center gap-1">
+            <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+              {tabs.map(({ id, label, icon: Icon }) => (
                 <button
-                  onClick={() => handleConfigChange({ tema: "claro" })}
-                  className={`p-1.5 rounded-lg transition-colors ${config.tema === "claro" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
-                  aria-label={t("light")}
+                  key={id}
+                  onClick={() => {
+                    setActiveTab(id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === id
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    }`}
                 >
-                  <Sun className="w-4 h-4" />
+                  <Icon className="w-5 h-5" />
+                  {label}
                 </button>
-                <button
-                  onClick={() => handleConfigChange({ tema: "sistema" })}
-                  className={`p-1.5 rounded-lg transition-colors ${config.tema === "sistema" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
-                  aria-label={t("system")}
-                >
-                  <Monitor className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleConfigChange({ tema: "oscuro" })}
-                  className={`p-1.5 rounded-lg transition-colors ${config.tema === "oscuro" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
-                  aria-label={t("dark")}
-                >
-                  <Moon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              ))}
+            </nav>
             <button
-              onClick={() => { setConfigOpen(true); setSidebarOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
-            >
-              <Settings className="w-5 h-5" />
-              {t("settings")}
-              <ChevronRightIcon className="w-4 h-4 ml-auto opacity-50" />
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
+              <LogOut className="w-5 h-5" />
+              Cerrar sesión
             </button>
-          </div>
-        </div>
-      </aside>
-
-      <div className="lg:ml-72">
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border px-4 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-xl hover:bg-muted transition-colors"
-                aria-label={t("openMenu")}
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">{tabs.find(tab => tab.id === activeTab)?.label}</h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">
-                  {t("patientFile")} {dp.nombre} {dp.apellidoPaterno}
-                </p>
+            <div className="p-4 border-t border-sidebar-border space-y-1">
+              <div className="px-4 py-2 flex items-center justify-between">
+                <span className="text-xs text-sidebar-foreground/40 font-medium">{t("theme")}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleConfigChange({ tema: "claro" })}
+                    className={`p-1.5 rounded-lg transition-colors ${config.tema === "claro" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
+                    aria-label={t("light")}
+                  >
+                    <Sun className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleConfigChange({ tema: "sistema" })}
+                    className={`p-1.5 rounded-lg transition-colors ${config.tema === "sistema" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
+                    aria-label={t("system")}
+                  >
+                    <Monitor className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleConfigChange({ tema: "oscuro" })}
+                    className={`p-1.5 rounded-lg transition-colors ${config.tema === "oscuro" ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground"}`}
+                    aria-label={t("dark")}
+                  >
+                    <Moon className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+              <button
+                onClick={() => { setConfigOpen(true); setSidebarOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+              >
+                <Settings className="w-5 h-5" />
+                {t("settings")}
+                <ChevronRightIcon className="w-4 h-4 ml-auto opacity-50" />
+              </button>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Notification bell */}
-              <div className="relative">
-                <button
-                  onClick={() => setNotifOpen((o) => !o)}
-                  className="relative p-2 rounded-xl hover:bg-muted transition-colors"
-                  aria-label={t("notifications")}
-                >
-                  <Bell className="w-5 h-5 text-muted-foreground" />
-                  {sinLeer.length > 0 && (
-                    <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-destructive text-[10px] font-bold text-white rounded-full flex items-center justify-center leading-none">
-                      {sinLeer.length > 9 ? "9+" : sinLeer.length}
-                    </span>
-                  )}
-                </button>
+          </div>
+        </aside>
 
-                {notifOpen && (
-                  <>
-                    {/* backdrop */}
-                    <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                    {/* panel */}
-                    <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl shadow-black/10 z-50 overflow-hidden">
-                      {/* header */}
-                      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-                        <div className="flex items-center gap-2">
-                          <Bell className="w-4 h-4 text-primary" />
-                          <span className="font-semibold text-foreground text-sm">{t("notificationsTitle")}</span>
+        <div className="lg:ml-72">
+          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border px-4 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden p-2 rounded-xl hover:bg-muted transition-colors"
+                  aria-label={t("openMenu")}
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <div>
+                  <h1 className="text-xl font-bold text-foreground">{tabs.find(tab => tab.id === activeTab)?.label}</h1>
+                  <p className="text-sm text-muted-foreground hidden sm:block">
+                    {t("patientFile")} {dp.nombre} {dp.apellidoPaterno}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Notification bell */}
+                <div className="relative">
+                  <button
+                    onClick={() => setNotifOpen((o) => !o)}
+                    className="relative p-2 rounded-xl hover:bg-muted transition-colors"
+                    aria-label={t("notifications")}
+                  >
+                    <Bell className="w-5 h-5 text-muted-foreground" />
+                    {sinLeer.length > 0 && (
+                      <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-destructive text-[10px] font-bold text-white rounded-full flex items-center justify-center leading-none">
+                        {sinLeer.length > 9 ? "9+" : sinLeer.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {notifOpen && (
+                    <>
+                      {/* backdrop */}
+                      <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                      {/* panel */}
+                      <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl shadow-black/10 z-50 overflow-hidden">
+                        {/* header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                          <div className="flex items-center gap-2">
+                            <Bell className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-foreground text-sm">{t("notificationsTitle")}</span>
+                            {sinLeer.length > 0 && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                                {sinLeer.length} {t("newNotifications")}
+                              </span>
+                            )}
+                          </div>
                           {sinLeer.length > 0 && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
-                              {sinLeer.length} {t("newNotifications")}
-                            </span>
+                            <button
+                              onClick={marcarTodas}
+                              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {t("markAllAsRead")}
+                            </button>
                           )}
                         </div>
-                        {sinLeer.length > 0 && (
-                          <button
-                            onClick={marcarTodas}
-                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {t("markAllAsRead")}
-                          </button>
-                        )}
-                      </div>
 
-                      {/* list */}
-                      <div className="max-h-[420px] overflow-y-auto divide-y divide-border">
-                        {notificaciones.length === 0 && (
-                          <div className="px-5 py-10 text-center text-muted-foreground text-sm">
-                            {t("noNotifications")}
-                          </div>
-                        )}
-                        {notificaciones.map((n) => {
-                          const esLeida = leidas.has(n.id);
-                          const iconMap = {
-                            medicamento: <Pill className="w-4 h-4 text-emerald-600" />,
-                            cita: <Calendar className="w-4 h-4 text-primary" />,
-                            resultado: <FileText className="w-4 h-4 text-amber-500" />,
-                          };
-                          const bgMap = {
-                            medicamento: "bg-emerald-100",
-                            cita: "bg-primary/10",
-                            resultado: "bg-amber-100",
-                          };
-                          return (
-                            <button
-                              key={n.id}
-                              onClick={() => marcarUna(n.id)}
-                              className={`w-full text-left flex items-start gap-4 px-5 py-4 hover:bg-muted/50 transition-colors ${esLeida ? "opacity-60" : ""}`}
-                            >
-                              <div className={`w-9 h-9 rounded-xl ${bgMap[n.tipo]} flex items-center justify-center shrink-0 mt-0.5`}>
-                                {iconMap[n.tipo]}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className={`text-sm font-medium text-foreground truncate ${!esLeida ? "font-semibold" : ""}`}>
-                                    {n.titulo}
-                                  </p>
-                                  {n.hora && (
-                                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
-                                      <Clock className="w-3 h-3" />{n.hora}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.descripcion}</p>
-                              </div>
-                              {!esLeida && (
-                                <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* footer */}
-                      <div className="px-5 py-3 border-t border-border bg-muted/30">
-                        <button
-                          onClick={() => { setActiveTab("medicamentos"); setNotifOpen(false); }}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {t("viewAllReminders")}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 pl-3 border-l border-border">
-                <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
-                <div className="hidden sm:block flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{edad} años</span>
-                    
-                    {paciente.alergias.length > 0 && (
-                      <>
-                        <span className="text-xs text-muted-foreground">•</span>
-                        
-                        {/* Dropdown de Alergias */}
-                        <div className="relative group">
-                          <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group-hover:shadow-md">
-                            <AlertTriangle className="w-3 h-3 text-red-600" />
-                            <span className="text-xs font-semibold text-red-700">
-                              {paciente.alergias.length}
-                            </span>
-                            <ChevronDown className="w-2.5 h-2.5 text-red-600 group-hover:rotate-180 transition-transform" />
-                          </button>
-
-                          {/* Panel desplegable */}
-                          <div className="absolute right-0 top-full mt-1 w-[520px] bg-card border border-border rounded-xl shadow-lg shadow-black/10 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
-                            {/* Header compacto */}
-                            <div className="px-3 py-2 border-b border-border bg-muted/30">
-                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Alergias ({paciente.alergias.length})
-                              </p>
+                        {/* list */}
+                        <div className="max-h-[420px] overflow-y-auto divide-y divide-border">
+                          {notificaciones.length === 0 && (
+                            <div className="px-5 py-10 text-center text-muted-foreground text-sm">
+                              {t("noNotifications")}
                             </div>
+                          )}
+                          {notificaciones.map((n) => {
+                            const esLeida = leidas.has(n.id);
+                            const iconMap = {
+                              medicamento: <Pill className="w-4 h-4 text-emerald-600" />,
+                              cita: <Calendar className="w-4 h-4 text-primary" />,
+                              resultado: <FileText className="w-4 h-4 text-amber-500" />,
+                            };
+                            const bgMap = {
+                              medicamento: "bg-emerald-100",
+                              cita: "bg-primary/10",
+                              resultado: "bg-amber-100",
+                            };
+                            return (
+                              <button
+                                key={n.id}
+                                onClick={() => marcarUna(n.id)}
+                                className={`w-full text-left flex items-start gap-4 px-5 py-4 hover:bg-muted/50 transition-colors ${esLeida ? "opacity-60" : ""}`}
+                              >
+                                <div className={`w-9 h-9 rounded-xl ${bgMap[n.tipo]} flex items-center justify-center shrink-0 mt-0.5`}>
+                                  {iconMap[n.tipo]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className={`text-sm font-medium text-foreground truncate ${!esLeida ? "font-semibold" : ""}`}>
+                                      {n.titulo}
+                                    </p>
+                                    {n.hora && (
+                                      <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />{n.hora}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.descripcion}</p>
+                                </div>
+                                {!esLeida && (
+                                  <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                            {/* Lista horizontal con scroll */}
-                            <div className="p-3">
-                              <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-hide">
-                                {/* Agrupar alergias por tipo */}
-                                {Object.entries(
-                                  paciente.alergias.reduce((acc, alergia) => {
-                                    if (!acc[alergia.tipo]) {
-                                      acc[alergia.tipo] = [];
-                                    }
-                                    acc[alergia.tipo].push(alergia);
-                                    return acc;
-                                  }, {} as Record<string, Alergia[]>)
-                                ).map(([tipo, alergias]) => {
-                                  const tipoIconos: Record<string, { icon: string; bg: string; border: string; text: string }> = {
-                                    Medicamento: { icon: "💊", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
-                                    Alimento: { icon: "🍽️", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" },
-                                    Ambiental: { icon: "🌿", bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700" },
-                                    Material: { icon: "🧤", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700" },
-                                    Otro: { icon: "⚠️", bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-700" },
-                                  };
-                                  const tipoConfig = tipoIconos[tipo] || tipoIconos["Otro"];
+                        {/* footer */}
+                        <div className="px-5 py-3 border-t border-border bg-muted/30">
+                          <button
+                            onClick={() => { setActiveTab("medicamentos"); setNotifOpen(false); }}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            {t("viewAllReminders")}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-                                  return (
-                                    <div
-                                      key={tipo}
-                                      className={`flex-shrink-0 ${tipoConfig.bg} border ${tipoConfig.border} rounded-lg p-2.5 transition-all hover:shadow-sm min-w-max`}
-                                    >
-                                      <div className="space-y-1.5">
-                                        {/* Encabezado del tipo - más compacto */}
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-base">{tipoConfig.icon}</span>
-                                          <h4 className={`text-xs font-bold ${tipoConfig.text}`}>{tipo}</h4>
-                                          {alergias.length > 1 && (
-                                            <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${tipoConfig.bg} ${tipoConfig.text} border ${tipoConfig.border}`}>
-                                              {alergias.length}
-                                            </span>
-                                          )}
-                                        </div>
+                <div className="flex items-center gap-3 pl-3 border-l border-border">
+                  <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
+                  <div className="hidden sm:block flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{edad} años</span>
 
-                                        {/* Lista de alergias del tipo - compacta */}
-                                        <div className="space-y-1 pl-5">
-                                          {alergias.map((alergia) => {
-                                            const severidadDot: Record<string, string> = {
-                                              Grave: "bg-red-500",
-                                              Moderada: "bg-orange-500",
-                                              Leve: "bg-amber-500",
-                                            };
+                      {paciente.alergias.length > 0 && (
+                        <>
+                          <span className="text-xs text-muted-foreground">•</span>
 
-                                            return (
-                                              <div key={alergia.id} className="flex items-center gap-1.5">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${severidadDot[alergia.severidad]}`} />
-                                                <span className="text-xs text-foreground font-medium">
-                                                  {alergia.descripcion}
-                                                </span>
-                                              </div>
-                                            );
-                                          })}
+                          {/* Dropdown de Alergias */}
+                          <div className="relative group">
+                            <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group-hover:shadow-md">
+                              <AlertTriangle className="w-3 h-3 text-red-600" />
+                              <span className="text-xs font-semibold text-red-700">
+                                {paciente.alergias.length}
+                              </span>
+                              <ChevronDown className="w-2.5 h-2.5 text-red-600 group-hover:rotate-180 transition-transform" />
+                            </button>
+
+                            {/* Panel desplegable */}
+                            <div className="absolute right-0 top-full mt-1 w-[520px] bg-card border border-border rounded-xl shadow-lg shadow-black/10 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+                              {/* Header compacto */}
+                              <div className="px-3 py-2 border-b border-border bg-muted/30">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                  Alergias ({paciente.alergias.length})
+                                </p>
+                              </div>
+
+                              {/* Lista horizontal con scroll */}
+                              <div className="p-3">
+                                <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-hide">
+                                  {/* Agrupar alergias por tipo */}
+                                  {Object.entries(
+                                    paciente.alergias.reduce((acc, alergia) => {
+                                      if (!acc[alergia.tipo]) {
+                                        acc[alergia.tipo] = [];
+                                      }
+                                      acc[alergia.tipo].push(alergia);
+                                      return acc;
+                                    }, {} as Record<string, Alergia[]>)
+                                  ).map(([tipo, alergias]) => {
+                                    const tipoIconos: Record<string, { icon: string; bg: string; border: string; text: string }> = {
+                                      Medicamento: { icon: "💊", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
+                                      Alimento: { icon: "🍽️", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" },
+                                      Ambiental: { icon: "🌿", bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700" },
+                                      Material: { icon: "🧤", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700" },
+                                      Otro: { icon: "⚠️", bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-700" },
+                                    };
+                                    const tipoConfig = tipoIconos[tipo] || tipoIconos["Otro"];
+
+                                    return (
+                                      <div
+                                        key={tipo}
+                                        className={`flex-shrink-0 ${tipoConfig.bg} border ${tipoConfig.border} rounded-lg p-2.5 transition-all hover:shadow-sm min-w-max`}
+                                      >
+                                        <div className="space-y-1.5">
+                                          {/* Encabezado del tipo - más compacto */}
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-base">{tipoConfig.icon}</span>
+                                            <h4 className={`text-xs font-bold ${tipoConfig.text}`}>{tipo}</h4>
+                                            {alergias.length > 1 && (
+                                              <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${tipoConfig.bg} ${tipoConfig.text} border ${tipoConfig.border}`}>
+                                                {alergias.length}
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          {/* Lista de alergias del tipo - compacta */}
+                                          <div className="space-y-1 pl-5">
+                                            {alergias.map((alergia) => {
+                                              const severidadDot: Record<string, string> = {
+                                                Grave: "bg-red-500",
+                                                Moderada: "bg-orange-500",
+                                                Leve: "bg-amber-500",
+                                              };
+
+                                              return (
+                                                <div key={alergia.id} className="flex items-center gap-1.5">
+                                                  <div className={`w-1.5 h-1.5 rounded-full ${severidadDot[alergia.severidad]}`} />
+                                                  <span className="text-xs text-foreground font-medium">
+                                                    {alergia.descripcion}
+                                                  </span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Footer compacto */}
+                              <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20 rounded-b-xl">
+                                <p className="text-xs text-muted-foreground">⚠️ Revisar antes de prescribir</p>
                               </div>
                             </div>
-
-                            {/* Footer compacto */}
-                            <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20 rounded-b-xl">
-                              <p className="text-xs text-muted-foreground">⚠️ Revisar antes de prescribir</p>
-                            </div>
                           </div>
-                        </div>
-                      </>
-                    )}
+                        </>
+                      )}
 
-                    {paciente.alergias.length === 0 && (
-                      <span className="text-xs text-emerald-600 font-medium">Sin alergias</span>
-                    )}
+                      {paciente.alergias.length === 0 && (
+                        <span className="text-xs text-emerald-600 font-medium">Sin alergias</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="p-4 lg:p-8 max-w-7xl">
-          {activeTab === "dashboard" && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
-          {activeTab === "datos" && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
-          {activeTab === "signos" && <SignosVitalesTab signosVitales={paciente.signosVitales} />}
-          {activeTab === "citas" && <CitasTab />}
-          {activeTab === "consulta" && <ConsultaTab />}
-          {activeTab === "expediente" && <ExpedienteTab diagnosticos={paciente.diagnosticos} citas={paciente.citas} notas={paciente.notas} />}
-          {activeTab === "visitas" && <VisitasTab visitas={paciente.visitas} />}
-          {activeTab === "medicamentos" && <MedicamentosTab medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
+          <main className="p-4 lg:p-8 max-w-7xl">
+            {activeTab === "dashboard" && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
+            {activeTab === "datos" && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
+            {activeTab === "signos" && <SignosVitalesTab signosVitales={paciente.signosVitales} />}
+            {activeTab === "citas" && <CitasTab />}
+            {activeTab === "consulta" && <ConsultaTab />}
+            {activeTab === "expediente" && <ExpedienteTab diagnosticos={paciente.diagnosticos} citas={paciente.citas} notas={paciente.notas} />}
+            {activeTab === "visitas" && <VisitasTab visitas={paciente.visitas} />}
+            {activeTab === "medicamentos" && <MedicamentosTab medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
 
-        </main>
+          </main>
+        </div>
+
+        <ConfiguracionPanel
+          open={configOpen}
+          onClose={() => setConfigOpen(false)}
+          config={config}
+          onChange={handleConfigChange}
+        />
       </div>
-
-      <ConfiguracionPanel
-        open={configOpen}
-        onClose={() => setConfigOpen(false)}
-        config={config}
-        onChange={handleConfigChange}
-      />
-    </div>
     </LanguageContext.Provider>
   );
 }

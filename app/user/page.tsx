@@ -64,7 +64,7 @@ import {
 // PACIENTE SERVICE
 // ─────────────────────────────────────────────
 
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "http://localhost:3003/api";
 
 const getAuthHeaders = (isMultipart = false): HeadersInit => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
@@ -76,7 +76,7 @@ const getAuthHeaders = (isMultipart = false): HeadersInit => {
 const patientService = {
 
   claimPatient: (data: Record<string, unknown>) =>
-    fetch(`${API_BASE_URL}/patients/claim`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data),}).then((r) => r.json()),
+    fetch(`${API_BASE_URL}/patients/claim`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data), }).then((r) => r.json()),
 
   getMyRecord: () =>
     fetch(`${API_BASE_URL}/patients/me`, { method: "GET", headers: getAuthHeaders(), }).then((r) => r.json()),
@@ -350,7 +350,7 @@ function presionCategoria(sis: number, dia: number) {
 function AvatarPaciente({ nombre, sexo }: { nombre: string; sexo: "Masculino" | "Femenino" | "Otro" }) {
   const initials = nombre.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const bgColor = sexo === "Femenino" ? "from-rose-400 to-pink-500" : sexo === "Masculino" ? "from-sky-400 to-blue-500" : "from-slate-400 to-slate-500";
-  
+
   return (
     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${bgColor} flex items-center justify-center shadow-lg shadow-primary/20`}>
       <span className="text-xl font-bold text-white tracking-tight">{initials}</span>
@@ -428,7 +428,7 @@ const severidadConfig: Record<string, { cls: string; dot: string; bg: string }> 
 
 function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
   const sv = dashboard.ultimoRegistro;
-  
+
   const vitales = [
     { icon: <Heart className="w-6 h-6 text-rose-500" />, label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica}`, unit: "mmHg", status: presionCategoria(sv.presionSistolica, sv.presionDiastolica).label, statusColor: presionCategoria(sv.presionSistolica, sv.presionDiastolica).cls },
     { icon: <Activity className="w-6 h-6 text-primary" />, label: "Frec. cardíaca", value: `${sv.frecuenciaCardiaca}`, unit: "bpm" },
@@ -1055,28 +1055,28 @@ export default function Page() {
 
   const router = useRouter();
 
-// useEffect(() => {
-//   loadPatient();
-// }, []);
+  // useEffect(() => {
+  //   loadPatient();
+  // }, []);
 
-// const loadPatient = async () => {
-//   try {
-//     setLoading(true);
+  // const loadPatient = async () => {
+  //   try {
+  //     setLoading(true);
 
-//     const response = await patientService.getMyRecord();
+  //     const response = await patientService.getMyRecord();
 
-//     if (response.success) {
-//       setPaciente(response.data);
-//     } else {
-//       setError(response.message || "No se pudo cargar");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     setError("Error de conexión");
-//   } finally {
-//     setLoading(false);
-//   }
-// };
+  //     if (response.success) {
+  //       setPaciente(response.data);
+  //     } else {
+  //       setError(response.message || "No se pudo cargar");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError("Error de conexión");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleLogout = async () => {
     try {
@@ -1089,17 +1089,17 @@ export default function Page() {
     }
   }
 
-// if (loading) {
-//   return <div className="p-10">Cargando expediente...</div>;
-// }
+  // if (loading) {
+  //   return <div className="p-10">Cargando expediente...</div>;
+  // }
 
-// if (error) {
-//   return <div className="p-10 text-red-500">{error}</div>;
-// }
+  // if (error) {
+  //   return <div className="p-10 text-red-500">{error}</div>;
+  // }
 
-// if (!paciente) {
-//   return <div className="p-10">No existe expediente</div>;
-// }
+  // if (!paciente) {
+  //   return <div className="p-10">No existe expediente</div>;
+  // }
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -1133,11 +1133,10 @@ export default function Page() {
                   setActiveTab(id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === id
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === id
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 {label}
