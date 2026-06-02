@@ -543,41 +543,26 @@ interface Alergia {
   severidad: "Leve" | "Moderada" | "Grave";
 }
 
-interface DatosPersonales {
-  id: ID;
-  nombre: string;
-  apellidoPaterno: string;
-  apellidoMaterno?: string;
-  fechaNacimiento: FechaISO;
-  sexo: "Masculino" | "Femenino" | "Otro";
-  curp?: string;
-  rfc?: string;
-}
-
-interface Direccion {
-  calle: string;
-  numeroExterior: string;
-  numeroInterior?: string;
-  colonia: string;
-  ciudad: string;
-  estado: string;
-  codigoPostal: string;
-  pais: string;
-}
-
-interface Contacto {
-  telefono: string;
-  telefonoEmergencia?: string;
-  email?: string;
-  nombreContactoEmergencia?: string;
-}
-
-interface DatosFiscales {
-  razonSocial?: string;
-  rfc?: string;
-  usoCFDI?: string;
-  regimenFiscal?: string;
-  direccionFiscal?: Direccion;
+interface PatientData {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  maternalLastName?: string;
+  birthDate: FechaISO;
+  gender: "male" | "female" | "other";
+  maritalStatus?: string;
+  nationality?: string;
+  educationLevel?: string;
+  occupation?: string;
+  religion?: string;
+  bloodType?: string;
+  donorStatus?: boolean;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRel?: string;
+  countryCode?: string;
+  nationalIdType?: string;
+  nationalId?: string;
 }
 
 interface SignosVitales {
@@ -655,10 +640,7 @@ interface MiniDashboard {
 
 interface Paciente {
   id: ID;
-  datosPersonales: DatosPersonales;
-  direccion: Direccion;
-  contacto: Contacto;
-  datosFiscales?: DatosFiscales;
+  patientData: PatientData;
   signosVitales: SignosVitales[];
   citas: Cita[];
   visitas: Visita[];
@@ -697,37 +679,26 @@ interface CitaAgendada {
 
 const pacienteMock: Paciente = {
   id: "",
-  datosPersonales: {
-    id: "",
-    nombre: "",
-    apellidoPaterno: "",
-    apellidoMaterno: "",
-    fechaNacimiento: "",
-    sexo: "Femenino",
-    curp: "",
-    rfc: "",
-  },
-  direccion: {
-    calle: "",
-    numeroExterior: "",
-    numeroInterior: "",
-    colonia: "",
-    ciudad: "",
-    estado: "",
-    codigoPostal: "",
-    pais: "",
-  },
-  contacto: {
-    telefono: "",
-    telefonoEmergencia: "",
-    email: "",
-    nombreContactoEmergencia: "",
-  },
-  datosFiscales: {
-    razonSocial: "",
-    rfc: "",
-    usoCFDI: "",
-    regimenFiscal: "",
+  patientData: {
+    userId: "",
+    firstName: "",
+    lastName: "",
+    maternalLastName: "",
+    birthDate: "",
+    gender: "female",
+    maritalStatus: "",
+    nationality: "",
+    educationLevel: "",
+    occupation: "",
+    religion: "",
+    bloodType: "",
+    donorStatus: false,
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    emergencyContactRel: "",
+    countryCode: "",
+    nationalIdType: "",
+    nationalId: "",
   },
   signosVitales: [],
   citas: [],
@@ -1441,15 +1412,13 @@ const tipoAlergiaIconos: Record<string, string> = {
 };
 
 function DatosGeneralesTab({
-  datosPersonales, direccion, contacto, datosFiscales,
+  patientData,
 }: {
-  datosPersonales: DatosPersonales;
-  direccion: Direccion;
-  contacto: Contacto;
-  datosFiscales?: DatosFiscales;
+  patientData: PatientData;
 }) {
-  const edad = calcularEdad(datosPersonales.fechaNacimiento);
-  const nombreCompleto = [datosPersonales.nombre, datosPersonales.apellidoPaterno, datosPersonales.apellidoMaterno].filter(Boolean).join(" ");
+  const edad = calcularEdad(patientData.birthDate);
+  const nombreCompleto = [patientData.firstName, patientData.lastName, patientData.maternalLastName].filter(Boolean).join(" ");
+  const genderLabels: Record<string, string> = { male: "Masculino", female: "Femenino", other: "Otro" };
 
   const [alergias, setAlergias] = useState<Alergia[]>([
     { id: "AL-001", tipo: "Medicamento", descripcion: "Penicilina", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
@@ -1481,51 +1450,34 @@ function DatosGeneralesTab({
         <SectionCard icon={<User className="w-5 h-5" />} title="Datos Personales">
           <div className="grid grid-cols-2 gap-5">
             <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
-            <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
+            <FieldItem label="Fecha de nacimiento" value={patientData.birthDate ? fmtFecha(patientData.birthDate) : ""} />
             <FieldItem label="Edad" value={`${edad} años`} />
-            <FieldItem label="Sexo" value={datosPersonales.sexo} />
-            <FieldItem label="CURP" value={datosPersonales.curp} />
-            <div className="col-span-2"><FieldItem label="RFC" value={datosPersonales.rfc} /></div>
+            <FieldItem label="Género" value={genderLabels[patientData.gender] || patientData.gender} />
+            <FieldItem label="Estado civil" value={patientData.maritalStatus} />
+            <FieldItem label="Nacionalidad" value={patientData.nationality} />
+            <FieldItem label="Nivel educativo" value={patientData.educationLevel} />
+            <FieldItem label="Ocupación" value={patientData.occupation} />
+            <FieldItem label="Religión" value={patientData.religion} />
+            <FieldItem label="Tipo de sangre" value={patientData.bloodType} />
+            <FieldItem label="Donador" value={patientData.donorStatus ? "Sí" : "No"} />
           </div>
         </SectionCard>
 
-        <SectionCard icon={<Phone className="w-5 h-5" />} title="Información de Contacto">
+        <SectionCard icon={<Shield className="w-5 h-5" />} title="Identificación">
           <div className="grid grid-cols-2 gap-5">
-            <FieldItem label="Teléfono" value={contacto.telefono} icon={<Phone className="w-3 h-3" />} />
-            <FieldItem label="Correo electrónico" value={contacto.email} icon={<Mail className="w-3 h-3" />} />
-            <div className="col-span-2 pt-3 mt-3 border-t border-border">
-              <p className="text-xs font-medium text-destructive/80 uppercase tracking-wider mb-3">Contacto de Emergencia</p>
-              <div className="grid grid-cols-2 gap-5">
-                <FieldItem label="Nombre" value={contacto.nombreContactoEmergencia} />
-                <FieldItem label="Teléfono" value={contacto.telefonoEmergencia} />
-              </div>
-            </div>
+            <FieldItem label="Código de país" value={patientData.countryCode} />
+            <FieldItem label="Tipo de ID" value={patientData.nationalIdType} />
+            <div className="col-span-2"><FieldItem label="ID Nacional" value={patientData.nationalId} /></div>
           </div>
         </SectionCard>
 
-        <SectionCard icon={<MapPin className="w-5 h-5" />} title="Domicilio">
+        <SectionCard icon={<Phone className="w-5 h-5" />} title="Contacto de Emergencia">
           <div className="grid grid-cols-2 gap-5">
-            <div className="col-span-2">
-              <FieldItem label="Calle y número" value={`${direccion.calle} #${direccion.numeroExterior}${direccion.numeroInterior ? ` Int. ${direccion.numeroInterior}` : ""}`} />
-            </div>
-            <FieldItem label="Colonia" value={direccion.colonia} />
-            <FieldItem label="Ciudad" value={direccion.ciudad} />
-            <FieldItem label="Estado" value={direccion.estado} />
-            <FieldItem label="Código Postal" value={direccion.codigoPostal} />
-            <div className="col-span-2"><FieldItem label="País" value={direccion.pais} /></div>
+            <FieldItem label="Nombre" value={patientData.emergencyContactName} />
+            <FieldItem label="Teléfono" value={patientData.emergencyContactPhone} icon={<Phone className="w-3 h-3" />} />
+            <div className="col-span-2"><FieldItem label="Relación" value={patientData.emergencyContactRel} /></div>
           </div>
         </SectionCard>
-
-        {datosFiscales && (
-          <SectionCard icon={<Receipt className="w-5 h-5" />} title="Datos Fiscales">
-            <div className="grid grid-cols-2 gap-5">
-              <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
-              <FieldItem label="RFC" value={datosFiscales.rfc} />
-              <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
-              <div className="col-span-2"><FieldItem label="Uso de CFDI" value={datosFiscales.usoCFDI} /></div>
-            </div>
-          </SectionCard>
-        )}
       </div>
 
       {/* ALERGIAS */}
@@ -5066,9 +5018,10 @@ export default function Page() {
     else html.style.fontSize = "16px";
   }, [config.tamanoTexto]);
   const paciente = pacienteMock;
-  const dp = paciente.datosPersonales;
-  const nombreCompleto = [dp.nombre, dp.apellidoPaterno, dp.apellidoMaterno].filter(Boolean).join(" ");
-  const edad = calcularEdad(dp.fechaNacimiento);
+  const pd = paciente.patientData;
+  const genderToSexo = (g: string) => g === "male" ? "Masculino" : g === "female" ? "Femenino" : "Otro";
+  const nombreCompleto = [pd.firstName, pd.lastName, pd.maternalLastName].filter(Boolean).join(" ");
+  const edad = calcularEdad(pd.birthDate);
 
   // Build notifications from real data
   const hoy = new Date();
@@ -5220,7 +5173,7 @@ export default function Page() {
                 <div>
                   <h1 className="text-xl font-bold text-foreground">{tabs.find(tab => tab.id === activeTab)?.label}</h1>
                   <p className="text-sm text-muted-foreground hidden sm:block">
-                    {t("patientFile")} {dp.nombre} {dp.apellidoPaterno}
+                    {t("patientFile")} {pd.firstName} {pd.lastName}
                   </p>
                 </div>
               </div>
@@ -5331,7 +5284,7 @@ export default function Page() {
                 </div>
 
                 <div className="flex items-center gap-3 pl-3 border-l border-border">
-                  <AvatarPaciente nombre={nombreCompleto} sexo={dp.sexo} size={48} animated={true} />
+                  <AvatarPaciente nombre={nombreCompleto} sexo={genderToSexo(pd.gender)} size={48} animated={true} />
                   <div className="hidden sm:block flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">{nombreCompleto}</p>
                     <div className="flex items-center gap-2">
@@ -5446,7 +5399,7 @@ export default function Page() {
 
           <main className="p-4 lg:p-8 max-w-7xl">
             {activeTab === "dashboard" && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
-            {activeTab === "datos" && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
+            {activeTab === "datos" && <DatosGeneralesTab patientData={paciente.patientData} />}
             {activeTab === "signos" && <SignosVitalesTab signosVitales={paciente.signosVitales} />}
             {activeTab === "citas" && <CitasTab />}
             {activeTab === "consulta" && <ConsultaTab />}

@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { cn } from "../lib/utils"
+import { cn } from "../../lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Badge } from "../../components/ui/badge"
+import { Textarea } from "../../components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -30,13 +31,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table"
+} from "@/components/ui/table"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import { 
   Calendar, 
   Activity, 
@@ -71,7 +72,12 @@ import {
   Eye,
   Edit,
   Trash2,
-  User
+  DollarSign,
+  Building2,
+  UserCog,
+  Briefcase,
+  Video,
+  MapPin
 } from "lucide-react"
 
 // Types
@@ -111,18 +117,80 @@ interface VitalSign {
   height: number
 }
 
+// New API-aligned Appointment interface
 interface Appointment {
   id: string
+  doctorId: string
   patientId: string
-  patientName: string
-  date: string
-  time: string
-  type: "Consulta General" | "Seguimiento" | "Urgencia" | "Control"
+  branchId: string
+  affiliationId: string
+  serviceId: string
+  modality: "PRESENCIAL" | "VIRTUAL" | "DOMICILIO"
+  scheduledAt: string
+  durationMinutes: number
+  price: number
+  paymentMethod: "CASH" | "CARD" | "TRANSFER" | "INSURANCE"
+  notes: string
+  internalNotes: string
   status: "Programada" | "Completada" | "Cancelada" | "En curso"
-  notes?: string
+}
+
+// Reference data types
+interface Doctor {
+  id: string
+  name: string
+  specialty: string
+}
+
+interface Branch {
+  id: string
+  name: string
+  address: string
+}
+
+interface Affiliation {
+  id: string
+  name: string
+  type: string
+}
+
+interface Service {
+  id: string
+  name: string
+  duration: number
+  price: number
 }
 
 // Initial Data
+const initialDoctors: Doctor[] = [
+  { id: "doc1", name: "Dr. Roberto Sanchez", specialty: "Medicina General" },
+  { id: "doc2", name: "Dra. Ana Morales", specialty: "Cardiologia" },
+  { id: "doc3", name: "Dr. Miguel Torres", specialty: "Traumatologia" },
+  { id: "doc4", name: "Dra. Laura Vega", specialty: "Endocrinologia" },
+]
+
+const initialBranches: Branch[] = [
+  { id: "branch1", name: "Sucursal Centro", address: "Av. Principal 123" },
+  { id: "branch2", name: "Sucursal Norte", address: "Calle Norte 456" },
+  { id: "branch3", name: "Sucursal Sur", address: "Blvd. Sur 789" },
+]
+
+const initialAffiliations: Affiliation[] = [
+  { id: "aff1", name: "IMSS", type: "Seguro Social" },
+  { id: "aff2", name: "ISSSTE", type: "Seguro Social" },
+  { id: "aff3", name: "GNP Seguros", type: "Seguro Privado" },
+  { id: "aff4", name: "MetLife", type: "Seguro Privado" },
+  { id: "aff5", name: "Particular", type: "Sin Seguro" },
+]
+
+const initialServices: Service[] = [
+  { id: "serv1", name: "Consulta General", duration: 30, price: 500 },
+  { id: "serv2", name: "Consulta Especializada", duration: 45, price: 800 },
+  { id: "serv3", name: "Control de Seguimiento", duration: 20, price: 350 },
+  { id: "serv4", name: "Urgencia", duration: 60, price: 1200 },
+  { id: "serv5", name: "Valoracion Inicial", duration: 60, price: 1000 },
+]
+
 const initialPatients: Patient[] = [
   {
     id: "1",
@@ -262,59 +330,98 @@ const initialPatients: Patient[] = [
 const initialAppointments: Appointment[] = [
   {
     id: "apt1",
+    doctorId: "doc1",
     patientId: "1",
-    patientName: "Maria Garcia Lopez",
-    date: "2024-01-22",
-    time: "09:00",
-    type: "Control",
-    status: "Programada",
-    notes: "Control de presion arterial"
+    branchId: "branch1",
+    affiliationId: "aff5",
+    serviceId: "serv3",
+    modality: "PRESENCIAL",
+    scheduledAt: "2024-01-22T09:00:00.000Z",
+    durationMinutes: 30,
+    price: 500,
+    paymentMethod: "CASH",
+    notes: "Control de presion arterial",
+    internalNotes: "",
+    status: "Programada"
   },
   {
     id: "apt2",
+    doctorId: "doc2",
     patientId: "2",
-    patientName: "Carlos Rodriguez Martinez",
-    date: "2024-01-22",
-    time: "10:30",
-    type: "Seguimiento",
+    branchId: "branch1",
+    affiliationId: "aff3",
+    serviceId: "serv2",
+    modality: "PRESENCIAL",
+    scheduledAt: "2024-01-22T10:30:00.000Z",
+    durationMinutes: 45,
+    price: 800,
+    paymentMethod: "INSURANCE",
+    notes: "",
+    internalNotes: "Paciente con seguro GNP",
     status: "Programada"
   },
   {
     id: "apt3",
+    doctorId: "doc1",
     patientId: "4",
-    patientName: "Jose Luis Hernandez",
-    date: "2024-01-22",
-    time: "11:30",
-    type: "Consulta General",
+    branchId: "branch2",
+    affiliationId: "aff1",
+    serviceId: "serv1",
+    modality: "VIRTUAL",
+    scheduledAt: "2024-01-22T11:30:00.000Z",
+    durationMinutes: 30,
+    price: 500,
+    paymentMethod: "INSURANCE",
+    notes: "",
+    internalNotes: "",
     status: "Programada"
   },
   {
     id: "apt4",
+    doctorId: "doc3",
     patientId: "3",
-    patientName: "Ana Fernandez Ruiz",
-    date: "2024-01-22",
-    time: "14:00",
-    type: "Consulta General",
-    status: "Programada",
-    notes: "Primera consulta"
+    branchId: "branch1",
+    affiliationId: "aff5",
+    serviceId: "serv5",
+    modality: "PRESENCIAL",
+    scheduledAt: "2024-01-22T14:00:00.000Z",
+    durationMinutes: 60,
+    price: 1000,
+    paymentMethod: "CARD",
+    notes: "Primera consulta",
+    internalNotes: "Paciente nuevo",
+    status: "Programada"
   },
   {
     id: "apt5",
+    doctorId: "doc1",
     patientId: "1",
-    patientName: "Maria Garcia Lopez",
-    date: "2024-01-21",
-    time: "09:30",
-    type: "Urgencia",
-    status: "Completada",
-    notes: "Dolor de cabeza intenso"
+    branchId: "branch1",
+    affiliationId: "aff5",
+    serviceId: "serv4",
+    modality: "PRESENCIAL",
+    scheduledAt: "2024-01-21T09:30:00.000Z",
+    durationMinutes: 60,
+    price: 1200,
+    paymentMethod: "CASH",
+    notes: "Dolor de cabeza intenso",
+    internalNotes: "Urgencia atendida",
+    status: "Completada"
   },
   {
     id: "apt6",
+    doctorId: "doc2",
     patientId: "2",
-    patientName: "Carlos Rodriguez Martinez",
-    date: "2024-01-20",
-    time: "16:00",
-    type: "Control",
+    branchId: "branch2",
+    affiliationId: "aff3",
+    serviceId: "serv3",
+    modality: "DOMICILIO",
+    scheduledAt: "2024-01-20T16:00:00.000Z",
+    durationMinutes: 45,
+    price: 1500,
+    paymentMethod: "INSURANCE",
+    notes: "",
+    internalNotes: "",
     status: "Completada"
   }
 ]
@@ -342,6 +449,25 @@ const statusIcons = {
   "En curso": AlertCircle
 }
 
+const modalityLabels = {
+  "PRESENCIAL": "Presencial",
+  "VIRTUAL": "Virtual",
+  "DOMICILIO": "Domicilio"
+}
+
+const modalityIcons = {
+  "PRESENCIAL": Building2,
+  "VIRTUAL": Video,
+  "DOMICILIO": MapPin
+}
+
+const paymentMethodLabels = {
+  "CASH": "Efectivo",
+  "CARD": "Tarjeta",
+  "TRANSFER": "Transferencia",
+  "INSURANCE": "Seguro"
+}
+
 export default function MedicalAssistantApp() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -353,7 +479,15 @@ export default function MedicalAssistantApp() {
       case "dashboard":
         return <DashboardSection patients={patientsData} appointments={appointmentsData} />
       case "appointments":
-        return <AppointmentsSection patients={patientsData} appointments={appointmentsData} setAppointments={setAppointmentsData} />
+        return <AppointmentsSection 
+          patients={patientsData} 
+          appointments={appointmentsData} 
+          setAppointments={setAppointmentsData}
+          doctors={initialDoctors}
+          branches={initialBranches}
+          affiliations={initialAffiliations}
+          services={initialServices}
+        />
       case "vitals":
         return <VitalSignsSection patients={patientsData} setPatients={setPatientsData} />
       case "records":
@@ -488,6 +622,16 @@ function DashboardSection({ patients, appointments }: { patients: Patient[], app
 
   const upcomingAppointments = appointments.filter(apt => apt.status === "Programada").slice(0, 4)
 
+  const getPatientName = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId)
+    return patient?.name || "Paciente desconocido"
+  }
+
+  const formatTime = (scheduledAt: string) => {
+    const date = new Date(scheduledAt)
+    return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -526,23 +670,30 @@ function DashboardSection({ patients, appointments }: { patients: Patient[], app
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {upcomingAppointments.map((apt) => (
-                <div key={apt.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <span className="text-sm font-medium text-primary">
-                      {apt.patientName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                    </span>
+              {upcomingAppointments.map((apt) => {
+                const patientName = getPatientName(apt.patientId)
+                const ModalityIcon = modalityIcons[apt.modality]
+                return (
+                  <div key={apt.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <span className="text-sm font-medium text-primary">
+                        {patientName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{patientName}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <ModalityIcon className="h-3 w-3" />
+                        <span>{modalityLabels[apt.modality]}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{formatTime(apt.scheduledAt)}</p>
+                      <p className="text-xs text-muted-foreground">${apt.price.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{apt.patientName}</p>
-                    <p className="text-xs text-muted-foreground">{apt.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{apt.time}</p>
-                    <p className="text-xs text-muted-foreground">{apt.notes || "Sin notas"}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -580,36 +731,122 @@ function DashboardSection({ patients, appointments }: { patients: Patient[], app
   )
 }
 
-// Appointments Section
-function AppointmentsSection({ patients, appointments, setAppointments }: { patients: Patient[], appointments: Appointment[], setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>> }) {
+// Appointments Section with full API fields
+interface AppointmentsSectionProps {
+  patients: Patient[]
+  appointments: Appointment[]
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+  doctors: Doctor[]
+  branches: Branch[]
+  affiliations: Affiliation[]
+  services: Service[]
+}
+
+function AppointmentsSection({ patients, appointments, setAppointments, doctors, branches, affiliations, services }: AppointmentsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [newAppointment, setNewAppointment] = useState({ patientId: "", date: "", time: "", type: "" as Appointment["type"], notes: "" })
+  const [newAppointment, setNewAppointment] = useState({
+    doctorId: "",
+    patientId: "",
+    branchId: "",
+    affiliationId: "",
+    serviceId: "",
+    modality: "" as Appointment["modality"],
+    scheduledDate: "",
+    scheduledTime: "",
+    durationMinutes: 30,
+    price: 0,
+    paymentMethod: "" as Appointment["paymentMethod"],
+    notes: "",
+    internalNotes: ""
+  })
+
+  const getPatientName = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId)
+    return patient?.name || "Paciente desconocido"
+  }
+
+  const getDoctorName = (doctorId: string) => {
+    const doctor = doctors.find(d => d.id === doctorId)
+    return doctor?.name || "Doctor desconocido"
+  }
+
+  const getBranchName = (branchId: string) => {
+    const branch = branches.find(b => b.id === branchId)
+    return branch?.name || "Sucursal desconocida"
+  }
+
+  const getServiceName = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId)
+    return service?.name || "Servicio desconocido"
+  }
+
+  const formatDateTime = (scheduledAt: string) => {
+    const date = new Date(scheduledAt)
+    return {
+      date: date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      time: date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+    }
+  }
 
   const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = apt.patientName.toLowerCase().includes(searchTerm.toLowerCase())
+    const patientName = getPatientName(apt.patientId)
+    const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === "all" || apt.status === filterStatus
     return matchesSearch && matchesStatus
   })
 
+  const handleServiceChange = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId)
+    if (service) {
+      setNewAppointment({
+        ...newAppointment,
+        serviceId,
+        durationMinutes: service.duration,
+        price: service.price
+      })
+    }
+  }
+
   const handleCreateAppointment = () => {
-    const patient = patients.find(p => p.id === newAppointment.patientId)
-    if (!patient || !newAppointment.date || !newAppointment.time || !newAppointment.type) return
+    if (!newAppointment.patientId || !newAppointment.doctorId || !newAppointment.scheduledDate || !newAppointment.scheduledTime || !newAppointment.serviceId) return
+
+    const scheduledAt = new Date(`${newAppointment.scheduledDate}T${newAppointment.scheduledTime}:00.000Z`).toISOString()
 
     const appointment: Appointment = {
       id: `apt${Date.now()}`,
+      doctorId: newAppointment.doctorId,
       patientId: newAppointment.patientId,
-      patientName: patient.name,
-      date: newAppointment.date,
-      time: newAppointment.time,
-      type: newAppointment.type,
-      status: "Programada",
-      notes: newAppointment.notes
+      branchId: newAppointment.branchId,
+      affiliationId: newAppointment.affiliationId,
+      serviceId: newAppointment.serviceId,
+      modality: newAppointment.modality || "PRESENCIAL",
+      scheduledAt,
+      durationMinutes: newAppointment.durationMinutes,
+      price: newAppointment.price,
+      paymentMethod: newAppointment.paymentMethod || "CASH",
+      notes: newAppointment.notes,
+      internalNotes: newAppointment.internalNotes,
+      status: "Programada"
     }
 
     setAppointments([appointment, ...appointments])
-    setNewAppointment({ patientId: "", date: "", time: "", type: "" as Appointment["type"], notes: "" })
+    setNewAppointment({
+      doctorId: "",
+      patientId: "",
+      branchId: "",
+      affiliationId: "",
+      serviceId: "",
+      modality: "" as Appointment["modality"],
+      scheduledDate: "",
+      scheduledTime: "",
+      durationMinutes: 30,
+      price: 0,
+      paymentMethod: "" as Appointment["paymentMethod"],
+      notes: "",
+      internalNotes: ""
+    })
     setIsDialogOpen(false)
   }
 
@@ -628,46 +865,227 @@ function AppointmentsSection({ patients, appointments, setAppointments }: { pati
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="h-4 w-4" />Nueva Cita</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Agendar Nueva Cita</DialogTitle>
               <DialogDescription>Completa los datos para agendar una nueva cita medica</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="patient">Paciente</Label>
-                <Select value={newAppointment.patientId} onValueChange={(value) => setNewAppointment({...newAppointment, patientId: value})}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar paciente" /></SelectTrigger>
-                  <SelectContent>
-                    {patients.map(patient => (<SelectItem key={patient.id} value={patient.id}>{patient.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Row 1: Doctor and Patient */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="date">Fecha</Label>
-                  <Input id="date" type="date" value={newAppointment.date} onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})} />
+                  <Label htmlFor="doctor" className="flex items-center gap-2">
+                    <UserCog className="h-4 w-4 text-muted-foreground" />
+                    Doctor
+                  </Label>
+                  <Select value={newAppointment.doctorId} onValueChange={(value) => setNewAppointment({...newAppointment, doctorId: value})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar doctor" /></SelectTrigger>
+                    <SelectContent>
+                      {doctors.map(doctor => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          <div className="flex flex-col">
+                            <span>{doctor.name}</span>
+                            <span className="text-xs text-muted-foreground">{doctor.specialty}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="time">Hora</Label>
-                  <Input id="time" type="time" value={newAppointment.time} onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})} />
+                  <Label htmlFor="patient" className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    Paciente
+                  </Label>
+                  <Select value={newAppointment.patientId} onValueChange={(value) => setNewAppointment({...newAppointment, patientId: value})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar paciente" /></SelectTrigger>
+                    <SelectContent>
+                      {patients.map(patient => (
+                        <SelectItem key={patient.id} value={patient.id}>{patient.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="type">Tipo de Cita</Label>
-                <Select value={newAppointment.type} onValueChange={(value) => setNewAppointment({...newAppointment, type: value as Appointment["type"]})}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Consulta General">Consulta General</SelectItem>
-                    <SelectItem value="Seguimiento">Seguimiento</SelectItem>
-                    <SelectItem value="Control">Control</SelectItem>
-                    <SelectItem value="Urgencia">Urgencia</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {/* Row 2: Branch and Service */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="branch" className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    Sucursal
+                  </Label>
+                  <Select value={newAppointment.branchId} onValueChange={(value) => setNewAppointment({...newAppointment, branchId: value})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar sucursal" /></SelectTrigger>
+                    <SelectContent>
+                      {branches.map(branch => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          <div className="flex flex-col">
+                            <span>{branch.name}</span>
+                            <span className="text-xs text-muted-foreground">{branch.address}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="service" className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    Servicio
+                  </Label>
+                  <Select value={newAppointment.serviceId} onValueChange={handleServiceChange}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar servicio" /></SelectTrigger>
+                    <SelectContent>
+                      {services.map(service => (
+                        <SelectItem key={service.id} value={service.id}>
+                          <div className="flex flex-col">
+                            <span>{service.name}</span>
+                            <span className="text-xs text-muted-foreground">{service.duration} min - ${service.price.toLocaleString()}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {/* Row 3: Affiliation and Modality */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="affiliation" className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                    Afiliacion
+                  </Label>
+                  <Select value={newAppointment.affiliationId} onValueChange={(value) => setNewAppointment({...newAppointment, affiliationId: value})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar afiliacion" /></SelectTrigger>
+                    <SelectContent>
+                      {affiliations.map(affiliation => (
+                        <SelectItem key={affiliation.id} value={affiliation.id}>
+                          <div className="flex flex-col">
+                            <span>{affiliation.name}</span>
+                            <span className="text-xs text-muted-foreground">{affiliation.type}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="modality" className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    Modalidad
+                  </Label>
+                  <Select value={newAppointment.modality} onValueChange={(value) => setNewAppointment({...newAppointment, modality: value as Appointment["modality"]})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar modalidad" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PRESENCIAL">Presencial</SelectItem>
+                      <SelectItem value="VIRTUAL">Virtual</SelectItem>
+                      <SelectItem value="DOMICILIO">Domicilio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row 4: Date and Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="date" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Fecha
+                  </Label>
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    value={newAppointment.scheduledDate} 
+                    onChange={(e) => setNewAppointment({...newAppointment, scheduledDate: e.target.value})} 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="time" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    Hora
+                  </Label>
+                  <Input 
+                    id="time" 
+                    type="time" 
+                    value={newAppointment.scheduledTime} 
+                    onChange={(e) => setNewAppointment({...newAppointment, scheduledTime: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Duration, Price, Payment Method */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="duration" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    Duracion (min)
+                  </Label>
+                  <Input 
+                    id="duration" 
+                    type="number" 
+                    value={newAppointment.durationMinutes} 
+                    onChange={(e) => setNewAppointment({...newAppointment, durationMinutes: parseInt(e.target.value) || 30})} 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="price" className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    Precio
+                  </Label>
+                  <Input 
+                    id="price" 
+                    type="number" 
+                    value={newAppointment.price} 
+                    onChange={(e) => setNewAppointment({...newAppointment, price: parseFloat(e.target.value) || 0})} 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="paymentMethod" className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    Metodo de Pago
+                  </Label>
+                  <Select value={newAppointment.paymentMethod} onValueChange={(value) => setNewAppointment({...newAppointment, paymentMethod: value as Appointment["paymentMethod"]})}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CASH">Efectivo</SelectItem>
+                      <SelectItem value="CARD">Tarjeta</SelectItem>
+                      <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                      <SelectItem value="INSURANCE">Seguro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row 6: Notes */}
               <div className="grid gap-2">
-                <Label htmlFor="notes">Notas (opcional)</Label>
-                <Input id="notes" placeholder="Agregar notas adicionales" value={newAppointment.notes} onChange={(e) => setNewAppointment({...newAppointment, notes: e.target.value})} />
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Notas para el paciente
+                </Label>
+                <Textarea 
+                  id="notes" 
+                  placeholder="Agregar notas visibles para el paciente" 
+                  value={newAppointment.notes} 
+                  onChange={(e) => setNewAppointment({...newAppointment, notes: e.target.value})}
+                  rows={2}
+                />
+              </div>
+
+              {/* Row 7: Internal Notes */}
+              <div className="grid gap-2">
+                <Label htmlFor="internalNotes" className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  Notas internas
+                </Label>
+                <Textarea 
+                  id="internalNotes" 
+                  placeholder="Agregar notas internas (solo personal medico)" 
+                  value={newAppointment.internalNotes} 
+                  onChange={(e) => setNewAppointment({...newAppointment, internalNotes: e.target.value})}
+                  rows={2}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -706,32 +1124,81 @@ function AppointmentsSection({ patients, appointments, setAppointments }: { pati
         ) : (
           filteredAppointments.map((apt) => {
             const StatusIcon = statusIcons[apt.status]
+            const ModalityIcon = modalityIcons[apt.modality]
+            const patientName = getPatientName(apt.patientId)
+            const doctorName = getDoctorName(apt.doctorId)
+            const branchName = getBranchName(apt.branchId)
+            const serviceName = getServiceName(apt.serviceId)
+            const { date, time } = formatDateTime(apt.scheduledAt)
+            
             return (
               <Card key={apt.id} className="border-border/50">
                 <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    {/* Patient Info */}
                     <div className="flex items-center gap-4 flex-1">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <span className="text-lg font-medium text-primary">{apt.patientName.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                        <span className="text-lg font-medium text-primary">{patientName.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{apt.patientName}</p>
+                        <p className="font-medium truncate">{patientName}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" /><span>{apt.date}</span>
-                          <Clock className="h-3.5 w-3.5 ml-2" /><span>{apt.time}</span>
+                          <Calendar className="h-3.5 w-3.5" /><span>{date}</span>
+                          <Clock className="h-3.5 w-3.5 ml-2" /><span>{time}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-sm font-medium">{apt.type}</p>
-                        <p className="text-xs text-muted-foreground">{apt.notes || "Sin notas"}</p>
+
+                    {/* Appointment Details */}
+                    <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+                      <div className="text-sm hidden md:block">
+                        <p className="font-medium">{doctorName}</p>
+                        <p className="text-xs text-muted-foreground">{serviceName}</p>
                       </div>
+                      
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <ModalityIcon className="h-3.5 w-3.5" />
+                        <span>{modalityLabels[apt.modality]}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{branchName}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-sm font-medium">
+                        <DollarSign className="h-3.5 w-3.5 text-accent" />
+                        <span>${apt.price.toLocaleString()}</span>
+                      </div>
+
+                      <Badge variant="outline" className="text-xs">
+                        {paymentMethodLabels[apt.paymentMethod]}
+                      </Badge>
+
                       <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium", statusColors[apt.status])}>
                         <StatusIcon className="h-3.5 w-3.5" />{apt.status}
                       </div>
                     </div>
                   </div>
+
+                  {/* Notes Section */}
+                  {(apt.notes || apt.internalNotes) && (
+                    <div className="mt-3 pt-3 border-t border-border/50 grid sm:grid-cols-2 gap-2">
+                      {apt.notes && (
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Notas: </span>
+                          <span>{apt.notes}</span>
+                        </div>
+                      )}
+                      {apt.internalNotes && (
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Internas: </span>
+                          <span className="text-chart-4">{apt.internalNotes}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {apt.status === "Programada" && (
                     <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
                       <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "En curso")}>Iniciar</Button>
