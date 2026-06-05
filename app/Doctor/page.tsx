@@ -75,7 +75,7 @@ const ChevronRightIcon = ChevronRight;
 // DOCTOR SERVICE
 // ─────────────────────────────────────────────
 
-const BASE_URL = "http://localhost:3003/api";
+const BASE_URL = "http://localhost:3000/api";
 
 const getAuthHeaders = (isMultipart = false): HeadersInit => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
@@ -117,6 +117,92 @@ const doctorService = {
 
   createPatientFile: (patientData: Record<string, unknown>) =>
     fetch(`${BASE_URL}/patients`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(patientData) }).then((r) => r.json()),
+
+  // ─────────────────────────────────────────────
+  // NUEVAS APIS - Consulta y Signos Vitales
+  // ─────────────────────────────────────────────
+
+  // Datos médicos del paciente
+  saveDatosMedicos: (data: {
+    patient_id: string;
+    blood_type?: string;
+    allergies?: string;
+    chronic_diseases?: string;
+    surgeries?: string;
+    medications?: string;
+    family_history?: string;
+  }) =>
+    fetch(`${BASE_URL}/datosmedicos`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  // Signos vitales
+  saveSignosVitales: (data: {
+    patient_id: string;
+    doctor_id: string;
+    appointment_id?: number;
+    blood_pressure?: string;
+    heart_rate?: number;
+    respiratory_rate?: number;
+    temperature?: number;
+    oxygen_saturation?: number;
+    weight?: number;
+    height?: number;
+    bmi?: number;
+    glucose?: number;
+    notes?: string;
+  }) =>
+    fetch(`${BASE_URL}/signosvitales`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  // Nota SOAP
+  saveSOAP: (data: {
+    patient_id: string;
+    doctor_id: string;
+    appointment_id?: number;
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    diagnosis?: string;
+    prescription?: string;
+    observations?: string;
+  }) =>
+    fetch(`${BASE_URL}/soap`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  // Alergias del paciente
+  savePatientAlergia: (data: {
+    patient_id: string;
+    allergy_type: string;
+    allergen: string;
+    reaction?: string;
+    severity: string;
+    notes?: string;
+  }) =>
+    fetch(`${BASE_URL}/patientalergias`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  // Alergias (endpoint alternativo)
+  saveAlergia: (data: {
+    patient_id: string;
+    allergy_type: string;
+    allergen: string;
+    reaction?: string;
+    severity: string;
+    notes?: string;
+  }) =>
+    fetch(`${BASE_URL}/alergias`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
+
+  // Prescripciones
+  savePrescripcion: (data: {
+    patient_id: string;
+    doctor_id: string;
+    appointment_id?: number;
+    medication_type: string;
+    medication_name: string;
+    dosage: string;
+    route: string;
+    frequency_hours: number;
+    duration_days: number;
+    indications?: string;
+  }) =>
+    fetch(`${BASE_URL}/prescripcionprenscripciones`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
 };
 
 // ─────────────────────────────────────────────
@@ -3035,6 +3121,175 @@ function ConsultaTab() {
 
   const eliminarPrescripcion = (id: string) => setPrescripciones(prescripciones.filter((p) => p.id !== id));
 
+  // ─────────────────────────────────────────────
+  // FUNCIONES DE GUARDADO CON API
+  // ─────────────────────────────────────────────
+
+  const [guardandoSOAP, setGuardandoSOAP] = useState(false);
+  const [guardandoDatosClinicos, setGuardandoDatosClinicos] = useState(false);
+  const [guardandoPrescripcion, setGuardandoPrescripcion] = useState(false);
+
+  // Guardar Nota SOAP
+  const handleGuardarSOAP = async () => {
+    setGuardandoSOAP(true);
+    try {
+      await doctorService.saveSOAP({
+        patient_id: "PAT001", // TODO: Obtener del paciente actual
+        doctor_id: "DOC001", // TODO: Obtener del doctor actual
+        appointment_id: 1,
+        subjective: soapNote.subjective,
+        objective: soapNote.objective,
+        assessment: soapNote.assessment,
+        plan: soapNote.plan,
+        diagnosis: diagnosticos.map(d => d.descripcion).join(", "),
+        prescription: prescripciones.map(p => `${p.medicamento} ${p.dosis}`).join(", "),
+        observations: notas.map(n => n.contenido).join("\n"),
+      });
+      alert("Nota SOAP guardada exitosamente");
+    } catch (error) {
+      console.error("Error al guardar SOAP:", error);
+      alert("Error al guardar la nota SOAP");
+    } finally {
+      setGuardandoSOAP(false);
+    }
+  };
+
+  // Guardar Datos Clínicos / Signos Vitales
+  const handleGuardarDatosClinicos = async () => {
+    setGuardandoDatosClinicos(true);
+    try {
+      const bloodPressure = datosClinicosForm.presionSistolica && datosClinicosForm.presionDiastolica
+        ? `${datosClinicosForm.presionSistolica}/${datosClinicosForm.presionDiastolica}`
+        : undefined;
+
+      await doctorService.saveSignosVitales({
+        patient_id: "PAT001", // TODO: Obtener del paciente actual
+        doctor_id: "DOC001", // TODO: Obtener del doctor actual
+        appointment_id: 1,
+        blood_pressure: bloodPressure,
+        heart_rate: datosClinicosForm.frecuenciaCardiaca ? parseInt(datosClinicosForm.frecuenciaCardiaca) : undefined,
+        respiratory_rate: datosClinicosForm.frecuenciaRespiratoria ? parseInt(datosClinicosForm.frecuenciaRespiratoria) : undefined,
+        temperature: datosClinicosForm.temperatura ? parseFloat(datosClinicosForm.temperatura) : undefined,
+        weight: datosClinicosForm.peso ? parseFloat(datosClinicosForm.peso) : undefined,
+        height: datosClinicosForm.estatura ? parseFloat(datosClinicosForm.estatura) / 100 : undefined, // Convertir cm a m
+        bmi: datosClinicosForm.imc ? parseFloat(datosClinicosForm.imc) : undefined,
+        notes: "Registro de signos vitales en consulta",
+      });
+      alert("Datos clínicos guardados exitosamente");
+    } catch (error) {
+      console.error("Error al guardar datos clínicos:", error);
+      alert("Error al guardar los datos clínicos");
+    } finally {
+      setGuardandoDatosClinicos(false);
+    }
+  };
+
+  // Guardar Alergia con API
+  const handleGuardarAlergiaConsulta = async () => {
+    if (!nuevaAlergiaConsulta.descripcion.trim()) return;
+    
+    try {
+      // Mapear tipo de alergia al formato de la API
+      const tipoMap: Record<string, string> = {
+        "Medicamento": "MEDICAMENTO",
+        "Alimento": "ALIMENTO",
+        "Ambiental": "AMBIENTAL",
+        "Material": "MATERIAL",
+        "Otro": "OTRO",
+      };
+      
+      // Mapear severidad al formato de la API
+      const severidadMap: Record<string, string> = {
+        "Leve": "LEVE",
+        "Moderada": "MODERADA",
+        "Grave": "SEVERA",
+      };
+
+      await doctorService.savePatientAlergia({
+        patient_id: "PAT001", // TODO: Obtener del paciente actual
+        allergy_type: tipoMap[nuevaAlergiaConsulta.tipo] || "OTRO",
+        allergen: nuevaAlergiaConsulta.descripcion,
+        reaction: nuevaAlergiaConsulta.reaccion || undefined,
+        severity: severidadMap[nuevaAlergiaConsulta.severidad] || "LEVE",
+        notes: "",
+      });
+
+      // Agregar a la lista local
+      setAlergiasConsulta([...alergiasConsulta, { id: `AL-${Date.now()}`, ...nuevaAlergiaConsulta }]);
+      setNuevaAlergiaConsulta({ tipo: "Medicamento", descripcion: "", reaccion: "", severidad: "Leve" });
+      setMostrarFormAlergiaConsulta(false);
+      alert("Alergia guardada exitosamente");
+    } catch (error) {
+      console.error("Error al guardar alergia:", error);
+      alert("Error al guardar la alergia");
+    }
+  };
+
+  // Guardar Prescripción con API
+  const handleGuardarPrescripcion = async () => {
+    if (prescripciones.length === 0) return;
+    
+    setGuardandoPrescripcion(true);
+    try {
+      // Mapear frecuencia a horas
+      const frecuenciaToHours: Record<string, number> = {
+        "Cada 4 horas": 4,
+        "Cada 6 horas": 6,
+        "Cada 8 horas": 8,
+        "Cada 12 horas": 12,
+        "Cada 24 horas": 24,
+        "PRN (según necesidad)": 0,
+      };
+
+      // Mapear duración a días
+      const duracionToDays: Record<string, number> = {
+        "Dosis única": 1,
+        "1 día": 1,
+        "3 días": 3,
+        "5 días": 5,
+        "7 días": 7,
+        "10 días": 10,
+        "14 días": 14,
+        "21 días": 21,
+        "30 días": 30,
+        "60 días": 60,
+        "90 días": 90,
+        "Indefinido": 365,
+      };
+
+      // Mapear vía al formato de la API
+      const viaMap: Record<string, string> = {
+        "Oral": "ORAL",
+        "Intramuscular": "INTRAMUSCULAR",
+        "Intravenosa": "INTRAVENOSA",
+        "Tópica": "TOPICA",
+        "Inhalada": "INHALADA",
+      };
+
+      // Guardar cada prescripción
+      for (const rx of prescripciones) {
+        await doctorService.savePrescripcion({
+          patient_id: "PAT001", // TODO: Obtener del paciente actual
+          doctor_id: "DOC001", // TODO: Obtener del doctor actual
+          appointment_id: 1,
+          medication_type: tipoMedicamento === "comercial" ? "COMERCIAL" : "GENERICO",
+          medication_name: rx.medicamento,
+          dosage: rx.dosis,
+          route: viaMap[rx.via] || "ORAL",
+          frequency_hours: frecuenciaToHours[rx.frecuencia] || 8,
+          duration_days: duracionToDays[rx.duracion] || 5,
+          indications: rx.indicaciones || undefined,
+        });
+      }
+      alert("Prescripciones guardadas exitosamente");
+    } catch (error) {
+      console.error("Error al guardar prescripciones:", error);
+      alert("Error al guardar las prescripciones");
+    } finally {
+      setGuardandoPrescripcion(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="border-b border-border">
@@ -3258,9 +3513,12 @@ function ConsultaTab() {
               </div>
             </div>
 
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+            <button 
+              onClick={handleGuardarSOAP}
+              disabled={guardandoSOAP}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
               <Save className="w-4 h-4" />
-              Guardar Nota SOAP
+              {guardandoSOAP ? "Guardando..." : "Guardar Nota SOAP"}
             </button>
           </div>
         )}
@@ -3315,9 +3573,12 @@ function ConsultaTab() {
               </div>
             )}
 
-            <button className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+            <button 
+              onClick={handleGuardarDatosClinicos}
+              disabled={guardandoDatosClinicos}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
               <Save className="w-4 h-4" />
-              Guardar Datos Clínicos
+              {guardandoDatosClinicos ? "Guardando..." : "Guardar Datos Clínicos"}
             </button>
           </div>
         )}
@@ -3394,7 +3655,7 @@ function ConsultaTab() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={agregarAlergiaConsulta}
+                    onClick={handleGuardarAlergiaConsulta}
                     disabled={!nuevaAlergiaConsulta.descripcion.trim()}
                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
@@ -3908,9 +4169,12 @@ function ConsultaTab() {
                   ))}
                 </div>
 
-                <button className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                <button 
+                  onClick={handleGuardarPrescripcion}
+                  disabled={guardandoPrescripcion}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
                   <Save className="w-4 h-4" />
-                  Guardar Receta
+                  {guardandoPrescripcion ? "Guardando..." : "Guardar Receta"}
                 </button>
               </div>
             )}
