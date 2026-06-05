@@ -86,7 +86,23 @@ const getAuthHeaders = (isMultipart = false): HeadersInit => {
 
 const doctorService = {
   // Citas
-  createAppointment: (data: Record<string, unknown>) =>
+  createAppointment: (data: {
+    doctorId: string;
+    patientId: string;
+    branchId?: string;
+    affiliationId?: string;
+    serviceId?: string;
+    modality: string;
+    status?: string;
+    scheduledAt: string;
+    endAt?: string;
+    durationMinutes?: number;
+    price?: number;
+    paymentMethod?: string;
+    createdById?: string;
+    notes?: string;
+    internalNotes?: string;
+  }) =>
     fetch(`${BASE_URL}/appointments`, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) }).then((r) => r.json()),
 
   createRecurringAppointments: (data: Record<string, unknown>) =>
@@ -2032,17 +2048,19 @@ function CitasTab() {
 
     // Crear la cita en el servidor
     await doctorService.createAppointment({
-      fecha: fechaSeleccionada,
-      hora: formCita.horaInicio,
-      motivo: formCita.motivo || tipoConsulta?.nombre || "",
-      especialidad: formCita.especialidad,
-      medicoEspecialista: formCita.medicoEspecialista,
-      tipoConsultaId: formCita.tipoConsultaId,
-      seguro: formCita.seguro,
-      servicios: formCita.servicios,
-      cupon: formCita.cupon,
-      descuento: descuentoAplicado,
-      precioFinal: precioConDescuento,
+      doctorId: formCita.medicoEspecialista || "",
+      patientId: "",
+      serviceId: formCita.tipoConsultaId,
+      modality: formCita.tipoConsultaId === "urgencia" ? "URGENCIA" : "PRESENCIAL",
+      status: "PENDIENTE",
+      scheduledAt: fechaSeleccionada && formCita.horaInicio
+        ? new Date(`${fechaSeleccionada}T${formCita.horaInicio}`).toISOString()
+        : new Date().toISOString(),
+      endAt: fechaSeleccionada && formCita.horaCierre
+        ? new Date(`${fechaSeleccionada}T${formCita.horaCierre}`).toISOString()
+        : undefined,
+      price: precioConDescuento,
+      notes: formCita.motivo || tipoConsulta?.nombre || "",
     }).catch(console.error);
 
     setCitasAgendadas([...citasAgendadas, nuevaCita]);
@@ -4282,13 +4300,12 @@ function ConsultaTab() {
               <button
                 onClick={async () => {
                   await doctorService.createAppointment({
-                    fecha: new Date().toISOString().split("T")[0],
-                    hora: new Date().toTimeString().slice(0, 5),
-                    motivo: soapNote.assessment || "Consulta",
-                    diagnosticos: diagnosticos.map((d) => ({ clave: d.clave, descripcion: d.descripcion })),
-                    prescripciones: prescripciones,
-                    notas: notas.map((n) => n.contenido),
-                    signosVitales: datosClinicosForm,
+                    doctorId: "DOC001",
+                    patientId: "PAT001",
+                    modality: "PRESENCIAL",
+                    status: "COMPLETADA",
+                    scheduledAt: new Date().toISOString(),
+                    notes: soapNote.assessment || "Consulta",
                   }).catch(console.error);
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
@@ -4724,7 +4741,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// ───────────���─────────────────────────────────
 // TAB: MEDICAMENTOS
 // ─────────────────────────────────────────────
 
