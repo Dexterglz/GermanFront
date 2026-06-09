@@ -474,12 +474,15 @@ function AvatarPaciente({ edad, sexo }: { edad: number; sexo: "Masculino" | "Fem
 // SHARED MINI-COMPONENTS
 // ─────────────────────────────────────────────
 
-function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function SectionCard({ icon, title, action, children }: { icon: React.ReactNode; title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <span className="text-primary">{icon}</span>
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h3>
+    <div className="bg-card border border-border rounded-xl p-6 space-y-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">{icon}</span>
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
+        </div>
+        {action}
       </div>
       {children}
     </div>
@@ -490,7 +493,7 @@ function FieldItem({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
     <div>
-      <p className="text-xs text-muted-foreground leading-relaxed">{label}</p>
+      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-relaxed">{label}</p>
       <p className="text-sm font-medium text-foreground">{value}</p>
     </div>
   );
@@ -498,7 +501,7 @@ function FieldItem({ label, value }: { label: string; value?: string }) {
 
 const estadoConfig: Record<string, { cls: string; dot: string }> = {
   Pendiente:  { cls: "bg-amber-50 text-amber-800 border-amber-200",        dot: "bg-amber-500" },
-  Confirmada: { cls: "bg-blue-50 text-blue-700 border-blue-200",           dot: "bg-blue-600" },
+  Confirmada: { cls: "bg-primary/10 text-primary border-primary/20",       dot: "bg-primary" },
   Cancelada:  { cls: "bg-red-50 text-red-700 border-red-200",              dot: "bg-red-500" },
   Completada: { cls: "bg-emerald-50 text-emerald-700 border-emerald-200",  dot: "bg-emerald-500" },
 };
@@ -517,7 +520,7 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
   const sv = dashboard.ultimoRegistro;
   const vitales = [
     { icon: <Heart className="w-5 h-5 text-destructive" />,        label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica}`, unit: "mmHg" },
-    { icon: <Activity className="w-5 h-5 text-accent" />,          label: "Frec. cardíaca",   value: `${sv.frecuenciaCardiaca}`,                        unit: "bpm" },
+    { icon: <Activity className="w-5 h-5 text-primary" />,         label: "Frec. cardíaca",   value: `${sv.frecuenciaCardiaca}`,                        unit: "bpm" },
     { icon: <Thermometer className="w-5 h-5 text-amber-500" />,    label: "Temperatura",      value: `${sv.temperatura}`,                               unit: "°C" },
     { icon: <Scale className="w-5 h-5 text-blue-600" />,           label: "Peso",             value: `${sv.peso}`,                                      unit: "kg" },
     { icon: <TrendingDown className="w-5 h-5 text-emerald-600" />, label: "IMC",              value: sv.indiceMasaCorporal ? sv.indiceMasaCorporal.toFixed(1) : "—", unit: "" },
@@ -534,7 +537,7 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {vitales.map((v) => (
-            <div key={v.label} className="flex items-center gap-3 bg-card border border-border rounded-lg p-4">
+            <div key={v.label} className="flex items-center gap-3 bg-card border border-border rounded-xl p-4 shadow-sm">
               <div className="shrink-0">{v.icon}</div>
               <div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{v.label}</p>
@@ -550,7 +553,7 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {dashboard.proximaCita && (
-          <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+          <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Próxima cita</h3>
@@ -566,7 +569,7 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
           </section>
         )}
         {dashboard.ultimoDiagnostico && (
-          <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+          <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Último diagnóstico</h3>
@@ -584,7 +587,7 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
       </div>
 
       {dashboard.medicamentosActivos.length > 0 && (
-        <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
           <div className="flex items-center gap-2">
             <Pill className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Medicamentos activos</h3>
@@ -622,9 +625,9 @@ function DatosGeneralesTab({
   const nombreCompleto = [datosPersonales.nombre, datosPersonales.apellidoPaterno, datosPersonales.apellidoMaterno].filter(Boolean).join(" ");
 
   return (
-    <div className="grid md:grid-cols-2 gap-5">
-      <SectionCard icon={<User className="w-4 h-4" />} title="Datos personales">
-        <div className="grid grid-cols-2 gap-3">
+    <div className="grid md:grid-cols-2 gap-6">
+      <SectionCard icon={<User className="w-5 h-5" />} title="Datos personales">
+        <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
           <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
           <FieldItem label="Edad" value={`${edad} años`} />
@@ -634,8 +637,8 @@ function DatosGeneralesTab({
         </div>
       </SectionCard>
 
-      <SectionCard icon={<Phone className="w-4 h-4" />} title="Contacto">
-        <div className="grid grid-cols-2 gap-3">
+      <SectionCard icon={<Phone className="w-5 h-5" />} title="Contacto">
+        <div className="grid grid-cols-2 gap-4">
           <FieldItem label="Teléfono" value={contacto.telefono} />
           <FieldItem label="Correo electrónico" value={contacto.email} />
           <FieldItem label="Contacto de emergencia" value={contacto.nombreContactoEmergencia} />
@@ -643,8 +646,8 @@ function DatosGeneralesTab({
         </div>
       </SectionCard>
 
-      <SectionCard icon={<MapPin className="w-4 h-4" />} title="Domicilio">
-        <div className="grid grid-cols-2 gap-3">
+      <SectionCard icon={<MapPin className="w-5 h-5" />} title="Domicilio">
+        <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <FieldItem label="Calle y número" value={`${direccion.calle} #${direccion.numeroExterior}${direccion.numeroInterior ? ` Int. ${direccion.numeroInterior}` : ""}`} />
           </div>
@@ -657,8 +660,8 @@ function DatosGeneralesTab({
       </SectionCard>
 
       {datosFiscales && (
-        <SectionCard icon={<Receipt className="w-4 h-4" />} title="Datos fiscales">
-          <div className="grid grid-cols-2 gap-3">
+        <SectionCard icon={<Receipt className="w-5 h-5" />} title="Datos fiscales">
+          <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
             <FieldItem label="RFC" value={datosFiscales.rfc} />
             <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
@@ -680,7 +683,7 @@ function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] })
 
   const vitales = ultimo ? [
     { icon: <Heart className="w-5 h-5 text-destructive" />,        label: "Presión arterial", value: `${ultimo.presionSistolica}/${ultimo.presionDiastolica}`, unit: "mmHg", estado: presionCategoria(ultimo.presionSistolica, ultimo.presionDiastolica) },
-    { icon: <Activity className="w-5 h-5 text-accent" />,          label: "Frec. cardíaca",   value: `${ultimo.frecuenciaCardiaca}`,                           unit: "bpm",  estado: null },
+    { icon: <Activity className="w-5 h-5 text-primary" />,         label: "Frec. cardíaca",   value: `${ultimo.frecuenciaCardiaca}`,                           unit: "bpm",  estado: null },
     { icon: <Thermometer className="w-5 h-5 text-amber-500" />,    label: "Temperatura",      value: `${ultimo.temperatura}`,                                  unit: "°C",   estado: null },
     { icon: <Scale className="w-5 h-5 text-blue-600" />,           label: "Peso",             value: `${ultimo.peso}`,                                         unit: "kg",   estado: null },
     { icon: <Ruler className="w-5 h-5 text-slate-400" />,          label: "Estatura",         value: `${ultimo.estatura}`,                                     unit: "cm",   estado: null },
@@ -698,7 +701,7 @@ function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] })
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {vitales.map((v) => (
-              <div key={v.label} className="bg-card border border-border rounded-lg p-4 flex items-start gap-3">
+              <div key={v.label} className="bg-card border border-border rounded-xl p-4 flex items-start gap-3 shadow-sm">
                 <div className="mt-0.5 shrink-0">{v.icon}</div>
                 <div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{v.label}</p>
@@ -716,7 +719,7 @@ function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] })
 
       <section>
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Historial de registros</h3>
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -881,7 +884,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
       </div>
 
       {/* Leyenda */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-lg">
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-xl shadow-sm">
         <span className="text-sm font-medium text-foreground">Leyenda:</span>
         {[
           { color: "bg-amber-500", label: "Cita programada" },
@@ -895,7 +898,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
       </div>
 
       {/* Calendario solo lectura */}
-      <div className="bg-card border border-border rounded-lg p-5">
+      <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <button onClick={irMesAnterior} className="p-2 hover:bg-muted rounded-md transition-colors" aria-label="Mes anterior">
             <ChevronLeft className="w-5 h-5" />
@@ -942,7 +945,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
           </h3>
           <div className="space-y-2">
             {citasAgendadas.map((cita) => (
-              <div key={cita.id} className={`bg-card border rounded-lg p-4 ${cita.tipo === "urgencia" ? "border-red-300" : "border-border"}`}>
+              <div key={cita.id} className={`bg-card border rounded-xl p-5 shadow-sm ${cita.tipo === "urgencia" ? "border-red-300" : "border-border"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -950,7 +953,7 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
                         {cita.tipo === "urgencia" ? "URGENCIA" : "CITA"}
                       </span>
                       {cita.primeraVez && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Primera vez</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">Primera vez</span>
                       )}
                     </div>
                     <p className="font-semibold text-foreground">{cita.tipoConsulta}</p>
@@ -987,10 +990,6 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
 // TAB: MEDICAMENTOS
 // ─────────────────────────────────────────────
 
-// ─────────────────────────────────────────────
-// TAB: MEDICAMENTOS
-// ─────────────────────────────────────────────
-
 function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medicamento[]; recordatorios: Recordatorio[] }) {
   const activos     = medicamentos.filter((m) => !m.fechaFin || new Date(m.fechaFin) >= new Date());
   const finalizados = medicamentos.filter((m) => m.fechaFin && new Date(m.fechaFin) < new Date());
@@ -999,10 +998,10 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
   const renderMed = (med: Medicamento, esActivo: boolean) => {
     const recs = getRecs(med.id);
     return (
-      <div key={med.id} className={`bg-card border rounded-lg p-5 space-y-3 ${esActivo ? "border-border" : "border-border/50 opacity-70"}`}>
+      <div key={med.id} className={`bg-card border rounded-xl p-5 space-y-3 shadow-sm ${esActivo ? "border-border" : "border-border/50 opacity-70"}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${esActivo ? "bg-primary/10" : "bg-muted"}`}>
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${esActivo ? "bg-primary/10" : "bg-muted"}`}>
               <Pill className={`w-4 h-4 ${esActivo ? "text-primary" : "text-muted-foreground"}`} />
             </div>
             <div>
@@ -1021,7 +1020,7 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
         {recs.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">
             {recs.map((rec) => (
-              <span key={rec.id} className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border ${rec.activo ? "bg-accent/10 text-accent border-accent/30" : "bg-muted text-muted-foreground border-border"}`}>
+              <span key={rec.id} className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border ${rec.activo ? "bg-primary/10 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>
                 {rec.activo ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
                 {rec.hora}
               </span>
@@ -1065,7 +1064,7 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
 }
 
 // ─────────────────────────────────────────────
-// TABS CONFIG
+// NAV CONFIG
 // ─────────────────────────────────────────────
 
 const tabs = [
@@ -1078,61 +1077,100 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]["id"];
 
+const tabTitulos: Record<TabId, string> = {
+  dashboard: "Resumen",
+  datos: "Datos generales",
+  signos: "Signos vitales",
+  visitas: "Visitas",
+  medicamentos: "Medicamentos",
+};
+
 // ─────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  const [activeTab, setActiveTab] = useState<TabId>("datos");
   const paciente = pacienteMock;
   const dp = paciente.datosPersonales;
   const nombreCompleto = [dp.nombre, dp.apellidoPaterno, dp.apellidoMaterno].filter(Boolean).join(" ");
   const edad = calcularEdad(dp.fechaNacimiento);
 
   return (
-    <div className="min-h-screen bg-background font-sans">
-      {/* Topbar */}
-      <header className="bg-sidebar border-b border-sidebar-border px-4 md:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-            <Stethoscope className="w-4 h-4 text-primary-foreground" />
+    <div className="flex min-h-screen bg-background font-sans">
+      {/* Sidebar */}
+      <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar border-r border-sidebar-border">
+        <div className="flex items-center gap-3 px-5 py-5">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+            <Stethoscope className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-sidebar-foreground font-semibold text-sm tracking-tight">Expediente Clínico</span>
+          <div>
+            <p className="font-semibold text-sidebar-foreground leading-tight">MediRecord</p>
+            <p className="text-xs text-sidebar-foreground/50 leading-tight">Sistema de Expedientes</p>
+          </div>
         </div>
-        <span />
-      </header>
 
-      {/* Patient banner + tabs */}
-      <div className="bg-sidebar border-b border-sidebar-border px-4 md:px-8 pt-5">
-        <div className="flex items-center gap-4">
-          <div className="shrink-0">
-            <AvatarPaciente edad={edad} sexo={dp.sexo} />
+        <nav className="flex-1 px-3 py-2 space-y-1" aria-label="Navegación principal">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              }`}
+            >
+              <Icon className="w-[18px] h-[18px]" />
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="px-5 py-4 border-t border-sidebar-border">
+          <div className="flex items-center gap-2 text-xs text-sidebar-foreground/50">
+            <Shield className="w-3.5 h-3.5" />
+            Datos protegidos
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-sidebar-foreground text-balance">{nombreCompleto}</h1>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-sidebar-foreground/60">
-              <span>{dp.sexo}</span>
-              <span className="hidden sm:inline">·</span>
-              <span>{edad} años</span>
-              <span className="hidden sm:inline">·</span>
-              {dp.curp && <span className="font-mono text-xs">{dp.curp}</span>}
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Topbar */}
+        <header className="bg-card border-b border-border px-4 md:px-8 py-4 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-foreground text-balance">{tabTitulos[activeTab]}</h1>
+            <p className="text-sm text-muted-foreground truncate">Expediente de {nombreCompleto}</p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <button className="relative p-2 rounded-md hover:bg-muted transition-colors" aria-label="Notificaciones">
+              <Bell className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex items-center gap-3">
+              <AvatarPaciente edad={edad} sexo={dp.sexo} />
+              <div className="hidden sm:block">
+                <p className="text-sm font-semibold text-foreground leading-tight">{edad} años</p>
+                <p className="text-xs text-emerald-600 leading-tight">Sin alergias</p>
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
+        {/* Mobile nav */}
         <nav
-          className="mt-5 -mb-px flex gap-1 overflow-x-auto"
-          aria-label="Secciones del expediente"
+          className="md:hidden flex gap-1 overflow-x-auto bg-card border-b border-border px-4 py-2"
+          aria-label="Navegación principal"
           style={{ scrollbarWidth: "none" }}
         >
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-md border-b-2 whitespace-nowrap transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
                 activeTab === id
-                  ? "border-primary text-sidebar-foreground bg-sidebar-accent"
-                  : "border-transparent text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -1140,16 +1178,16 @@ export default function Page() {
             </button>
           ))}
         </nav>
-      </div>
 
-      {/* Content */}
-      <main className="px-4 md:px-8 py-6 max-w-6xl mx-auto">
-        {activeTab === "dashboard"     && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
-        {activeTab === "datos"         && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
-        {activeTab === "signos"        && <SignosVitalesTab  signosVitales={paciente.signosVitales} />}
-        {activeTab === "visitas"       && <VisitasTab        visitas={paciente.visitas} />}
-        {activeTab === "medicamentos"  && <MedicamentosTab   medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
-      </main>
+        {/* Content */}
+        <main className="flex-1 px-4 md:px-8 py-6 max-w-6xl w-full mx-auto">
+          {activeTab === "dashboard"     && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
+          {activeTab === "datos"         && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
+          {activeTab === "signos"        && <SignosVitalesTab  signosVitales={paciente.signosVitales} />}
+          {activeTab === "visitas"       && <VisitasTab        visitas={paciente.visitas} />}
+          {activeTab === "medicamentos"  && <MedicamentosTab   medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
+        </main>
+      </div>
     </div>
   );
 }
