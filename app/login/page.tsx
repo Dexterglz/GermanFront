@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "../../hooks/useAuth"
 
 function HeartPulseIcon({ className }: { className?: string }) {
   return (
@@ -127,7 +127,7 @@ export default function Login() {
     setErrorLogin("")
 
     try {
-      const response = await fetch("http://localhost:3003/api/auth/login", {
+      const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
