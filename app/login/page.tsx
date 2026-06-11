@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../../hooks/useAuth"
@@ -79,7 +80,7 @@ export default function Login() {
 
   const [form, setForm] = useState({
     email: "",
-    password: ""
+    password: "",
   })
 
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -97,7 +98,7 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     })
     if (errores[e.target.name]) {
       setErrores({ ...errores, [e.target.name]: "" })
@@ -105,21 +106,21 @@ export default function Login() {
   }
 
   const validar = () => {
-    const errores: Record<string, string> = {}
+    const erroresValidacion: Record<string, string> = {}
 
     if (!form.email) {
-      errores.email = "El correo es obligatorio"
+      erroresValidacion.email = "El correo es obligatorio"
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      errores.email = "Correo inválido"
+      erroresValidacion.email = "Correo inválido"
     }
 
     if (!form.password) {
-      errores.password = "La contraseña es obligatoria"
+      erroresValidacion.password = "La contraseña es obligatoria"
     } else if (form.password.length < 6) {
-      errores.password = "Debe tener al menos 6 caracteres"
+      erroresValidacion.password = "Debe tener al menos 6 caracteres"
     }
 
-    return errores
+    return erroresValidacion
   }
 
   const login = async () => {
@@ -127,20 +128,19 @@ export default function Login() {
     setErrorLogin("")
 
     try {
+      // El login NO lleva la cabecera Authorization: es el que genera el token
       const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: form.email,
-          password: form.password
-        })
+          password: form.password,
+        }),
       })
 
       const data = await response.json()
-
-      console.log(data)
 
       if (!response.ok) {
         setErrorLogin(data.data?.message || data.message || "Credenciales incorrectas")
@@ -148,7 +148,9 @@ export default function Login() {
         return
       }
 
-      // Guardar token y usuario
+      // Guardar token y usuario.
+      // El token guardado habilita la cabecera "Authorization: Bearer <token>"
+      // en todas las peticiones protegidas posteriores.
       const token = data.data?.session?.token || data.token
       const user = data.data?.user || data.user
 
@@ -192,8 +194,8 @@ export default function Login() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Validando sesión...</p>
+          <div className="w-12 h-12 border-4 border-teal-500/30 border-t-teal-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-500">Validando sesión...</p>
         </div>
       </div>
     )
@@ -205,9 +207,12 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 overflow-hidden">
         {/* Patrón de fondo */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+          <div
+            className="absolute top-0 left-0 w-full h-full"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
         </div>
 
         {/* Círculos decorativos */}
@@ -278,12 +283,8 @@ export default function Login() {
 
           {/* Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">
-              Bienvenido
-            </h2>
-            <p className="text-slate-500">
-              Ingresa tus datos para acceder al sistema
-            </p>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">Bienvenido</h2>
+            <p className="text-slate-500">Ingresa tus datos para acceder al sistema</p>
           </div>
 
           {/* Form */}
@@ -304,10 +305,11 @@ export default function Login() {
                   placeholder="doctor@hospital.com"
                   value={form.email}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-4 py-3.5 bg-white border-2 rounded-xl text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none ${errores.email
-                    ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
-                    : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
-                    }`}
+                  className={`w-full pl-12 pr-4 py-3.5 bg-white border-2 rounded-xl text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none ${
+                    errores.email
+                      ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                      : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                  }`}
                 />
               </div>
               {errores.email && (
@@ -334,10 +336,11 @@ export default function Login() {
                   placeholder="••••••••"
                   value={form.password}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-12 py-3.5 bg-white border-2 rounded-xl text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none ${errores.password
-                    ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
-                    : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
-                    }`}
+                  className={`w-full pl-12 pr-12 py-3.5 bg-white border-2 rounded-xl text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none ${
+                    errores.password
+                      ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                      : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                  }`}
                 />
                 <button
                   type="button"
