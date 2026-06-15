@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -39,6 +40,7 @@ import {
   UserPlus,
   ShieldCheck,
   ShieldX,
+  Loader2,
 } from "lucide-react";
 
 // ==========================================
@@ -53,7 +55,6 @@ const getHeaders = (token?: string) => ({
 });
 
 const institutionService = {
-  // 🤝 AFILIACIONES Y MÉDICOS
   approveAffiliation: async (token: string, affiliationId: number) => {
     const res = await fetch(`${BASE_URL}/affiliations/${affiliationId}/approve`, {
       method: 'POST',
@@ -79,7 +80,6 @@ const institutionService = {
     return res.json();
   },
 
-  // 🧑‍⚕️ PACIENTES Y CITAS
   createPatient: async (token: string, patientData: Record<string, unknown>) => {
     const res = await fetch(`${BASE_URL}/patients`, {
       method: 'POST',
@@ -98,7 +98,6 @@ const institutionService = {
     return res.json();
   },
 
-  // 🏥 SUCURSALES Y STAFF
   createBranch: async (token: string, institutionId: number, branchData: Record<string, unknown>) => {
     const res = await fetch(`${BASE_URL}/institutions/${institutionId}/branches`, {
       method: 'POST',
@@ -126,7 +125,6 @@ const institutionService = {
     return res.json();
   },
 
-  // 📊 DASHBOARDS
   getInstitutionSummary: async (token: string) => {
     const res = await fetch(`${BASE_URL}/dashboard/institution/summary`, {
       method: 'GET',
@@ -143,7 +141,6 @@ const institutionService = {
     return res.json();
   },
 
-  // Métodos adicionales para CRUD básico
   getPatients: async () => {
     const res = await fetch(`${BASE_URL}/patients`);
     return res.json();
@@ -421,7 +418,6 @@ const DashboardView = ({
 
   return (
     <>
-      {/* QUICK ACTIONS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { icon: <Calendar size={20} />, label: "Nueva Cita", color: "bg-blue-500", section: "Citas" as NavSection },
@@ -442,7 +438,6 @@ const DashboardView = ({
         ))}
       </div>
 
-      {/* STATS */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, index) => (
           <motion.div
@@ -472,9 +467,7 @@ const DashboardView = ({
         ))}
       </div>
 
-      {/* MAIN GRID */}
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
-        {/* TABLA CITAS */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-xl font-semibold text-slate-800">Citas Recientes</h3>
@@ -534,7 +527,6 @@ const DashboardView = ({
           )}
         </div>
 
-        {/* TOP DOCTORES */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-xl font-semibold text-slate-800 mb-6">Top Doctores</h3>
           {topDoctors.length === 0 ? (
@@ -622,7 +614,7 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
       }));
       setPatients(mapped);
     } catch (err) {
-      console.error("[v0] Error fetching patients:", err);
+      console.error("Error fetching patients:", err);
     } finally {
       setLoading(false);
     }
@@ -667,7 +659,7 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
       setSuccessMessage("¡Paciente guardado correctamente!");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error saving patient:", err);
+      console.error("Error saving patient:", err);
     } finally {
       setSaving(false);
     }
@@ -678,7 +670,7 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
       await institutionService.deletePatient(id);
       setPatients(patients.filter((p) => p.id !== id));
     } catch (err) {
-      console.error("[v0] Error deleting patient:", err);
+      console.error("Error deleting patient:", err);
     }
   };
 
@@ -704,7 +696,6 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
         </motion.button>
       </div>
 
-      {/* Search and Filter */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex gap-4">
           <div className="relative flex-1">
@@ -724,11 +715,10 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
         </div>
       </div>
 
-      {/* Patients Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {loading ? (
           <div className="p-16 text-center text-slate-400">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
             <p className="text-sm">Cargando pacientes...</p>
           </div>
         ) : filteredPatients.length === 0 ? (
@@ -738,82 +728,83 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
             <p className="text-sm">Agrega el primer paciente usando el botón de arriba</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Edad</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Contacto</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Última Visita</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Condiciones</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPatients.map((patient, idx) => (
-                <motion.tr
-                  key={patient.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="border-b border-slate-50 hover:bg-slate-50/50"
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium">
-                        {patient.nombre.split(" ").map((n) => n[0]).join("")}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Edad</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Contacto</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Última Visita</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Condiciones</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPatients.map((patient, idx) => (
+                  <motion.tr
+                    key={patient.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="border-b border-slate-50 hover:bg-slate-50/50"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium">
+                          {patient.nombre.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-800">{patient.nombre}</p>
+                          <p className="text-sm text-slate-500">{patient.genero}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-slate-800">{patient.nombre}</p>
-                        <p className="text-sm text-slate-500">{patient.genero}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">{patient.edad} años</td>
-                  <td className="p-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm text-slate-600 flex items-center gap-1">
-                        <Phone size={14} /> {patient.telefono}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">{patient.ultimaVisita}</td>
-                  <td className="p-4">
-                    <div className="flex flex-wrap gap-1">
-                      {patient.condiciones.slice(0, 2).map((cond, i) => (
-                        <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">
-                          {cond}
+                    </td>
+                    <td className="p-4 text-slate-600">{patient.edad} años</td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm text-slate-600 flex items-center gap-1">
+                          <Phone size={14} /> {patient.telefono}
                         </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedPatient(patient)}
-                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeletePatient(patient.id)}
-                        className="p-2 hover:bg-red-50 rounded-lg text-red-500"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+                      </div>
+                    </td>
+                    <td className="p-4 text-slate-600">{patient.ultimaVisita}</td>
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-1">
+                        {patient.condiciones.slice(0, 2).map((cond, i) => (
+                          <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">
+                            {cond}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedPatient(patient)}
+                          className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePatient(patient.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg text-red-500"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Add Patient Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Agregar Nuevo Paciente">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -911,7 +902,6 @@ const PatientsView = ({ institutionId, token }: { institutionId: number | null; 
         </div>
       </Modal>
 
-      {/* Patient Detail Modal */}
       <Modal
         isOpen={!!selectedPatient}
         onClose={() => setSelectedPatient(null)}
@@ -1004,7 +994,7 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
       }));
       setDoctors(mapped);
     } catch (err) {
-      console.error("[v0] Error fetching doctors:", err);
+      console.error("Error fetching doctors:", err);
     } finally {
       setLoading(false);
     }
@@ -1040,7 +1030,7 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
       setSuccessMessage("¡Doctor guardado correctamente!");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error saving doctor:", err);
+      console.error("Error saving doctor:", err);
     } finally {
       setSaving(false);
     }
@@ -1051,7 +1041,7 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
       await institutionService.deleteDoctor(id);
       setDoctors(doctors.filter((d) => d.id !== id));
     } catch (err) {
-      console.error("[v0] Error deleting doctor:", err);
+      console.error("Error deleting doctor:", err);
     }
   };
 
@@ -1062,7 +1052,7 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
       await institutionService.updateDoctor(id, { disponible: !doctor.disponible });
       setDoctors(doctors.map((d) => (d.id === id ? { ...d, disponible: !d.disponible } : d)));
     } catch (err) {
-      console.error("[v0] Error toggling doctor availability:", err);
+      console.error("Error toggling doctor availability:", err);
     }
   };
 
@@ -1088,7 +1078,6 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
         </motion.button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-xl border border-slate-100">
           <div className="flex items-center gap-3">
@@ -1142,7 +1131,6 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
         </div>
       </div>
 
-      {/* Search */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1156,10 +1144,9 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
         </div>
       </div>
 
-      {/* Doctors Grid */}
       {loading ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-16 text-center text-slate-400">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-sm">Cargando doctores...</p>
         </div>
       ) : filteredDoctors.length === 0 ? (
@@ -1246,7 +1233,6 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
         </div>
       )}
 
-      {/* Add Doctor Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Agregar Nuevo Doctor">
         <div className="space-y-4">
           <div>
@@ -1325,7 +1311,6 @@ const DoctorsView = ({ institutionId }: { institutionId: number | null }) => {
         </div>
       </Modal>
 
-      {/* Doctor Detail Modal */}
       <Modal
         isOpen={!!selectedDoctor}
         onClose={() => setSelectedDoctor(null)}
@@ -1458,7 +1443,7 @@ const AppointmentsView = ({
       setSuccessMessage("¡Cita agendada correctamente!");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error creating appointment:", err);
+      console.error("Error creating appointment:", err);
     } finally {
       setSaving(false);
     }
@@ -1494,7 +1479,6 @@ const AppointmentsView = ({
         </motion.button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-xl border border-slate-100">
           <div className="flex items-center gap-3">
@@ -1548,7 +1532,6 @@ const AppointmentsView = ({
         </div>
       </div>
 
-      {/* Search and Filter */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex gap-4">
           <div className="relative flex-1">
@@ -1575,7 +1558,6 @@ const AppointmentsView = ({
         </div>
       </div>
 
-      {/* Appointments Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {filteredAppointments.length === 0 ? (
           <div className="p-16 text-center text-slate-400">
@@ -1584,88 +1566,89 @@ const AppointmentsView = ({
             <p className="text-sm">Agenda la primera cita usando el botón de arriba</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Fecha</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
-                <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAppointments.map((apt, idx) => (
-                <motion.tr
-                  key={apt.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: idx * 0.03 }}
-                  className="border-b border-slate-50 hover:bg-slate-50/50"
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                        {apt.paciente.split(" ").map((n) => n[0]).join("")}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Paciente</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Doctor</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Fecha</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Hora</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Tipo</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Estado</th>
+                  <th className="text-left p-4 text-slate-600 font-medium text-sm">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAppointments.map((apt, idx) => (
+                  <motion.tr
+                    key={apt.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="border-b border-slate-50 hover:bg-slate-50/50"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                          {apt.paciente.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <span className="font-medium text-slate-800">{apt.paciente}</span>
                       </div>
-                      <span className="font-medium text-slate-800">{apt.paciente}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">{apt.doctor}</td>
-                  <td className="p-4 text-slate-600">{apt.fecha}</td>
-                  <td className="p-4 text-slate-600">{apt.hora}</td>
-                  <td className="p-4 text-slate-600">{apt.tipo}</td>
-                  <td className="p-4">
-                    <StatusBadge estado={apt.estado} />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1">
-                      {apt.estado === "pendiente" && (
+                    </td>
+                    <td className="p-4 text-slate-600">{apt.doctor}</td>
+                    <td className="p-4 text-slate-600">{apt.fecha}</td>
+                    <td className="p-4 text-slate-600">{apt.hora}</td>
+                    <td className="p-4 text-slate-600">{apt.tipo}</td>
+                    <td className="p-4">
+                      <StatusBadge estado={apt.estado} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1">
+                        {apt.estado === "pendiente" && (
+                          <button
+                            onClick={() => handleUpdateStatus(apt.id, "confirmada")}
+                            className="p-2 hover:bg-green-50 rounded-lg text-green-600"
+                            title="Confirmar"
+                          >
+                            <CheckCircle2 size={18} />
+                          </button>
+                        )}
+                        {apt.estado === "confirmada" && (
+                          <button
+                            onClick={() => handleUpdateStatus(apt.id, "en_curso")}
+                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                            title="Iniciar"
+                          >
+                            <Activity size={18} />
+                          </button>
+                        )}
+                        {apt.estado !== "cancelada" && (
+                          <button
+                            onClick={() => handleUpdateStatus(apt.id, "cancelada")}
+                            className="p-2 hover:bg-red-50 rounded-lg text-red-500"
+                            title="Cancelar"
+                          >
+                            <XCircle size={18} />
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleUpdateStatus(apt.id, "confirmada")}
-                          className="p-2 hover:bg-green-50 rounded-lg text-green-600"
-                          title="Confirmar"
+                          onClick={() => handleDeleteAppointment(apt.id)}
+                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+                          title="Eliminar"
                         >
-                          <CheckCircle2 size={18} />
+                          <Trash2 size={18} />
                         </button>
-                      )}
-                      {apt.estado === "confirmada" && (
-                        <button
-                          onClick={() => handleUpdateStatus(apt.id, "en_curso")}
-                          className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                          title="Iniciar"
-                        >
-                          <Activity size={18} />
-                        </button>
-                      )}
-                      {apt.estado !== "cancelada" && (
-                        <button
-                          onClick={() => handleUpdateStatus(apt.id, "cancelada")}
-                          className="p-2 hover:bg-red-50 rounded-lg text-red-500"
-                          title="Cancelar"
-                        >
-                          <XCircle size={18} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteAppointment(apt.id)}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Add Appointment Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Agendar Nueva Cita">
         <div className="space-y-4">
           <div>
@@ -1801,7 +1784,7 @@ const BranchesView = ({ institutionId, token }: { institutionId: number | null; 
         })));
       }
     } catch (err) {
-      console.error("[v0] Error fetching branches:", err);
+      console.error("Error fetching branches:", err);
     } finally {
       setLoading(false);
     }
@@ -1822,7 +1805,7 @@ const BranchesView = ({ institutionId, token }: { institutionId: number | null; 
       setSuccessMessage("¡Sucursal creada correctamente!");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error creating branch:", err);
+      console.error("Error creating branch:", err);
     } finally {
       setSaving(false);
     }
@@ -1852,7 +1835,7 @@ const BranchesView = ({ institutionId, token }: { institutionId: number | null; 
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-16 text-center text-slate-400">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-sm">Cargando sucursales...</p>
         </div>
       ) : branches.length === 0 ? (
@@ -1911,7 +1894,6 @@ const BranchesView = ({ institutionId, token }: { institutionId: number | null; 
         </div>
       )}
 
-      {/* Add Branch Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Nueva Sucursal">
         <div className="space-y-4">
           <div>
@@ -2007,7 +1989,7 @@ const AffiliationsView = ({ token }: { token: string }) => {
         })));
       }
     } catch (err) {
-      console.error("[v0] Error fetching affiliations:", err);
+      console.error("Error fetching affiliations:", err);
     } finally {
       setLoading(false);
     }
@@ -2024,7 +2006,7 @@ const AffiliationsView = ({ token }: { token: string }) => {
       setSuccessMessage("¡Afiliación aprobada!");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error approving affiliation:", err);
+      console.error("Error approving affiliation:", err);
     }
   };
 
@@ -2038,7 +2020,7 @@ const AffiliationsView = ({ token }: { token: string }) => {
       setSuccessMessage("Afiliación rechazada");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
-      console.error("[v0] Error rejecting affiliation:", err);
+      console.error("Error rejecting affiliation:", err);
     }
   };
 
@@ -2069,7 +2051,6 @@ const AffiliationsView = ({ token }: { token: string }) => {
         </select>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded-xl border border-slate-100">
           <div className="flex items-center gap-3">
@@ -2108,7 +2089,7 @@ const AffiliationsView = ({ token }: { token: string }) => {
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-16 text-center text-slate-400">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-sm">Cargando solicitudes...</p>
         </div>
       ) : filteredAffiliations.length === 0 ? (
@@ -2173,7 +2154,6 @@ const AffiliationsView = ({ token }: { token: string }) => {
         </div>
       )}
 
-      {/* Reject Modal */}
       <Modal isOpen={rejectModal.open} onClose={() => setRejectModal({ open: false, id: null })} title="Rechazar Afiliación">
         <div className="space-y-4">
           <p className="text-slate-600">Por favor, indica el motivo del rechazo:</p>
@@ -2270,7 +2250,6 @@ const ReportsView = ({
         </div>
       </div>
 
-      {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-2xl text-white">
           <div className="flex items-center justify-between">
@@ -2311,7 +2290,6 @@ const ReportsView = ({
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Appointments by Status */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <PieChart size={20} className="text-blue-500" />
@@ -2347,7 +2325,6 @@ const ReportsView = ({
           )}
         </div>
 
-        {/* Appointments by Type */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <BarChart3 size={20} className="text-purple-500" />
@@ -2376,7 +2353,6 @@ const ReportsView = ({
         </div>
       </div>
 
-      {/* Doctor Performance */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <Stethoscope size={20} className="text-green-500" />
@@ -2436,6 +2412,30 @@ const InstitutionDashboard: React.FC = () => {
   const [institutionSummary, setInstitutionSummary] = useState<Record<string, unknown> | null>(null);
 
   const router = useRouter();
+  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+
+  // Redirigir si no está autenticado
+  React.useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Mostrar loading mientras se verifica autenticación
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm text-slate-500">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // Load token from storage
   React.useEffect(() => {
@@ -2453,31 +2453,33 @@ const InstitutionDashboard: React.FC = () => {
           setInstitutionName(data[0].nombre_institucion);
         }
       } catch (err) {
-        console.error("[v0] Error fetching institution:", err);
+        console.error("Error fetching institution:", err);
       }
     };
-    loadInstitution();
-  }, []);
+    if (isAuthenticated) {
+      loadInstitution();
+    }
+  }, [isAuthenticated]);
 
   // Fetch institution summary
   React.useEffect(() => {
     const loadSummary = async () => {
-      if (!token) return;
+      if (!token || !isAuthenticated) return;
       try {
         const summary = await institutionService.getInstitutionSummary(token);
         setInstitutionSummary(summary);
       } catch (err) {
-        console.error("[v0] Error fetching institution summary:", err);
+        console.error("Error fetching institution summary:", err);
       }
     };
     loadSummary();
-  }, [token]);
+  }, [token, isAuthenticated]);
 
   // Fetch patients and doctors for Dashboard view
   React.useEffect(() => {
     const loadPatientsAndDoctors = async () => {
+      if (!isAuthenticated) return;
       try {
-        // Fetch patients
         const patientsData: ApiPatient[] = await institutionService.getPatients();
         const filteredPatients = institutionId
           ? patientsData.filter((p) => p.institution_id === institutionId)
@@ -2496,7 +2498,6 @@ const InstitutionDashboard: React.FC = () => {
         }));
         setPatients(mappedPatients);
 
-        // Fetch doctors
         const doctorsData: ApiDoctor[] = await institutionService.getDoctors();
         const filteredDoctors = institutionId
           ? doctorsData.filter((d) => d.institution_id === institutionId)
@@ -2515,17 +2516,15 @@ const InstitutionDashboard: React.FC = () => {
         }));
         setDoctors(mappedDoctors);
       } catch (err) {
-        console.error("[v0] Error fetching patients/doctors:", err);
+        console.error("Error fetching patients/doctors:", err);
       }
     };
     loadPatientsAndDoctors();
-  }, [institutionId]);
+  }, [institutionId, isAuthenticated]);
 
   const handleLogout = () => {
-    localStorage.removeItem("rol");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
-    router.replace("/login");
+    logout();
+    router.push("/login");
   };
 
   const navItems: { icon: React.ReactNode; label: NavSection }[] = [
@@ -2631,11 +2630,11 @@ const InstitutionDashboard: React.FC = () => {
         <div className="border-t border-slate-200 pt-4 mt-4">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center font-bold text-white">
-              AD
+              {user?.email ? user.email.charAt(0).toUpperCase() : "AD"}
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm text-slate-800">Admin</p>
-              <p className="text-slate-500 text-xs">Administrador</p>
+              <p className="font-medium text-sm text-slate-800">{user?.email?.split("@")[0] || "Admin"}</p>
+              <p className="text-slate-500 text-xs">{user?.email || "admin@medirecord.com"}</p>
             </div>
             <LogOut
               size={18}

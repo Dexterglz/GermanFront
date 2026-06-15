@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type React from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../hooks/useAuth";
 import {
   LayoutDashboard,
   User,
   Activity,
   Calendar,
   Stethoscope,
-  FileText,
   Pill,
   Heart,
   Thermometer,
@@ -23,33 +24,39 @@ import {
   BellOff,
   ChevronLeft,
   ChevronRight,
-  Shield,
+  Menu,
+  X,
+  LogOut,
+  Settings,
+  Plus,
+  Send,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  FileText,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
-// PATIENT SERVICE (SOLO LECTURA)
+// API CONFIG
 // ─────────────────────────────────────────────
 
 const BASE_URL = "http://localhost:3000/api";
 
-const getAuthHeaders = (): HeadersInit => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
-  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+// IDs internos: NO se muestran en el front, solo se usan para las llamadas a la API.
+const CONTEXT_IDS = {
+  pacienteId: "USR001",
+  doctorId: "DOC001",
+  citaId: "",
 };
 
+const getAuthHeaders = (): HeadersInit => {
+  const token =
+    typeof window !== "undefined" ? (localStorage.getItem("token") ?? "") : "";
+  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+};
 const patientService = {
   getMyAppointments: () =>
     fetch(`${BASE_URL}/appointments`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
-  getMyDatosMedicos: (patientId: string) =>
-    fetch(`${BASE_URL}/datosmedicos/${patientId}`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
-  getMySignosVitales: (patientId: string) =>
-    fetch(`${BASE_URL}/signosvitales/${patientId}`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
-  getMySOAP: (patientId: string) =>
-    fetch(`${BASE_URL}/soap/${patientId}`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
-  getMyAlergias: (patientId: string) =>
-    fetch(`${BASE_URL}/patientalergias/${patientId}`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
-  getMyPrescripciones: (patientId: string) =>
-    fetch(`${BASE_URL}/prescripcionprenscripciones/${patientId}`, { method: "GET", headers: getAuthHeaders() }).then((r) => r.json()),
 };
 
 // ─────────────────────────────────────────────
@@ -60,129 +67,50 @@ type ID = string;
 type FechaISO = string;
 
 interface DatosPersonales {
-  id: ID;
-  nombre: string;
-  apellidoPaterno: string;
-  apellidoMaterno?: string;
-  fechaNacimiento: FechaISO;
-  sexo: "Masculino" | "Femenino" | "Otro";
-  curp?: string;
-  rfc?: string;
+  id: ID; nombre: string; apellidoPaterno: string; apellidoMaterno?: string;
+  fechaNacimiento: FechaISO; sexo: "Masculino" | "Femenino" | "Otro";
+  curp?: string; rfc?: string;
 }
-
 interface Direccion {
-  calle: string;
-  numeroExterior: string;
-  numeroInterior?: string;
-  colonia: string;
-  ciudad: string;
-  estado: string;
-  codigoPostal: string;
-  pais: string;
+  calle: string; numeroExterior: string; numeroInterior?: string;
+  colonia: string; ciudad: string; estado: string; codigoPostal: string; pais: string;
 }
-
 interface Contacto {
-  telefono: string;
-  telefonoEmergencia?: string;
-  email?: string;
-  nombreContactoEmergencia?: string;
+  telefono: string; telefonoEmergencia?: string; email?: string; nombreContactoEmergencia?: string;
 }
-
 interface DatosFiscales {
-  razonSocial?: string;
-  rfc?: string;
-  usoCFDI?: string;
-  regimenFiscal?: string;
-  direccionFiscal?: Direccion;
+  razonSocial?: string; rfc?: string; usoCFDI?: string; regimenFiscal?: string;
 }
-
 interface SignosVitales {
-  id: ID;
-  fecha: FechaISO;
-  peso: number;
-  estatura: number;
-  temperatura: number;
-  frecuenciaCardiaca: number;
-  presionSistolica: number;
-  presionDiastolica: number;
-  grasaCorporal?: number;
-  indiceMasaCorporal?: number;
+  id: ID; fecha: FechaISO; peso: number; estatura: number; temperatura: number;
+  frecuenciaCardiaca: number; presionSistolica: number; presionDiastolica: number;
+  grasaCorporal?: number; indiceMasaCorporal?: number;
 }
-
 interface Cita {
-  id: ID;
-  pacienteId: ID;
-  fecha: FechaISO;
-  hora: string;
-  motivo: string;
-  estado: "Pendiente" | "Confirmada" | "Cancelada" | "Completada";
-  notas?: string;
+  id: ID; pacienteId: ID; doctorId: ID; fecha: FechaISO; hora: string; motivo: string;
+  estado: "Pendiente" | "Confirmada" | "Cancelada" | "Completada"; notas?: string;
 }
-
 interface Visita {
-  id: ID;
-  pacienteId: ID;
-  fecha: FechaISO;
-  motivo: string;
-  observaciones: string;
-  signosVitales: SignosVitales;
+  id: ID; pacienteId: ID; doctorId: ID; fecha: FechaISO; motivo: string; observaciones: string; signosVitales: SignosVitales;
 }
-
 interface Diagnostico {
-  id: ID;
-  pacienteId: ID;
-  fecha: FechaISO;
-  descripcion: string;
-  tratamiento?: string;
+  id: ID; pacienteId: ID; fecha: FechaISO; descripcion: string; tratamiento?: string;
   severidad?: "Leve" | "Moderado" | "Grave";
 }
-
-interface NotaMedica {
-  id: ID;
-  pacienteId: ID;
-  fecha: FechaISO;
-  contenido: string;
-}
-
 interface Medicamento {
-  id: ID;
-  pacienteId: ID;
-  nombre: string;
-  dosis: string;
-  frecuencia: string;
-  fechaInicio: FechaISO;
-  fechaFin?: FechaISO;
+  id: ID; pacienteId: ID; nombre: string; dosis: string; frecuencia: string;
+  fechaInicio: FechaISO; fechaFin?: FechaISO;
 }
-
-interface Recordatorio {
-  id: ID;
-  medicamentoId: ID;
-  hora: string;
-  activo: boolean;
-}
-
+interface Recordatorio { id: ID; medicamentoId: ID; hora: string; activo: boolean; }
 interface MiniDashboard {
-  pacienteId: ID;
-  ultimoRegistro: SignosVitales;
-  ultimoDiagnostico?: Diagnostico;
-  proximaCita?: Cita;
-  medicamentosActivos: Medicamento[];
+  pacienteId: ID; ultimoRegistro: SignosVitales; ultimoDiagnostico?: Diagnostico;
+  proximaCita?: Cita; medicamentosActivos: Medicamento[];
 }
-
 interface Paciente {
-  id: ID;
-  datosPersonales: DatosPersonales;
-  direccion: Direccion;
-  contacto: Contacto;
-  datosFiscales?: DatosFiscales;
-  signosVitales: SignosVitales[];
-  citas: Cita[];
-  visitas: Visita[];
-  diagnosticos: Diagnostico[];
-  notas: NotaMedica[];
-  medicamentos: Medicamento[];
-  recordatorios: Recordatorio[];
-  dashboard?: MiniDashboard;
+  id: ID; datosPersonales: DatosPersonales; direccion: Direccion; contacto: Contacto;
+  datosFiscales?: DatosFiscales; signosVitales: SignosVitales[]; citas: Cita[];
+  visitas: Visita[]; diagnosticos: Diagnostico[]; medicamentos: Medicamento[];
+  recordatorios: Recordatorio[]; dashboard?: MiniDashboard;
 }
 
 // ─────────────────────────────────────────────
@@ -192,36 +120,22 @@ interface Paciente {
 const pacienteMock: Paciente = {
   id: "PAC-001",
   datosPersonales: {
-    id: "DP-001",
-    nombre: "Carlos Eduardo",
-    apellidoPaterno: "Ramírez",
-    apellidoMaterno: "Herrera",
-    fechaNacimiento: "1985-07-14",
-    sexo: "Masculino",
-    curp: "RAHC850714HDFMRL09",
-    rfc: "RAHC850714AB1",
+    id: "DP-001", nombre: "Carlos Eduardo", apellidoPaterno: "Ramírez",
+    apellidoMaterno: "Herrera", fechaNacimiento: "1985-07-14", sexo: "Masculino",
+    curp: "RAHC850714HDFMRL09", rfc: "RAHC850714AB1",
   },
   direccion: {
-    calle: "Av. Insurgentes Sur",
-    numeroExterior: "1234",
-    numeroInterior: "5B",
-    colonia: "Del Valle",
-    ciudad: "Ciudad de México",
-    estado: "CDMX",
-    codigoPostal: "03100",
-    pais: "México",
+    calle: "Av. Insurgentes Sur", numeroExterior: "1234", numeroInterior: "5B",
+    colonia: "Del Valle", ciudad: "Ciudad de México", estado: "CDMX",
+    codigoPostal: "03100", pais: "México",
   },
   contacto: {
-    telefono: "55 1234 5678",
-    telefonoEmergencia: "55 9876 5432",
-    email: "carlos.ramirez@email.com",
-    nombreContactoEmergencia: "Laura Herrera (Esposa)",
+    telefono: "55 1234 5678", telefonoEmergencia: "55 9876 5432",
+    email: "carlos.ramirez@email.com", nombreContactoEmergencia: "Laura Herrera (Esposa)",
   },
   datosFiscales: {
-    razonSocial: "Carlos Eduardo Ramírez Herrera",
-    rfc: "RAHC850714AB1",
-    usoCFDI: "G03 - Gastos en general",
-    regimenFiscal: "601 - General de Ley Personas Morales",
+    razonSocial: "Carlos Eduardo Ramírez Herrera", rfc: "RAHC850714AB1",
+    usoCFDI: "G03 - Gastos en general", regimenFiscal: "601 - General de Ley Personas Morales",
   },
   signosVitales: [
     { id: "SV-001", fecha: "2024-01-15T09:30:00Z", peso: 78.5, estatura: 175, temperatura: 36.8, frecuenciaCardiaca: 72, presionSistolica: 120, presionDiastolica: 80, grasaCorporal: 18.5, indiceMasaCorporal: 25.6 },
@@ -229,34 +143,22 @@ const pacienteMock: Paciente = {
     { id: "SV-003", fecha: "2024-03-10T11:15:00Z", peso: 76.0, estatura: 175, temperatura: 36.6, frecuenciaCardiaca: 70, presionSistolica: 115, presionDiastolica: 75, grasaCorporal: 17.2, indiceMasaCorporal: 24.8 },
   ],
   citas: [
-    { id: "CIT-001", pacienteId: "PAC-001", fecha: "2024-04-05", hora: "10:00", motivo: "Revisión general anual", estado: "Completada", notas: "Paciente en buen estado general." },
-    { id: "CIT-002", pacienteId: "PAC-001", fecha: "2024-05-15", hora: "09:30", motivo: "Seguimiento de hipertensión", estado: "Confirmada" },
-    { id: "CIT-003", pacienteId: "PAC-001", fecha: "2024-06-20", hora: "11:00", motivo: "Control de medicamentos", estado: "Pendiente" },
+    { id: "CIT-001", pacienteId: "PAC-001", doctorId: "DOC-001", fecha: "2024-04-05", hora: "10:00", motivo: "Revisión general anual", estado: "Completada", notas: "Paciente en buen estado general." },
+    { id: "CIT-002", pacienteId: "PAC-001", doctorId: "DOC-001", fecha: "2024-05-15", hora: "09:30", motivo: "Seguimiento de hipertensión", estado: "Confirmada" },
+    { id: "CIT-003", pacienteId: "PAC-001", doctorId: "DOC-002", fecha: "2024-06-20", hora: "11:00", motivo: "Control de medicamentos", estado: "Pendiente" },
   ],
   visitas: [
-    {
-      id: "VIS-001", pacienteId: "PAC-001", fecha: "2024-01-15T09:30:00Z", motivo: "Revisión de rutina",
-      observaciones: "Paciente refiere leve dolor de cabeza recurrente. Se recomienda monitoreo de presión arterial.",
-      signosVitales: { id: "SV-001", fecha: "2024-01-15T09:30:00Z", peso: 78.5, estatura: 175, temperatura: 36.8, frecuenciaCardiaca: 72, presionSistolica: 120, presionDiastolica: 80, indiceMasaCorporal: 25.6 },
-    },
-    {
-      id: "VIS-002", pacienteId: "PAC-001", fecha: "2024-02-20T10:00:00Z", motivo: "Seguimiento presión arterial",
-      observaciones: "Mejoría notable. Presión arterial estable. Continuar con tratamiento actual.",
-      signosVitales: { id: "SV-002", fecha: "2024-02-20T10:00:00Z", peso: 77.2, estatura: 175, temperatura: 36.5, frecuenciaCardiaca: 68, presionSistolica: 118, presionDiastolica: 78, indiceMasaCorporal: 25.2 },
-    },
+    { id: "VIS-001", pacienteId: "PAC-001", doctorId: "DOC-001", fecha: "2024-01-15T09:30:00Z", motivo: "Revisión de rutina", observaciones: "Paciente refiere leve dolor de cabeza recurrente.", signosVitales: { id: "SV-001", fecha: "2024-01-15T09:30:00Z", peso: 78.5, estatura: 175, temperatura: 36.8, frecuenciaCardiaca: 72, presionSistolica: 120, presionDiastolica: 80, indiceMasaCorporal: 25.6 } },
+    { id: "VIS-002", pacienteId: "PAC-001", doctorId: "DOC-001", fecha: "2024-02-20T10:00:00Z", motivo: "Seguimiento presión arterial", observaciones: "Mejoría notable. Presión arterial estable.", signosVitales: { id: "SV-002", fecha: "2024-02-20T10:00:00Z", peso: 77.2, estatura: 175, temperatura: 36.5, frecuenciaCardiaca: 68, presionSistolica: 118, presionDiastolica: 78, indiceMasaCorporal: 25.2 } },
   ],
   diagnosticos: [
-    { id: "DX-001", pacienteId: "PAC-001", fecha: "2024-01-15", descripcion: "Hipertensión arterial leve", tratamiento: "Losartán 50mg cada 24 horas. Dieta baja en sodio. Ejercicio moderado.", severidad: "Leve" },
+    { id: "DX-001", pacienteId: "PAC-001", fecha: "2024-01-15", descripcion: "Hipertensión arterial leve", tratamiento: "Losartán 50mg cada 24 horas. Dieta baja en sodio.", severidad: "Leve" },
     { id: "DX-002", pacienteId: "PAC-001", fecha: "2024-02-20", descripcion: "Sobrepeso leve", tratamiento: "Plan nutricional, actividad física 30 min/día.", severidad: "Leve" },
   ],
-  notas: [
-    { id: "NM-001", pacienteId: "PAC-001", fecha: "2024-01-15T09:45:00Z", contenido: "Paciente cooperador. Refiere estrés laboral significativo que puede estar contribuyendo al cuadro hipertensivo. Se recomienda manejo del estrés y seguimiento en 30 días." },
-    { id: "NM-002", pacienteId: "PAC-001", fecha: "2024-02-20T10:20:00Z", contenido: "Buena adherencia al tratamiento. Paciente reporta mejora en calidad de sueño. Se ajusta dosis de Losartán a 25mg por mejoría clínica." },
-  ],
   medicamentos: [
-    { id: "MED-001", pacienteId: "PAC-001", nombre: "Losartán",     dosis: "25 mg",    frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
-    { id: "MED-002", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "400 mcg",  frecuencia: "1 vez al día",          fechaInicio: "2024-01-15", fechaFin: "2024-04-15" },
-    { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3",  dosis: "1000 UI",  frecuencia: "1 vez al día",          fechaInicio: "2024-02-20" },
+    { id: "MED-001", pacienteId: "PAC-001", nombre: "Losartán", dosis: "25 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
+    { id: "MED-002", pacienteId: "PAC-001", nombre: "Ácido fólico", dosis: "400 mcg", frecuencia: "1 vez al día", fechaInicio: "2024-01-15", fechaFin: "2024-04-15" },
+    { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "1000 UI", frecuencia: "1 vez al día", fechaInicio: "2024-02-20" },
   ],
   recordatorios: [
     { id: "REC-001", medicamentoId: "MED-001", hora: "08:00", activo: true },
@@ -267,10 +169,10 @@ const pacienteMock: Paciente = {
     pacienteId: "PAC-001",
     ultimoRegistro: { id: "SV-003", fecha: "2024-03-10T11:15:00Z", peso: 76.0, estatura: 175, temperatura: 36.6, frecuenciaCardiaca: 70, presionSistolica: 115, presionDiastolica: 75, grasaCorporal: 17.2, indiceMasaCorporal: 24.8 },
     ultimoDiagnostico: { id: "DX-002", pacienteId: "PAC-001", fecha: "2024-02-20", descripcion: "Sobrepeso leve", tratamiento: "Plan nutricional, actividad física 30 min/día.", severidad: "Leve" },
-    proximaCita: { id: "CIT-002", pacienteId: "PAC-001", fecha: "2024-05-15", hora: "09:30", motivo: "Seguimiento de hipertensión", estado: "Confirmada" },
+    proximaCita: { id: "CIT-002", pacienteId: "PAC-001", doctorId: "DOC-001", fecha: "2024-05-15", hora: "09:30", motivo: "Seguimiento de hipertensión", estado: "Confirmada" },
     medicamentosActivos: [
-      { id: "MED-001", pacienteId: "PAC-001", nombre: "Losartán",    dosis: "25 mg",   frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
-      { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "1000 UI", frecuencia: "1 vez al día",          fechaInicio: "2024-02-20" },
+      { id: "MED-001", pacienteId: "PAC-001", nombre: "Losartán", dosis: "25 mg", frecuencia: "1 vez al día (mañana)", fechaInicio: "2024-01-15" },
+      { id: "MED-003", pacienteId: "PAC-001", nombre: "Vitamina D3", dosis: "1000 UI", frecuencia: "1 vez al día", fechaInicio: "2024-02-20" },
     ],
   },
 };
@@ -288,10 +190,7 @@ function fmtFecha(fecha: string, opts?: { weekday?: boolean; corto?: boolean }) 
   const dia = d.getUTCDate().toString().padStart(2, "0");
   const mes = opts?.corto ? MESES[d.getUTCMonth()] : MESES_LARGO[d.getUTCMonth()];
   const anio = d.getUTCFullYear();
-  if (opts?.weekday) {
-    const dow = DIAS_SEMANA[d.getUTCDay()];
-    return `${dow}, ${dia} de ${mes} de ${anio}`;
-  }
+  if (opts?.weekday) return `${DIAS_SEMANA[d.getUTCDay()]}, ${dia} de ${mes} de ${anio}`;
   return `${dia} de ${mes} de ${anio}`;
 }
 
@@ -315,157 +214,277 @@ function calcularEdad(fechaNacimiento: string) {
 }
 
 function imcCategoria(imc: number) {
-  if (imc < 18.5) return { label: "Bajo peso", cls: "text-blue-600" };
-  if (imc < 25)   return { label: "Normal",    cls: "text-emerald-600" };
-  if (imc < 30)   return { label: "Sobrepeso", cls: "text-amber-700" };
-  return           { label: "Obesidad",        cls: "text-red-600" };
+  if (imc < 18.5) return { label: "Bajo peso", cls: "text-blue-500" };
+  if (imc < 25) return { label: "Normal", cls: "text-emerald-500" };
+  if (imc < 30) return { label: "Sobrepeso", cls: "text-amber-600" };
+  return { label: "Obesidad", cls: "text-red-500" };
 }
 
 function presionCategoria(sis: number, dia: number) {
-  if (sis < 120 && dia < 80) return { label: "Normal",  cls: "text-emerald-600" };
-  if (sis < 130 && dia < 80) return { label: "Elevada", cls: "text-amber-700" };
-  return                      { label: "Alta",          cls: "text-red-600" };
+  if (sis < 120 && dia < 80) return { label: "Normal", cls: "text-emerald-500" };
+  if (sis < 130 && dia < 80) return { label: "Elevada", cls: "text-amber-600" };
+  return { label: "Alta", cls: "text-red-500" };
 }
 
 // ─────────────────────────────────────────────
-// AVATAR POR EDAD Y SEXO (SVG inline)
+// API FORM DRAWER
 // ─────────────────────────────────────────────
 
-function AvatarPaciente({ edad, sexo }: { edad: number; sexo: "Masculino" | "Femenino" | "Otro" }) {
-  const etapa = edad <= 2 ? "bebe" : edad <= 11 ? "nino" : edad <= 17 ? "adolescente" : "adulto";
+type FieldDef = {
+  key: string;
+  label: string;
+  type?: "text" | "number" | "textarea" | "select";
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+  required?: boolean;
+  hidden?: boolean;
+};
+
+type ApiStatus = "idle" | "loading" | "success" | "error";
+
+function ApiDrawer({
+  open,
+  onClose,
+  title,
+  endpoint,
+  method,
+  fields,
+  defaultValues,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  endpoint: string;
+  method: "POST" | "PUT";
+  fields: FieldDef[];
+  defaultValues?: Record<string, string>;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<ApiStatus>("idle");
+  const [responseMsg, setResponseMsg] = useState("");
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  const visibleFields = fields.filter((f) => !f.hidden);
+
+  useEffect(() => {
+    if (open) {
+      const initial: Record<string, string> = {};
+      fields.forEach((f) => {
+        initial[f.key] = defaultValues?.[f.key] ?? "";
+      });
+      setValues(initial);
+      setStatus("idle");
+      setResponseMsg("");
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (open) document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+    setResponseMsg("");
+    const body: Record<string, string | number> = {};
+    fields.forEach((f) => {
+      const raw = values[f.key] ?? "";
+      if (f.hidden && raw === "") return;
+      body[f.key] = f.type === "number" ? Number(raw) : raw;
+    });
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setStatus("success");
+        setResponseMsg(data?.message ?? "Registrado correctamente.");
+      } else {
+        setStatus("error");
+        setResponseMsg(data?.message ?? `Error ${res.status}: ${res.statusText}`);
+      }
+    } catch (err) {
+      setStatus("error");
+      setResponseMsg(err instanceof Error ? err.message : "Error de red. Verifica la conexión.");
+    }
+  };
+
+  return (
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`fixed right-0 top-0 h-full z-50 w-full max-w-[420px] bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Send className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground leading-tight">{title}</p>
+            <p className="text-[11px] text-muted-foreground leading-none">
+              {method} {BASE_URL}{endpoint}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            aria-label="Cerrar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form id="api-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {visibleFields.map((field) => (
+            <div key={field.key} className="space-y-1.5">
+              <label htmlFor={field.key} className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                {field.label}
+                {field.required && <span className="text-red-400">*</span>}
+              </label>
+              {field.type === "textarea" ? (
+                <textarea
+                  id={field.key}
+                  value={values[field.key] ?? ""}
+                  onChange={(e) => setValues((p) => ({ ...p, [field.key]: e.target.value }))}
+                  placeholder={field.placeholder}
+                  required={field.required}
+                  rows={3}
+                  className="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors resize-none"
+                />
+              ) : field.type === "select" ? (
+                <select
+                  id={field.key}
+                  value={values[field.key] ?? ""}
+                  onChange={(e) => setValues((p) => ({ ...p, [field.key]: e.target.value }))}
+                  required={field.required}
+                  className="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                >
+                  <option value="">Seleccionar...</option>
+                  {field.options?.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={field.key}
+                  type={field.type === "number" ? "number" : "text"}
+                  value={values[field.key] ?? ""}
+                  onChange={(e) => setValues((p) => ({ ...p, [field.key]: e.target.value }))}
+                  placeholder={field.placeholder}
+                  required={field.required}
+                  step={field.type === "number" ? "any" : undefined}
+                  className="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                />
+              )}
+            </div>
+          ))}
+
+          {status === "success" && (
+            <div className="flex items-start gap-2.5 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+              <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-emerald-700">{responseMsg}</p>
+            </div>
+          )}
+          {status === "error" && (
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-600">{responseMsg}</p>
+            </div>
+          )}
+        </form>
+
+        <div className="px-5 py-4 border-t border-border shrink-0 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 text-sm font-medium border border-border rounded-lg py-2.5 text-muted-foreground hover:bg-muted transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            form="api-form"
+            type="submit"
+            disabled={status === "loading"}
+            className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold bg-primary text-white rounded-lg py-2.5 hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {status === "loading" ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+            ) : (
+              <><Send className="w-4 h-4" /> {method === "POST" ? "Guardar" : "Actualizar"}</>
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────
+// AVATAR
+// ─────────────────────────────────────────────
+
+function AvatarPaciente({ edad, sexo, size = "md" }: {
+  edad: number; sexo: "Masculino" | "Femenino" | "Otro"; size?: "sm" | "md" | "lg";
+}) {
   const isMasc = sexo === "Masculino";
   const isFem = sexo === "Femenino";
   const skinTone = "#f4c591";
   const hairColor = isMasc ? "#4a3728" : isFem ? "#8b4513" : "#5a5a5a";
   const shirtColor = isMasc ? "#3b82f6" : isFem ? "#ec4899" : "#6b7280";
   const pantColor = isMasc ? "#1e40af" : isFem ? "#9d174d" : "#374151";
-  const etapaLabel =
-    etapa === "bebe" ? "Bebé" :
-    etapa === "nino" ? (isFem ? "Niña" : "Niño") :
-    etapa === "adolescente" ? "Adolescente" :
-    isFem ? "Adulta" : "Adulto";
+  const sizeMap = { sm: { outer: "w-9 h-9", svg: 34 }, md: { outer: "w-14 h-14", svg: 52 }, lg: { outer: "w-20 h-20", svg: 72 } };
+  const { outer, svg } = sizeMap[size];
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="w-14 h-14 rounded-full bg-sidebar-accent/60 border-2 border-sidebar-border flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 64 64" width="52" height="52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          {etapa === "bebe" && (
-            <>
-              <ellipse cx="32" cy="50" rx="14" ry="10" fill={shirtColor} opacity="0.9" />
-              <circle cx="32" cy="28" r="14" fill={skinTone} />
-              <ellipse cx="32" cy="16" rx="7" ry="4" fill={hairColor} />
-              <circle cx="27" cy="28" r="2" fill="#1a1a1a" />
-              <circle cx="37" cy="28" r="2" fill="#1a1a1a" />
-              <circle cx="28" cy="27" r="0.8" fill="white" />
-              <circle cx="38" cy="27" r="0.8" fill="white" />
-              <path d="M28 33 Q32 37 36 33" stroke="#c0725a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <circle cx="23" cy="32" r="3" fill="#f4a0a0" opacity="0.5" />
-              <circle cx="41" cy="32" r="3" fill="#f4a0a0" opacity="0.5" />
-            </>
-          )}
-          {etapa === "nino" && (
-            <>
-              <rect x="24" y="46" width="7" height="12" rx="3" fill={pantColor} />
-              <rect x="33" y="46" width="7" height="12" rx="3" fill={pantColor} />
-              <rect x="20" y="32" width="24" height="16" rx="5" fill={shirtColor} />
-              <rect x="10" y="33" width="11" height="6" rx="3" fill={shirtColor} />
-              <rect x="43" y="33" width="11" height="6" rx="3" fill={shirtColor} />
-              <circle cx="10" cy="36" r="3.5" fill={skinTone} />
-              <circle cx="54" cy="36" r="3.5" fill={skinTone} />
-              <rect x="29" y="27" width="6" height="7" rx="2" fill={skinTone} />
-              <circle cx="32" cy="20" r="12" fill={skinTone} />
-              {isFem ? (
-                <>
-                  <ellipse cx="32" cy="9" rx="12" ry="6" fill={hairColor} />
-                  <ellipse cx="20" cy="18" rx="4" ry="8" fill={hairColor} />
-                  <ellipse cx="44" cy="18" rx="4" ry="8" fill={hairColor} />
-                </>
-              ) : (
-                <ellipse cx="32" cy="9" rx="12" ry="6" fill={hairColor} />
-              )}
-              <circle cx="27" cy="20" r="2.2" fill="#1a1a1a" />
-              <circle cx="37" cy="20" r="2.2" fill="#1a1a1a" />
-              <circle cx="27.8" cy="19.2" r="0.9" fill="white" />
-              <circle cx="37.8" cy="19.2" r="0.9" fill="white" />
-              <ellipse cx="32" cy="23" rx="1.5" ry="1" fill="#d4956a" />
-              <path d="M28 27 Q32 31 36 27" stroke="#c0725a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <circle cx="22" cy="24" r="3" fill="#f4a0a0" opacity="0.45" />
-              <circle cx="42" cy="24" r="3" fill="#f4a0a0" opacity="0.45" />
-            </>
-          )}
-          {etapa === "adolescente" && (
-            <>
-              <rect x="23" y="44" width="8" height="16" rx="3" fill={pantColor} />
-              <rect x="33" y="44" width="8" height="16" rx="3" fill={pantColor} />
-              <rect x="19" y="30" width="26" height="16" rx="5" fill={shirtColor} />
-              <rect x="8" y="31" width="12" height="6" rx="3" fill={shirtColor} />
-              <rect x="44" y="31" width="12" height="6" rx="3" fill={shirtColor} />
-              <circle cx="8" cy="34" r="4" fill={skinTone} />
-              <circle cx="56" cy="34" r="4" fill={skinTone} />
-              <rect x="28.5" y="24" width="7" height="8" rx="2.5" fill={skinTone} />
-              <ellipse cx="32" cy="17" rx="11" ry="13" fill={skinTone} />
-              {isFem ? (
-                <>
-                  <ellipse cx="32" cy="6" rx="11" ry="5" fill={hairColor} />
-                  <ellipse cx="21" cy="16" rx="3.5" ry="10" fill={hairColor} />
-                  <ellipse cx="43" cy="16" rx="3.5" ry="10" fill={hairColor} />
-                </>
-              ) : (
-                <>
-                  <ellipse cx="32" cy="6" rx="11" ry="5" fill={hairColor} />
-                  <rect x="21" y="5" width="22" height="6" rx="3" fill={hairColor} />
-                </>
-              )}
-              <ellipse cx="27" cy="17" rx="2.5" ry="2.5" fill="#1a1a1a" />
-              <ellipse cx="37" cy="17" rx="2.5" ry="2.5" fill="#1a1a1a" />
-              <circle cx="27.8" cy="16" r="1" fill="white" />
-              <circle cx="37.8" cy="16" r="1" fill="white" />
-              <path d="M30.5 20 Q32 22 33.5 20" stroke="#d4956a" strokeWidth="1.2" fill="none" />
-              <path d="M28.5 24 Q32 27.5 35.5 24" stroke="#c0725a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </>
-          )}
-          {etapa === "adulto" && (
-            <>
-              <rect x="22" y="44" width="9" height="16" rx="3.5" fill={pantColor} />
-              <rect x="33" y="44" width="9" height="16" rx="3.5" fill={pantColor} />
-              {isFem ? (
-                <path d="M18 30 Q18 44 22 46 L42 46 Q46 44 46 30 Q40 34 32 34 Q24 34 18 30 Z" fill={shirtColor} />
-              ) : (
-                <rect x="18" y="30" width="28" height="16" rx="5" fill={shirtColor} />
-              )}
-              <rect x="6" y="31" width="13" height="7" rx="3.5" fill={shirtColor} />
-              <rect x="45" y="31" width="13" height="7" rx="3.5" fill={shirtColor} />
-              <circle cx="6" cy="34.5" r="4.5" fill={skinTone} />
-              <circle cx="58" cy="34.5" r="4.5" fill={skinTone} />
-              <rect x="28" y="23" width="8" height="9" rx="3" fill={skinTone} />
-              <ellipse cx="32" cy="16" rx="12" ry="14" fill={skinTone} />
-              {isFem ? (
-                <>
-                  <ellipse cx="32" cy="4" rx="12" ry="6" fill={hairColor} />
-                  <ellipse cx="20" cy="14" rx="3" ry="11" fill={hairColor} />
-                  <ellipse cx="44" cy="14" rx="3" ry="11" fill={hairColor} />
-                </>
-              ) : (
-                <>
-                  <ellipse cx="32" cy="4" rx="12" ry="6" fill={hairColor} />
-                  <rect x="20" y="3" width="24" height="7" rx="3" fill={hairColor} />
-                  <path d="M22 24 Q32 30 42 24" stroke={hairColor} strokeWidth="2" fill="none" opacity="0.4" />
-                </>
-              )}
-              <ellipse cx="26.5" cy="16" rx="2.8" ry="2.8" fill="#1a1a1a" />
-              <ellipse cx="37.5" cy="16" rx="2.8" ry="2.8" fill="#1a1a1a" />
-              <circle cx="27.5" cy="15" r="1.1" fill="white" />
-              <circle cx="38.5" cy="15" r="1.1" fill="white" />
-              <path d="M30 20 Q32 23 34 20" stroke="#d4956a" strokeWidth="1.3" fill="none" />
-              <path d="M27.5 25 Q32 28.5 36.5 25" stroke="#c0725a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </>
-          )}
-        </svg>
-      </div>
-      <div className="text-center">
-        <p className="text-xs font-semibold text-sidebar-foreground/80 leading-tight">{etapaLabel}</p>
-        <p className="text-xs text-sidebar-foreground/50 leading-tight">{sexo}</p>
-      </div>
+    <div className={`${outer} rounded-full bg-muted border-2 border-border flex items-center justify-center overflow-hidden shrink-0`}>
+      <svg viewBox="0 0 64 64" width={svg} height={svg} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="22" y="44" width="9" height="16" rx="3.5" fill={pantColor} />
+        <rect x="33" y="44" width="9" height="16" rx="3.5" fill={pantColor} />
+        {isFem
+          ? <path d="M18 30 Q18 44 22 46 L42 46 Q46 44 46 30 Q40 34 32 34 Q24 34 18 30 Z" fill={shirtColor} />
+          : <rect x="18" y="30" width="28" height="16" rx="5" fill={shirtColor} />}
+        <rect x="6" y="31" width="13" height="7" rx="3.5" fill={shirtColor} />
+        <rect x="45" y="31" width="13" height="7" rx="3.5" fill={shirtColor} />
+        <circle cx="6" cy="34.5" r="4.5" fill={skinTone} />
+        <circle cx="58" cy="34.5" r="4.5" fill={skinTone} />
+        <rect x="28" y="23" width="8" height="9" rx="3" fill={skinTone} />
+        <ellipse cx="32" cy="16" rx="12" ry="14" fill={skinTone} />
+        {isFem ? (
+          <>
+            <ellipse cx="32" cy="4" rx="12" ry="6" fill={hairColor} />
+            <ellipse cx="20" cy="14" rx="3" ry="11" fill={hairColor} />
+            <ellipse cx="44" cy="14" rx="3" ry="11" fill={hairColor} />
+          </>
+        ) : (
+          <>
+            <ellipse cx="32" cy="4" rx="12" ry="6" fill={hairColor} />
+            <rect x="20" y="3" width="24" height="7" rx="3" fill={hairColor} />
+          </>
+        )}
+        <ellipse cx="26.5" cy="16" rx="2.8" ry="2.8" fill="#1a1a1a" />
+        <ellipse cx="37.5" cy="16" rx="2.8" ry="2.8" fill="#1a1a1a" />
+        <circle cx="27.5" cy="15" r="1.1" fill="white" />
+        <circle cx="38.5" cy="15" r="1.1" fill="white" />
+        <path d="M27.5 25 Q32 28.5 36.5 25" stroke="#c0725a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      </svg>
     </div>
   );
 }
@@ -474,15 +493,17 @@ function AvatarPaciente({ edad, sexo }: { edad: number; sexo: "Masculino" | "Fem
 // SHARED MINI-COMPONENTS
 // ─────────────────────────────────────────────
 
-function SectionCard({ icon, title, action, children }: { icon: React.ReactNode; title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function SectionCard({ icon, title, children, accent, action }: {
+  icon: React.ReactNode; title: string; children: React.ReactNode; accent?: string; action?: React.ReactNode;
+}) {
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">{icon}</span>
-          <h3 className="text-base font-semibold text-foreground">{title}</h3>
-        </div>
-        {action}
+    <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+      <div className="flex items-center gap-3">
+        <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${accent ?? "bg-primary/10 text-primary"}`}>
+          {icon}
+        </span>
+        <h3 className="text-sm font-semibold text-foreground flex-1">{title}</h3>
+        {action && action}
       </div>
       {children}
     </div>
@@ -492,18 +513,31 @@ function SectionCard({ icon, title, action, children }: { icon: React.ReactNode;
 function FieldItem({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
-    <div>
-      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-relaxed">{label}</p>
-      <p className="text-sm font-medium text-foreground">{value}</p>
+    <div className="space-y-0.5">
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{label}</p>
+      <p className="text-sm text-foreground">{value}</p>
     </div>
   );
 }
 
+function AddButton({ onClick, label = "Agregar" }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 text-xs font-medium text-primary border border-primary/30 bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
+}
+
 const estadoConfig: Record<string, { cls: string; dot: string }> = {
-  Pendiente:  { cls: "bg-amber-50 text-amber-800 border-amber-200",        dot: "bg-amber-500" },
-  Confirmada: { cls: "bg-primary/10 text-primary border-primary/20",       dot: "bg-primary" },
-  Cancelada:  { cls: "bg-red-50 text-red-700 border-red-200",              dot: "bg-red-500" },
-  Completada: { cls: "bg-emerald-50 text-emerald-700 border-emerald-200",  dot: "bg-emerald-500" },
+  Pendiente:  { cls: "bg-amber-50 text-amber-800 border-amber-200",       dot: "bg-amber-500" },
+  Confirmada: { cls: "bg-blue-50 text-blue-700 border-blue-200",          dot: "bg-blue-500" },
+  Cancelada:  { cls: "bg-red-50 text-red-700 border-red-200",             dot: "bg-red-500" },
+  Completada: { cls: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
 };
 
 const severidadConfig: Record<string, { cls: string; dot: string }> = {
@@ -513,97 +547,212 @@ const severidadConfig: Record<string, { cls: string; dot: string }> = {
 };
 
 // ─────────────────────────────────────────────
+// API FIELD DEFINITIONS
+// ─────────────────────────────────────────────
+
+const FIELDS_DATOS_MEDICOS: FieldDef[] = [
+  { key: "patient_id",       label: "ID del paciente",      hidden: true, required: true },
+  { key: "blood_type",       label: "Tipo de sangre",       type: "select", required: true,
+    options: ["A+","A-","B+","B-","AB+","AB-","O+","O-"].map((v) => ({ value: v, label: v })) },
+  { key: "allergies",        label: "Alergias",             type: "textarea", placeholder: "Penicilina, látex..." },
+  { key: "chronic_diseases", label: "Enfermedades crónicas",type: "textarea", placeholder: "Diabetes tipo 2..." },
+  { key: "surgeries",        label: "Cirugías",             type: "textarea", placeholder: "Apendicectomía..." },
+  { key: "medications",      label: "Medicamentos",         type: "textarea", placeholder: "Metformina 500mg..." },
+  { key: "family_history",   label: "Antecedentes familiares", type: "textarea", placeholder: "Hipertensión arterial..." },
+];
+
+const FIELDS_SIGNOS_VITALES: FieldDef[] = [
+  { key: "patient_id",       label: "ID del paciente",    hidden: true, required: true },
+  { key: "doctor_id",        label: "ID del doctor",      hidden: true, required: true },
+  { key: "appointment_id",   label: "ID de cita",         hidden: true, type: "number" },
+  { key: "blood_pressure",   label: "Presión arterial",   placeholder: "120/80", required: true },
+  { key: "heart_rate",       label: "Frecuencia cardíaca",type: "number", placeholder: "72", required: true },
+  { key: "respiratory_rate", label: "Frec. respiratoria", type: "number", placeholder: "18" },
+  { key: "temperature",      label: "Temperatura (°C)",   type: "number", placeholder: "36.5", required: true },
+  { key: "oxygen_saturation",label: "Saturación O₂ (%)",  type: "number", placeholder: "98" },
+  { key: "weight",           label: "Peso (kg)",          type: "number", placeholder: "84.5", required: true },
+  { key: "height",           label: "Estatura (m)",       type: "number", placeholder: "1.78", required: true },
+  { key: "bmi",              label: "IMC",                type: "number", placeholder: "26.67" },
+  { key: "glucose",          label: "Glucosa (mg/dL)",    type: "number", placeholder: "95" },
+  { key: "notes",            label: "Notas",              type: "textarea", placeholder: "Paciente estable..." },
+];
+
+const FIELDS_SOAP: FieldDef[] = [
+  { key: "patient_id",    label: "ID del paciente",  hidden: true, required: true },
+  { key: "doctor_id",     label: "ID del doctor",    hidden: true, required: true },
+  { key: "appointment_id",label: "ID de cita",       hidden: true, type: "number" },
+  { key: "subjective",    label: "Subjetivo (S)",    type: "textarea", placeholder: "Dolor de cabeza desde hace 3 días...", required: true },
+  { key: "objective",     label: "Objetivo (O)",     type: "textarea", placeholder: "TA 120/80, FC 72...", required: true },
+  { key: "assessment",    label: "Análisis (A)",     type: "textarea", placeholder: "Cefalea tensional...", required: true },
+  { key: "plan",          label: "Plan (P)",         type: "textarea", placeholder: "Reposo e hidratación...", required: true },
+  { key: "diagnosis",     label: "Diagnóstico",      placeholder: "Cefalea tensional" },
+  { key: "prescription",  label: "Prescripción",     type: "textarea", placeholder: "Paracetamol 500mg..." },
+  { key: "observations",  label: "Observaciones",    type: "textarea", placeholder: "Paciente orientado..." },
+];
+
+const FIELDS_ALERGIAS: FieldDef[] = [
+  { key: "patient_id",  label: "ID del paciente", hidden: true, required: true },
+  { key: "allergy_type",label: "Tipo de alergia", type: "select", required: true,
+    options: [
+      { value: "MEDICAMENTO", label: "Medicamento" },
+      { value: "ALIMENTO",    label: "Alimento" },
+      { value: "AMBIENTAL",   label: "Ambiental" },
+      { value: "OTRO",        label: "Otro" },
+    ] },
+  { key: "allergen",    label: "Alérgeno",        placeholder: "Penicilina", required: true },
+  { key: "reaction",    label: "Reacción",        type: "textarea", placeholder: "Erupción cutánea..." },
+  { key: "severity",    label: "Severidad",       type: "select", required: true,
+    options: [
+      { value: "LEVE",    label: "Leve" },
+      { value: "MODERADA",label: "Moderada" },
+      { value: "SEVERA",  label: "Severa" },
+    ] },
+  { key: "notes",       label: "Notas",           type: "textarea", placeholder: "Detectada en la infancia..." },
+];
+
+const FIELDS_PRESCRIPCION: FieldDef[] = [
+  { key: "patient_id",      label: "ID del paciente",   hidden: true, required: true },
+  { key: "doctor_id",       label: "ID del doctor",     hidden: true, required: true },
+  { key: "appointment_id",  label: "ID de cita",        hidden: true, type: "number" },
+  { key: "medication_type", label: "Tipo de medicamento", type: "select", required: true,
+    options: [
+      { value: "COMERCIAL", label: "Comercial" },
+      { value: "GENERICO",  label: "Genérico" },
+    ] },
+  { key: "medication_name", label: "Nombre del medicamento", placeholder: "Tempra", required: true },
+  { key: "dosage",          label: "Dosis",             placeholder: "500 mg", required: true },
+  { key: "route",           label: "Vía de administración", type: "select", required: true,
+    options: [
+      { value: "ORAL",       label: "Oral" },
+      { value: "INTRAVENOSA",label: "Intravenosa" },
+      { value: "INTRAMUSCULAR", label: "Intramuscular" },
+      { value: "TOPICA",     label: "Tópica" },
+      { value: "SUBLINGUAL", label: "Sublingual" },
+    ] },
+  { key: "frequency_hours", label: "Frecuencia (horas)", type: "number", placeholder: "8", required: true },
+  { key: "duration_days",   label: "Duración (días)",   type: "number", placeholder: "5" },
+  { key: "instructions",    label: "Indicaciones",      type: "textarea", placeholder: "Tomar después de los alimentos..." },
+];
+
+const ID_DEFAULTS = {
+  patient_id: CONTEXT_IDS.pacienteId,
+  doctor_id: CONTEXT_IDS.doctorId,
+  appointment_id: CONTEXT_IDS.citaId,
+};
+
+// ─────────────────────────────────────────────
+// VITAL CARD
+// ─────────────────────────────────────────────
+
+function VitalCard({ icon, label, value, unit, status }: {
+  icon: React.ReactNode; label: string; value: string; unit?: string;
+  status?: { label: string; cls: string } | null;
+}) {
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 flex items-start gap-3">
+      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">{label}</p>
+        <p className="text-lg font-bold text-foreground leading-tight mt-0.5">
+          {value}
+          {unit && <span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span>}
+        </p>
+        {status && <p className={`text-[11px] font-semibold mt-0.5 ${status.cls}`}>{status.label}</p>}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // TAB: DASHBOARD
 // ─────────────────────────────────────────────
 
 function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
   const sv = dashboard.ultimoRegistro;
   const vitales = [
-    { icon: <Heart className="w-5 h-5 text-destructive" />,        label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica}`, unit: "mmHg" },
-    { icon: <Activity className="w-5 h-5 text-primary" />,         label: "Frec. cardíaca",   value: `${sv.frecuenciaCardiaca}`,                        unit: "bpm" },
-    { icon: <Thermometer className="w-5 h-5 text-amber-500" />,    label: "Temperatura",      value: `${sv.temperatura}`,                               unit: "°C" },
-    { icon: <Scale className="w-5 h-5 text-blue-600" />,           label: "Peso",             value: `${sv.peso}`,                                      unit: "kg" },
-    { icon: <TrendingDown className="w-5 h-5 text-emerald-600" />, label: "IMC",              value: sv.indiceMasaCorporal ? sv.indiceMasaCorporal.toFixed(1) : "—", unit: "" },
-    { icon: <Scale className="w-5 h-5 text-muted-foreground" />,   label: "Grasa corporal",   value: sv.grasaCorporal ? `${sv.grasaCorporal}` : "—",    unit: sv.grasaCorporal ? "%" : "" },
+    { icon: <Heart className="w-5 h-5 text-rose-500" />,        label: "Presión arterial", value: `${sv.presionSistolica}/${sv.presionDiastolica}`, unit: "mmHg", status: presionCategoria(sv.presionSistolica, sv.presionDiastolica) },
+    { icon: <Activity className="w-5 h-5 text-primary" />,      label: "Frec. cardíaca",   value: `${sv.frecuenciaCardiaca}`,                        unit: "bpm",  status: null },
+    { icon: <Thermometer className="w-5 h-5 text-amber-500" />, label: "Temperatura",      value: `${sv.temperatura}`,                               unit: "°C",   status: null },
+    { icon: <Scale className="w-5 h-5 text-blue-500" />,        label: "Peso",             value: `${sv.peso}`,                                      unit: "kg",   status: null },
+    { icon: <TrendingDown className="w-5 h-5 text-emerald-500" />, label: "IMC",           value: sv.indiceMasaCorporal ? sv.indiceMasaCorporal.toFixed(1) : "—", unit: "", status: sv.indiceMasaCorporal ? imcCategoria(sv.indiceMasaCorporal) : null },
+    { icon: <Scale className="w-5 h-5 text-slate-400" />,       label: "Grasa corporal",   value: sv.grasaCorporal ? `${sv.grasaCorporal}` : "—",    unit: sv.grasaCorporal ? "%" : "", status: null },
   ];
 
   return (
     <div className="space-y-6">
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Últimos signos vitales</h3>
-          <span className="text-xs text-muted-foreground ml-1">— {fmtFecha(sv.fecha)}</span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {vitales.map((v) => (
-            <div key={v.label} className="flex items-center gap-3 bg-card border border-border rounded-xl p-4 shadow-sm">
-              <div className="shrink-0">{v.icon}</div>
-              <div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{v.label}</p>
-                <p className="text-sm font-semibold text-foreground">
-                  {v.value}
-                  {v.unit && <span className="text-xs font-normal text-muted-foreground ml-1">{v.unit}</span>}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full font-medium">
+          Último registro — {fmtFecha(sv.fecha)}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {vitales.map((v) => <VitalCard key={v.label} {...v} />)}
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
         {dashboard.proximaCita && (
-          <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Próxima cita</h3>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Calendar className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-foreground">Próxima cita</h3>
             </div>
-            <p className="font-medium text-foreground">{dashboard.proximaCita.motivo}</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {fmtFecha(dashboard.proximaCita.fecha)} — {dashboard.proximaCita.hora}
-            </p>
-            <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border font-medium ${estadoConfig[dashboard.proximaCita.estado]?.cls}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${estadoConfig[dashboard.proximaCita.estado]?.dot}`} />
-              {dashboard.proximaCita.estado}
-            </span>
-          </section>
+            <p className="font-semibold text-foreground text-sm leading-snug">{dashboard.proximaCita.motivo}</p>
+            <p className="text-sm text-muted-foreground mt-1">{fmtFecha(dashboard.proximaCita.fecha)} — {dashboard.proximaCita.hora}</p>
+            <div className="mt-3">
+              <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${estadoConfig[dashboard.proximaCita.estado]?.cls}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${estadoConfig[dashboard.proximaCita.estado]?.dot}`} />
+                {dashboard.proximaCita.estado}
+              </span>
+            </div>
+          </div>
         )}
         {dashboard.ultimoDiagnostico && (
-          <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Stethoscope className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Último diagnóstico</h3>
-            </div>
-            <p className="font-medium text-foreground">{dashboard.ultimoDiagnostico.descripcion}</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{fmtFecha(dashboard.ultimoDiagnostico.fecha)}</p>
-            {dashboard.ultimoDiagnostico.severidad && (
-              <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border font-medium ${severidadConfig[dashboard.ultimoDiagnostico.severidad]?.cls}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${severidadConfig[dashboard.ultimoDiagnostico.severidad]?.dot}`} />
-                {dashboard.ultimoDiagnostico.severidad}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <Stethoscope className="w-4 h-4" />
               </span>
+              <h3 className="text-sm font-semibold text-foreground">Último diagnóstico</h3>
+            </div>
+            <p className="font-semibold text-foreground text-sm leading-snug">{dashboard.ultimoDiagnostico.descripcion}</p>
+            <p className="text-xs text-muted-foreground mt-1">{fmtFecha(dashboard.ultimoDiagnostico.fecha)}</p>
+            {dashboard.ultimoDiagnostico.severidad && (
+              <div className="mt-3">
+                <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-semibold ${severidadConfig[dashboard.ultimoDiagnostico.severidad]?.cls}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${severidadConfig[dashboard.ultimoDiagnostico.severidad]?.dot}`} />
+                  {dashboard.ultimoDiagnostico.severidad}
+                </span>
+              </div>
             )}
-          </section>
+          </div>
         )}
       </div>
-
       {dashboard.medicamentosActivos.length > 0 && (
-        <section className="bg-card border border-border rounded-xl p-6 space-y-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Pill className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Medicamentos activos</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Pill className="w-4 h-4" />
+            </span>
+            <h3 className="text-sm font-semibold text-foreground">Medicamentos activos</h3>
+            <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {dashboard.medicamentosActivos.length}
+            </span>
           </div>
-          <div className="space-y-2">
-            {dashboard.medicamentosActivos.map((med) => (
-              <div key={med.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+          <div>
+            {dashboard.medicamentosActivos.map((med, i) => (
+              <div key={med.id} className={`flex items-center justify-between py-3 ${i < dashboard.medicamentosActivos.length - 1 ? "border-b border-border" : ""}`}>
                 <div>
                   <p className="text-sm font-medium text-foreground">{med.nombre}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{med.dosis} — {med.frecuencia}</p>
+                  <p className="text-xs text-muted-foreground">{med.dosis} — {med.frecuencia}</p>
                 </div>
-                <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full border font-medium bg-emerald-50 text-emerald-700 border-emerald-200">Activo</span>
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border font-medium bg-emerald-50 text-emerald-700 border-emerald-200">Activo</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
       )}
     </div>
   );
@@ -613,63 +762,116 @@ function DashboardTab({ dashboard }: { dashboard: MiniDashboard }) {
 // TAB: DATOS GENERALES
 // ─────────────────────────────────────────────
 
-function DatosGeneralesTab({
-  datosPersonales, direccion, contacto, datosFiscales,
-}: {
-  datosPersonales: DatosPersonales;
-  direccion: Direccion;
-  contacto: Contacto;
-  datosFiscales?: DatosFiscales;
+function DatosGeneralesTab({ datosPersonales, direccion, contacto, datosFiscales }: {
+  datosPersonales: DatosPersonales; direccion: Direccion; contacto: Contacto; datosFiscales?: DatosFiscales;
 }) {
   const edad = calcularEdad(datosPersonales.fechaNacimiento);
   const nombreCompleto = [datosPersonales.nombre, datosPersonales.apellidoPaterno, datosPersonales.apellidoMaterno].filter(Boolean).join(" ");
+  const [drawer, setDrawer] = useState<"datosMedicos" | "alergia" | null>(null);
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <SectionCard icon={<User className="w-5 h-5" />} title="Datos personales">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
-          <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
-          <FieldItem label="Edad" value={`${edad} años`} />
-          <FieldItem label="Sexo" value={datosPersonales.sexo} />
-          <FieldItem label="CURP" value={datosPersonales.curp} />
-          <FieldItem label="RFC" value={datosPersonales.rfc} />
-        </div>
-      </SectionCard>
-
-      <SectionCard icon={<Phone className="w-5 h-5" />} title="Contacto">
-        <div className="grid grid-cols-2 gap-4">
-          <FieldItem label="Teléfono" value={contacto.telefono} />
-          <FieldItem label="Correo electrónico" value={contacto.email} />
-          <FieldItem label="Contacto de emergencia" value={contacto.nombreContactoEmergencia} />
-          <FieldItem label="Tel. emergencias" value={contacto.telefonoEmergencia} />
-        </div>
-      </SectionCard>
-
-      <SectionCard icon={<MapPin className="w-5 h-5" />} title="Domicilio">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <FieldItem label="Calle y número" value={`${direccion.calle} #${direccion.numeroExterior}${direccion.numeroInterior ? ` Int. ${direccion.numeroInterior}` : ""}`} />
-          </div>
-          <FieldItem label="Colonia" value={direccion.colonia} />
-          <FieldItem label="Ciudad" value={direccion.ciudad} />
-          <FieldItem label="Estado" value={direccion.estado} />
-          <FieldItem label="CP" value={direccion.codigoPostal} />
-          <FieldItem label="País" value={direccion.pais} />
-        </div>
-      </SectionCard>
-
-      {datosFiscales && (
-        <SectionCard icon={<Receipt className="w-5 h-5" />} title="Datos fiscales">
+    <>
+      <div className="grid md:grid-cols-2 gap-4">
+        <SectionCard
+          icon={<User className="w-4 h-4" />}
+          title="Datos Personales"
+          accent="bg-primary/10 text-primary"
+          action={
+            <AddButton
+              onClick={() => setDrawer("datosMedicos")}
+              label="Datos médicos"
+            />
+          }
+        >
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
-            <FieldItem label="RFC" value={datosFiscales.rfc} />
-            <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
-            <div className="col-span-2"><FieldItem label="Uso de CFDI" value={datosFiscales.usoCFDI} /></div>
+            <div className="col-span-2"><FieldItem label="Nombre completo" value={nombreCompleto} /></div>
+            <FieldItem label="Edad" value={`${edad} años`} />
+            <FieldItem label="Género" value={datosPersonales.sexo} />
+            <FieldItem label="Donador" value="No" />
+            <FieldItem label="CURP" value={datosPersonales.curp} />
+            <div className="col-span-2"><FieldItem label="RFC" value={datosPersonales.rfc} /></div>
           </div>
         </SectionCard>
-      )}
-    </div>
+
+        <SectionCard icon={<Phone className="w-4 h-4" />} title="Identificación" accent="bg-primary/10 text-primary">
+          <div className="grid grid-cols-2 gap-4">
+            <FieldItem label="CURP" value={datosPersonales.curp} />
+            <FieldItem label="RFC" value={datosPersonales.rfc} />
+            <FieldItem label="Fecha de nacimiento" value={fmtFecha(datosPersonales.fechaNacimiento)} />
+          </div>
+        </SectionCard>
+
+        <SectionCard icon={<Phone className="w-4 h-4" />} title="Contacto de Emergencia" accent="bg-primary/10 text-primary">
+          <div className="grid grid-cols-2 gap-4">
+            <FieldItem label="Nombre" value={contacto.nombreContactoEmergencia} />
+            <FieldItem label="Teléfono" value={contacto.telefonoEmergencia} />
+            <FieldItem label="Correo electrónico" value={contacto.email} />
+            <FieldItem label="Teléfono principal" value={contacto.telefono} />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          icon={<MapPin className="w-4 h-4" />}
+          title="Alergias"
+          accent="bg-red-50 text-red-500"
+          action={<AddButton onClick={() => setDrawer("alergia")} />}
+        >
+          <div className="space-y-2">
+            {[
+              { nombre: "Penicilina", tipo: "Medicamento", reaccion: "Urticaria generalizada, angioedema", severidad: "Grave" },
+              { nombre: "Mariscos (camarón, ostión)", tipo: "Alimento", reaccion: "Náuseas, eritema en piel", severidad: "Moderado" },
+            ].map((alergia) => {
+              const sev = severidadConfig[alergia.severidad];
+              return (
+                <div key={alergia.nombre} className="flex items-start justify-between gap-3 border border-border rounded-lg px-4 py-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm font-medium text-foreground">{alergia.nombre}</span>
+                      <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{alergia.tipo}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{alergia.reaccion}</p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium shrink-0 ${sev?.cls.includes("red") ? "text-red-600" : sev?.cls.includes("amber") ? "text-amber-600" : "text-emerald-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sev?.dot}`} />
+                    {alergia.severidad}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </SectionCard>
+
+        {datosFiscales && (
+          <SectionCard icon={<Receipt className="w-4 h-4" />} title="Datos fiscales" accent="bg-primary/10 text-primary">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2"><FieldItem label="Razón social" value={datosFiscales.razonSocial} /></div>
+              <FieldItem label="RFC" value={datosFiscales.rfc} />
+              <FieldItem label="Régimen fiscal" value={datosFiscales.regimenFiscal} />
+              <div className="col-span-2"><FieldItem label="Uso de CFDI" value={datosFiscales.usoCFDI} /></div>
+            </div>
+          </SectionCard>
+        )}
+      </div>
+
+      <ApiDrawer
+        open={drawer === "datosMedicos"}
+        onClose={() => setDrawer(null)}
+        title="Registrar datos médicos"
+        endpoint="/datosmedicos"
+        method="POST"
+        fields={FIELDS_DATOS_MEDICOS}
+        defaultValues={{ patient_id: ID_DEFAULTS.patient_id }}
+      />
+      <ApiDrawer
+        open={drawer === "alergia"}
+        onClose={() => setDrawer(null)}
+        title="Registrar alergia"
+        endpoint="/patientalergias"
+        method="POST"
+        fields={FIELDS_ALERGIAS}
+        defaultValues={{ patient_id: ID_DEFAULTS.patient_id }}
+      />
+    </>
   );
 }
 
@@ -680,185 +882,200 @@ function DatosGeneralesTab({
 function SignosVitalesTab({ signosVitales }: { signosVitales: SignosVitales[] }) {
   const ordenados = [...signosVitales].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   const ultimo = ordenados[0];
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const vitales = ultimo ? [
-    { icon: <Heart className="w-5 h-5 text-destructive" />,        label: "Presión arterial", value: `${ultimo.presionSistolica}/${ultimo.presionDiastolica}`, unit: "mmHg", estado: presionCategoria(ultimo.presionSistolica, ultimo.presionDiastolica) },
-    { icon: <Activity className="w-5 h-5 text-primary" />,         label: "Frec. cardíaca",   value: `${ultimo.frecuenciaCardiaca}`,                           unit: "bpm",  estado: null },
-    { icon: <Thermometer className="w-5 h-5 text-amber-500" />,    label: "Temperatura",      value: `${ultimo.temperatura}`,                                  unit: "°C",   estado: null },
-    { icon: <Scale className="w-5 h-5 text-blue-600" />,           label: "Peso",             value: `${ultimo.peso}`,                                         unit: "kg",   estado: null },
-    { icon: <Ruler className="w-5 h-5 text-slate-400" />,          label: "Estatura",         value: `${ultimo.estatura}`,                                     unit: "cm",   estado: null },
-    { icon: <TrendingDown className="w-5 h-5 text-emerald-600" />, label: "IMC",              value: ultimo.indiceMasaCorporal ? `${ultimo.indiceMasaCorporal.toFixed(1)}` : "—", unit: "", estado: ultimo.indiceMasaCorporal ? imcCategoria(ultimo.indiceMasaCorporal) : null },
+    { icon: <Heart className="w-5 h-5 text-rose-500" />,        label: "Presión arterial", value: `${ultimo.presionSistolica}/${ultimo.presionDiastolica}`, unit: "mmHg", status: presionCategoria(ultimo.presionSistolica, ultimo.presionDiastolica) },
+    { icon: <Activity className="w-5 h-5 text-primary" />,      label: "Frec. cardíaca",   value: `${ultimo.frecuenciaCardiaca}`,                           unit: "bpm",  status: null },
+    { icon: <Thermometer className="w-5 h-5 text-amber-500" />, label: "Temperatura",      value: `${ultimo.temperatura}`,                                  unit: "°C",   status: null },
+    { icon: <Scale className="w-5 h-5 text-blue-500" />,        label: "Peso",             value: `${ultimo.peso}`,                                         unit: "kg",   status: null },
+    { icon: <Ruler className="w-5 h-5 text-slate-400" />,       label: "Estatura",         value: `${ultimo.estatura}`,                                     unit: "cm",   status: null },
+    { icon: <TrendingDown className="w-5 h-5 text-emerald-500" />, label: "IMC",           value: ultimo.indiceMasaCorporal ? `${ultimo.indiceMasaCorporal.toFixed(1)}` : "—", unit: "", status: ultimo.indiceMasaCorporal ? imcCategoria(ultimo.indiceMasaCorporal) : null },
   ] : [];
 
   return (
-    <div className="space-y-6">
-      {ultimo && (
+    <>
+      <div className="space-y-6">
+        {ultimo && (
+          <section>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full font-medium">
+                Último registro — {fmtFechaHora(ultimo.fecha)}
+              </span>
+              <AddButton onClick={() => setDrawerOpen(true)} label="Nuevo registro" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {vitales.map((v) => <VitalCard key={v.label} {...v} />)}
+            </div>
+          </section>
+        )}
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Activity className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Último registro</h3>
-            <span className="text-xs text-muted-foreground ml-1">— {fmtFechaHora(ultimo.fecha)}</span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {vitales.map((v) => (
-              <div key={v.label} className="bg-card border border-border rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <div className="mt-0.5 shrink-0">{v.icon}</div>
-                <div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{v.label}</p>
-                  <p className="text-base font-bold text-foreground">
-                    {v.value}
-                    {v.unit && <span className="text-xs font-normal text-muted-foreground ml-1">{v.unit}</span>}
-                  </p>
-                  {v.estado && <p className={`text-xs font-medium ${v.estado.cls}`}>{v.estado.label}</p>}
-                </div>
-              </div>
-            ))}
+          <h3 className="text-sm font-semibold text-foreground mb-4">Historial de registros</h3>
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["Fecha", "Peso", "Presión", "F.C.", "Temp.", "IMC"].map((h) => (
+                      <th key={h} className={`px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ${h === "Fecha" ? "text-left" : "text-right"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordenados.map((sv, i) => (
+                    <tr key={sv.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${i === 0 ? "bg-primary/5" : ""}`}>
+                      <td className="px-4 py-3 text-foreground">
+                        <div className="flex items-center gap-2">
+                          {i === 0 && <span className="text-[10px] bg-primary text-white rounded-md px-1.5 py-0.5 font-bold">Actual</span>}
+                          <span className="text-sm">{fmtFechaHora(sv.fecha)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-foreground">{sv.peso} kg</td>
+                      <td className="px-4 py-3 text-right font-bold text-foreground">{sv.presionSistolica}/{sv.presionDiastolica} <span className="text-xs font-normal text-muted-foreground">mmHg</span></td>
+                      <td className="px-4 py-3 text-right text-foreground">{sv.frecuenciaCardiaca} bpm</td>
+                      <td className="px-4 py-3 text-right text-foreground">{sv.temperatura} °C</td>
+                      <td className="px-4 py-3 text-right font-bold text-foreground">{sv.indiceMasaCorporal ? sv.indiceMasaCorporal.toFixed(1) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
-      )}
+      </div>
 
-      <section>
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Historial de registros</h3>
-        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  {["Fecha", "Peso", "Presión", "F.C.", "Temp.", "IMC"].map((h) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide ${h === "Fecha" ? "text-left" : "text-right"}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {ordenados.map((sv, i) => (
-                  <tr key={sv.id} className={`border-b border-border last:border-0 ${i === 0 ? "bg-primary/5" : ""}`}>
-                    <td className="px-4 py-3 text-foreground">
-                      <div className="flex items-center gap-2">
-                        {i === 0 && <span className="text-xs bg-primary text-primary-foreground rounded px-1.5 py-0.5 font-medium">Actual</span>}
-                        {fmtFechaHora(sv.fecha)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right text-foreground font-medium">{sv.peso} kg</td>
-                    <td className="px-4 py-3 text-right text-foreground font-medium">{sv.presionSistolica}/{sv.presionDiastolica} mmHg</td>
-                    <td className="px-4 py-3 text-right text-foreground">{sv.frecuenciaCardiaca} bpm</td>
-                    <td className="px-4 py-3 text-right text-foreground">{sv.temperatura} °C</td>
-                    <td className="px-4 py-3 text-right text-foreground">{sv.indiceMasaCorporal ? sv.indiceMasaCorporal.toFixed(1) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </div>
+      <ApiDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Registrar signos vitales"
+        endpoint="/signosvitales"
+        method="POST"
+        fields={FIELDS_SIGNOS_VITALES}
+        defaultValues={{ patient_id: ID_DEFAULTS.patient_id, doctor_id: ID_DEFAULTS.doctor_id, appointment_id: ID_DEFAULTS.appointment_id }}
+      />
+    </>
   );
 }
 
 // ─────────────────────────────────────────────
-// TAB: VISITAS (Agendar citas)
+// TAB: CONSULTA (SOAP)
+// ─────────────────────────────────────────────
+
+function ConsultaTab() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const soapMock = [
+    { id: "SOAP-001", fecha: "2024-03-10", subjective: "Dolor de cabeza desde hace 3 días", objective: "TA 120/80, FC 72", assessment: "Cefalea tensional", plan: "Reposo e hidratación", diagnosis: "Cefalea tensional", prescription: "Paracetamol 500mg c/8h por 3 días" },
+    { id: "SOAP-002", fecha: "2024-02-20", subjective: "Seguimiento de presión arterial", objective: "TA 118/78, FC 68, peso 77.2 kg", assessment: "Hipertensión leve bajo control", plan: "Continuar losartán, dieta baja en sodio", diagnosis: "Hipertensión arterial leve", prescription: "Losartán 25mg c/24h" },
+  ];
+
+  return (
+    <>
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Notas de consulta (SOAP)</h2>
+          <AddButton onClick={() => setDrawerOpen(true)} label="Nueva consulta" />
+        </div>
+        {soapMock.map((soap) => (
+          <div key={soap.id} className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4" />
+              </span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">{soap.diagnosis}</p>
+                <p className="text-[11px] text-muted-foreground">{fmtFecha(soap.fecha)}</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-wider">S — Subjetivo</p>
+                <p className="text-sm text-foreground">{soap.subjective}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">O — Objetivo</p>
+                <p className="text-sm text-foreground">{soap.objective}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">A — Análisis</p>
+                <p className="text-sm text-foreground">{soap.assessment}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">P — Plan</p>
+                <p className="text-sm text-foreground">{soap.plan}</p>
+              </div>
+            </div>
+            {soap.prescription && (
+              <div className="flex items-start gap-2 bg-muted/50 rounded-lg px-3 py-2.5">
+                <Pill className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                <p className="text-xs text-foreground">{soap.prescription}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <ApiDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Registrar nota SOAP"
+        endpoint="/soap"
+        method="POST"
+        fields={FIELDS_SOAP}
+        defaultValues={{ patient_id: ID_DEFAULTS.patient_id, doctor_id: ID_DEFAULTS.doctor_id, appointment_id: ID_DEFAULTS.appointment_id }}
+      />
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────
+// TAB: VISITAS
 // ─────────────────────────────────────────────
 
 interface CitaAgendada {
-  id: string;
-  fecha: string;
-  horaInicio: string;
-  horaCierre: string;
-  tipo: "disponible" | "cita" | "urgencia";
-  primeraVez: boolean;
-  tipoConsulta: string;
-  especialidad: string;
-  seguro: string;
-  servicios: string[];
-  cupon: string;
-  descuento: number;
-  precioBase: number;
-  precioFinal: number;
+  id: string; doctorId: string; fecha: string; horaInicio: string; horaCierre: string;
+  tipo: "disponible" | "cita" | "urgencia"; primeraVez: boolean; tipoConsulta: string;
+  especialidad: string; seguro: string; servicios: string[]; cupon: string;
+  descuento: number; precioBase: number; precioFinal: number;
 }
 
 const citasExistentesMock: CitaAgendada[] = [
-  {
-    id: "CITA-001", fecha: "2024-02-15", horaInicio: "10:00", horaCierre: "10:30",
-    tipo: "cita", primeraVez: false, tipoConsulta: "Consulta de seguimiento",
-    especialidad: "Cardiología", seguro: "IMSS", servicios: ["consulta"],
-    cupon: "", descuento: 0, precioBase: 800, precioFinal: 800,
-  },
-  {
-    id: "CITA-002", fecha: "2024-02-18", horaInicio: "14:00", horaCierre: "14:30",
-    tipo: "urgencia", primeraVez: false, tipoConsulta: "Urgencia",
-    especialidad: "Medicina General", seguro: "Sin seguro (Particular)",
-    servicios: ["consulta", "laboratorio"], cupon: "DESC10",
-    descuento: 10, precioBase: 2000, precioFinal: 1800,
-  },
-];
-
-const horasDisponibles = [
-  "08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
-  "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
-  "16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30",
+  { id: "CITA-001", doctorId: "DOC-001", fecha: "2024-02-15", horaInicio: "10:00", horaCierre: "10:30", tipo: "cita", primeraVez: false, tipoConsulta: "Consulta de seguimiento", especialidad: "Cardiología", seguro: "IMSS", servicios: ["consulta"], cupon: "", descuento: 0, precioBase: 800, precioFinal: 800 },
+  { id: "CITA-002", doctorId: "DOC-002", fecha: "2024-02-18", horaInicio: "14:00", horaCierre: "14:30", tipo: "urgencia", primeraVez: false, tipoConsulta: "Urgencia", especialidad: "Medicina General", seguro: "Sin seguro (Particular)", servicios: ["consulta", "laboratorio"], cupon: "DESC10", descuento: 10, precioBase: 2000, precioFinal: 1800 },
 ];
 
 function VisitasTab({ visitas }: { visitas: Visita[] }) {
   const [citasAgendadas, setCitasAgendadas] = useState<CitaAgendada[]>(citasExistentesMock);
   const [mesActual, setMesActual] = useState(new Date());
 
-  // Cargar las citas del paciente desde la API (solo lectura)
   useEffect(() => {
-    patientService
-      .getMyAppointments()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const mapeadas: CitaAgendada[] = data.map((c: Record<string, unknown>) => {
-            const scheduled = c.scheduledAt ? new Date(c.scheduledAt as string) : new Date();
-            const end = c.endAt ? new Date(c.endAt as string) : null;
-            const hh = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-            return {
-              id: String(c.id ?? `CITA-${Math.random()}`),
-              fecha: scheduled.toISOString().substring(0, 10),
-              horaInicio: hh(scheduled),
-              horaCierre: end ? hh(end) : hh(scheduled),
-              tipo: (c.modality === "URGENCIA" ? "urgencia" : "cita") as "cita" | "urgencia",
-              primeraVez: false,
-              tipoConsulta: String(c.notes ?? "Consulta"),
-              especialidad: "",
-              seguro: "",
-              servicios: [],
-              cupon: "",
-              descuento: 0,
-              precioBase: Number(c.price ?? 0),
-              precioFinal: Number(c.price ?? 0),
-            };
-          });
-          setCitasAgendadas(mapeadas);
-        }
-      })
-      .catch(() => {
-        // Si la API no responde, se mantienen los datos mock
-      });
+    patientService.getMyAppointments().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        const mapeadas: CitaAgendada[] = data.map((c: Record<string, unknown>) => {
+          const scheduled = c.scheduledAt ? new Date(c.scheduledAt as string) : new Date();
+          const end = c.endAt ? new Date(c.endAt as string) : null;
+          const hh = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+          return { id: String(c.id ?? `CITA-${Math.random()}`), doctorId: String(c.doctorId ?? c.doctor_id ?? ""), fecha: scheduled.toISOString().substring(0, 10), horaInicio: hh(scheduled), horaCierre: end ? hh(end) : hh(scheduled), tipo: (c.modality === "URGENCIA" ? "urgencia" : "cita") as "cita" | "urgencia", primeraVez: false, tipoConsulta: String(c.notes ?? "Consulta"), especialidad: "", seguro: "", servicios: [], cupon: "", descuento: 0, precioBase: Number(c.price ?? 0), precioFinal: Number(c.price ?? 0) };
+        });
+        setCitasAgendadas(mapeadas);
+      }
+    }).catch(() => {});
   }, []);
 
   const generarDiasMes = (fecha: Date) => {
-    const año = fecha.getFullYear();
-    const mes = fecha.getMonth();
-    const primerDia = new Date(año, mes, 1);
-    const ultimoDia = new Date(año, mes + 1, 0);
-    const diasEnMes = ultimoDia.getDate();
-    const diaInicioSemana = primerDia.getDay();
+    const año = fecha.getFullYear(); const mes = fecha.getMonth();
+    const primerDia = new Date(año, mes, 1); const ultimoDia = new Date(año, mes + 1, 0);
+    const diasEnMes = ultimoDia.getDate(); const diaInicioSemana = primerDia.getDay();
     const dias: Array<{ fecha: string; dia: number; esOtroMes: boolean }> = [];
-    const mesAnteriorDate = new Date(año, mes, 0);
-    const diasMesAnterior = mesAnteriorDate.getDate();
+    const diasMesAnterior = new Date(año, mes, 0).getDate();
     for (let i = diaInicioSemana - 1; i >= 0; i--) {
-      const diaNum = diasMesAnterior - i;
-      const fechaStr = `${año}-${String(mes).padStart(2, "0")}-${String(diaNum).padStart(2, "0")}`;
-      dias.push({ fecha: fechaStr, dia: diaNum, esOtroMes: true });
+      dias.push({ fecha: `${año}-${String(mes).padStart(2, "0")}-${String(diasMesAnterior - i).padStart(2, "0")}`, dia: diasMesAnterior - i, esOtroMes: true });
     }
     for (let dia = 1; dia <= diasEnMes; dia++) {
-      const fechaStr = `${año}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-      dias.push({ fecha: fechaStr, dia, esOtroMes: false });
+      dias.push({ fecha: `${año}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`, dia, esOtroMes: false });
     }
-    const diasRestantes = 42 - dias.length;
-    for (let dia = 1; dia <= diasRestantes; dia++) {
-      const fechaStr = `${año}-${String(mes + 2).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-      dias.push({ fecha: fechaStr, dia, esOtroMes: true });
+    for (let dia = 1; dia <= 42 - dias.length; dia++) {
+      dias.push({ fecha: `${año}-${String(mes + 2).padStart(2, "0")}-${String(dia).padStart(2, "0")}`, dia, esOtroMes: true });
     }
     return dias;
   };
@@ -866,53 +1083,34 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
   const diasMes = generarDiasMes(mesActual);
   const nombresMeses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   const nombresDias = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-
-  const obtenerEstadoDia = (fechaStr: string): "disponible" | "cita" | "urgencia" | null => {
-    const cita = citasAgendadas.find((c) => c.fecha === fechaStr);
-    if (cita) return cita.tipo;
-    return "disponible";
-  };
-
+  const obtenerEstadoDia = (fechaStr: string) => citasAgendadas.find((c) => c.fecha === fechaStr)?.tipo ?? "disponible";
   const irMesAnterior = () => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1));
   const irMesSiguiente = () => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 1));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Calendar className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">Mis Citas</h2>
-      </div>
-
-      {/* Leyenda */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-xl shadow-sm">
-        <span className="text-sm font-medium text-foreground">Leyenda:</span>
-        {[
-          { color: "bg-amber-500", label: "Cita programada" },
-          { color: "bg-red-500",   label: "Urgencia" },
-        ].map(({ color, label }) => (
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-card border border-border rounded-xl">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Leyenda:</span>
+        {[{ color: "bg-amber-400", label: "Cita programada" }, { color: "bg-red-400", label: "Urgencia" }].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-2">
-            <span className={`w-4 h-4 rounded ${color}`} />
+            <span className={`w-3 h-3 rounded ${color}`} />
             <span className="text-sm text-muted-foreground">{label}</span>
           </div>
         ))}
       </div>
-
-      {/* Calendario solo lectura */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={irMesAnterior} className="p-2 hover:bg-muted rounded-md transition-colors" aria-label="Mes anterior">
-            <ChevronLeft className="w-5 h-5" />
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={irMesAnterior} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors" aria-label="Mes anterior">
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <h3 className="text-lg font-semibold text-foreground">
-            {nombresMeses[mesActual.getMonth()]} {mesActual.getFullYear()}
-          </h3>
-          <button onClick={irMesSiguiente} className="p-2 hover:bg-muted rounded-md transition-colors" aria-label="Mes siguiente">
-            <ChevronRight className="w-5 h-5" />
+          <h3 className="text-base font-bold text-foreground">{nombresMeses[mesActual.getMonth()]} {mesActual.getFullYear()}</h3>
+          <button onClick={irMesSiguiente} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors" aria-label="Mes siguiente">
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 gap-1 mb-1">
           {nombresDias.map((dia) => (
-            <div key={dia} className="text-center text-xs font-semibold text-muted-foreground py-2">{dia}</div>
+            <div key={dia} className="text-center text-[10px] font-bold text-muted-foreground py-2 uppercase tracking-wider">{dia}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -921,54 +1119,45 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
             const esHoy = fecha === new Date().toISOString().substring(0, 10);
             let colorFondo = "";
             if (!esOtroMes && estado) {
-              if (estado === "cita")      colorFondo = "bg-amber-100 text-amber-800";
-              else if (estado === "urgencia") colorFondo = "bg-red-100 text-red-800";
+              if (estado === "cita") colorFondo = "bg-amber-100 text-amber-800 font-bold";
+              else if (estado === "urgencia") colorFondo = "bg-red-100 text-red-800 font-bold";
             }
             return (
-              <div
-                key={index}
-                className={`aspect-square flex items-center justify-center text-sm font-medium rounded-md ${esOtroMes ? "text-muted-foreground/30" : ""} ${!esOtroMes ? colorFondo : ""} ${esHoy && !esOtroMes ? "ring-2 ring-primary ring-offset-1" : ""}`}
-              >
+              <div key={index} className={`aspect-square flex items-center justify-center text-sm rounded-xl transition-colors ${esOtroMes ? "text-muted-foreground/20" : "text-foreground"} ${!esOtroMes && !colorFondo ? "hover:bg-muted/50" : ""} ${!esOtroMes ? colorFondo : ""} ${esHoy && !esOtroMes ? "ring-2 ring-primary ring-offset-1 font-black" : ""}`}>
                 {dia}
               </div>
             );
           })}
         </div>
       </div>
-
-      {/* Lista de citas agendadas */}
       {citasAgendadas.length > 0 ? (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" />
-            Citas Programadas ({citasAgendadas.length})
-          </h3>
-          <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Citas programadas</h3>
+            <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">{citasAgendadas.length}</span>
+          </div>
+          <div className="space-y-3">
             {citasAgendadas.map((cita) => (
-              <div key={cita.id} className={`bg-card border rounded-xl p-5 shadow-sm ${cita.tipo === "urgencia" ? "border-red-300" : "border-border"}`}>
+              <div key={cita.id} className={`bg-card border rounded-xl p-4 ${cita.tipo === "urgencia" ? "border-red-200" : "border-border"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cita.tipo === "urgencia" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                        {cita.tipo === "urgencia" ? "URGENCIA" : "CITA"}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${cita.tipo === "urgencia" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                        {cita.tipo === "urgencia" ? "Urgencia" : "Cita"}
                       </span>
-                      {cita.primeraVez && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">Primera vez</span>
-                      )}
+                      {cita.primeraVez && <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 uppercase tracking-wider">Primera vez</span>}
                     </div>
                     <p className="font-semibold text-foreground">{cita.tipoConsulta}</p>
                     {cita.especialidad && <p className="text-sm text-muted-foreground">{cita.especialidad}</p>}
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{fmtFecha(cita.fecha)}</span>
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{cita.horaInicio} - {cita.horaCierre}</span>
+                      <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" />{fmtFecha(cita.fecha)}</span>
+                      <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{cita.horaInicio} - {cita.horaCierre}</span>
                     </div>
                   </div>
                   {cita.precioFinal > 0 && (
                     <div className="text-right shrink-0">
-                      {cita.descuento > 0 && (
-                        <p className="text-xs text-muted-foreground line-through">${cita.precioBase.toLocaleString()} MXN</p>
-                      )}
-                      <p className="text-lg font-bold text-primary">${cita.precioFinal.toLocaleString()} MXN</p>
+                      {cita.descuento > 0 && <p className="text-xs text-muted-foreground line-through">${cita.precioBase.toLocaleString()} MXN</p>}
+                      <p className="text-xl font-black text-primary">${cita.precioFinal.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">MXN</span></p>
                     </div>
                   )}
                 </div>
@@ -977,9 +1166,9 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No tienes citas programadas</p>
+        <div className="text-center py-16 text-muted-foreground bg-card border border-border rounded-xl">
+          <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
+          <p className="text-sm font-medium">No tienes citas programadas</p>
         </div>
       )}
     </div>
@@ -990,23 +1179,26 @@ function VisitasTab({ visitas }: { visitas: Visita[] }) {
 // TAB: MEDICAMENTOS
 // ─────────────────────────────────────────────
 
-function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medicamento[]; recordatorios: Recordatorio[] }) {
-  const activos     = medicamentos.filter((m) => !m.fechaFin || new Date(m.fechaFin) >= new Date());
+function MedicamentosTab({ medicamentos, recordatorios }: {
+  medicamentos: Medicamento[]; recordatorios: Recordatorio[];
+}) {
+  const activos = medicamentos.filter((m) => !m.fechaFin || new Date(m.fechaFin) >= new Date());
   const finalizados = medicamentos.filter((m) => m.fechaFin && new Date(m.fechaFin) < new Date());
   const getRecs = (medId: string) => recordatorios.filter((r) => r.medicamentoId === medId);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const renderMed = (med: Medicamento, esActivo: boolean) => {
     const recs = getRecs(med.id);
     return (
-      <div key={med.id} className={`bg-card border rounded-xl p-5 space-y-3 shadow-sm ${esActivo ? "border-border" : "border-border/50 opacity-70"}`}>
+      <div key={med.id} className={`bg-card border rounded-xl p-5 space-y-3 ${esActivo ? "border-border" : "border-border/40 opacity-60"}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${esActivo ? "bg-primary/10" : "bg-muted"}`}>
-              <Pill className={`w-4 h-4 ${esActivo ? "text-primary" : "text-muted-foreground"}`} />
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${esActivo ? "bg-primary/10" : "bg-muted"}`}>
+              <Pill className={`w-5 h-5 ${esActivo ? "text-primary" : "text-muted-foreground"}`} />
             </div>
             <div>
               <p className="font-semibold text-foreground">{med.nombre}</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">{med.dosis} — {med.frecuencia}</p>
+              <p className="text-sm text-muted-foreground">{med.dosis} — {med.frecuencia}</p>
             </div>
           </div>
           <span className={`text-xs px-2.5 py-1 rounded-full border font-medium shrink-0 ${esActivo ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground border-border"}`}>
@@ -1014,13 +1206,13 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Inicio: {fmtFecha(med.fechaInicio, { corto: true })}</span>
-          {med.fechaFin && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Fin: {fmtFecha(med.fechaFin, { corto: true })}</span>}
+          <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />Inicio: {fmtFecha(med.fechaInicio, { corto: true })}</span>
+          {med.fechaFin && <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />Fin: {fmtFecha(med.fechaFin, { corto: true })}</span>}
         </div>
         {recs.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap gap-2">
             {recs.map((rec) => (
-              <span key={rec.id} className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border ${rec.activo ? "bg-primary/10 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>
+              <span key={rec.id} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${rec.activo ? "bg-primary/8 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}`}>
                 {rec.activo ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
                 {rec.hora}
               </span>
@@ -1032,160 +1224,294 @@ function MedicamentosTab({ medicamentos, recordatorios }: { medicamentos: Medica
   };
 
   return (
-    <div className="space-y-6">
-      {activos.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Pill className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Medicamentos activos</h3>
-            <span className="ml-auto text-xs text-muted-foreground">{activos.length}</span>
+    <>
+      <div className="space-y-8">
+        {activos.length > 0 && (
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <Pill className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-foreground">Medicamentos activos</h3>
+              <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">{activos.length}</span>
+              <AddButton onClick={() => setDrawerOpen(true)} label="Prescripción" />
+            </div>
+            <div className="space-y-3">{activos.map((m) => renderMed(m, true))}</div>
+          </section>
+        )}
+        {finalizados.length > 0 && (
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                <Pill className="w-4 h-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-foreground">Medicamentos anteriores</h3>
+              <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">{finalizados.length}</span>
+            </div>
+            <div className="space-y-3">{finalizados.map((m) => renderMed(m, false))}</div>
+          </section>
+        )}
+        {medicamentos.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground bg-card border border-border rounded-xl">
+            <Pill className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p className="text-sm font-medium">No hay medicamentos registrados</p>
           </div>
-          <div className="space-y-3">{activos.map((m) => renderMed(m, true))}</div>
-        </section>
-      )}
-      {finalizados.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Pill className="w-4 h-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Medicamentos anteriores</h3>
-            <span className="ml-auto text-xs text-muted-foreground">{finalizados.length}</span>
-          </div>
-          <div className="space-y-3">{finalizados.map((m) => renderMed(m, false))}</div>
-        </section>
-      )}
-      {medicamentos.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <Pill className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No hay medicamentos registrados</p>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      <ApiDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Registrar prescripción"
+        endpoint="/prescripcion"
+        method="POST"
+        fields={FIELDS_PRESCRIPCION}
+        defaultValues={{ patient_id: ID_DEFAULTS.patient_id, doctor_id: ID_DEFAULTS.doctor_id, appointment_id: ID_DEFAULTS.appointment_id }}
+      />
+    </>
   );
 }
 
 // ─────────────────────────────────────────────
-// NAV CONFIG
+// TABS CONFIG
 // ─────────────────────────────────────────────
 
 const tabs = [
-  { id: "dashboard", label: "Resumen",         icon: LayoutDashboard },
-  { id: "datos",     label: "Datos generales", icon: User },
-  { id: "signos",    label: "Signos vitales",  icon: Activity },
-  { id: "visitas",   label: "Visitas",         icon: Stethoscope },
-  { id: "medicamentos", label: "Medicamentos", icon: Pill },
+  { id: "dashboard",    label: "Resumen",         icon: LayoutDashboard, desc: "Vista general" },
+  { id: "datos",        label: "Datos generales", icon: User,            desc: "Información personal" },
+  { id: "signos",       label: "Signos vitales",  icon: Activity,        desc: "Mediciones clínicas" },
+  { id: "consulta",     label: "Consulta",        icon: FileText,        desc: "Notas SOAP" },
+  { id: "visitas",      label: "Visitas",         icon: Calendar,        desc: "Citas y consultas" },
+  { id: "medicamentos", label: "Medicamentos",    icon: Pill,            desc: "Tratamientos activos" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
 
-const tabTitulos: Record<TabId, string> = {
-  dashboard: "Resumen",
-  datos: "Datos generales",
-  signos: "Signos vitales",
-  visitas: "Visitas",
-  medicamentos: "Medicamentos",
-};
+// ─────────────────────────────────────────────
+// SIDEBAR
+// ─────────────────────────────────────────────
+
+function Sidebar({
+  activeTab, setActiveTab, collapsed, setCollapsed,
+  mobileOpen, setMobileOpen, onLogout,
+}: {
+  activeTab: TabId; setActiveTab: (t: TabId) => void;
+  collapsed: boolean; setCollapsed: (v: boolean) => void;
+  mobileOpen: boolean; setMobileOpen: (v: boolean) => void;
+  onLogout: () => void;
+}) {
+  const handleTabClick = (id: TabId) => { setActiveTab(id); setMobileOpen(false); };
+
+  const inner = (isMobile = false) => (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className={`flex items-center gap-3 px-4 py-5 shrink-0 ${collapsed && !isMobile ? "justify-center px-2" : ""}`}>
+        <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center shrink-0">
+          <Stethoscope className="w-5 h-5 text-white" />
+        </div>
+        {(!collapsed || isMobile) && (
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-bold text-sidebar-foreground leading-tight">MediRecord</p>
+            <p className="text-[11px] text-muted-foreground leading-tight">Sistema de Expedientes</p>
+          </div>
+        )}
+        {!isMobile && !collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            aria-label="Colapsar menú"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        {!isMobile && collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="absolute left-[52px] top-5 w-6 h-6 flex items-center justify-center rounded-full bg-card border border-border shadow-sm text-muted-foreground hover:text-foreground transition-all z-10"
+            aria-label="Expandir menú"
+          >
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        )}
+        {isMobile && (
+          <button onClick={() => setMobileOpen(false)} className="w-7 h-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors ml-auto">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto" aria-label="Navegación principal">
+        {tabs.map(({ id, label, icon: Icon }) => {
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => handleTabClick(id)}
+              className={`w-full flex items-center gap-3 rounded-lg text-left transition-all duration-150
+                ${collapsed && !isMobile ? "px-0 py-3 justify-center" : "px-3 py-2.5"}
+                ${isActive
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              title={collapsed && !isMobile ? label : undefined}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon className="w-[17px] h-[17px] shrink-0" />
+              {(!collapsed || isMobile) && (
+                <span className="text-[13.5px]">{label}</span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="px-3 pb-4 pt-3 space-y-0.5 shrink-0">
+        {(!collapsed || isMobile) && (
+          <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground mb-1">
+            <span>Tema</span>
+          </div>
+        )}
+        <button className={`w-full flex items-center gap-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150 ${collapsed && !isMobile ? "px-0 py-3 justify-center" : "px-3 py-2.5"}`} title={collapsed && !isMobile ? "Configuración" : undefined}>
+          <Settings className="w-[17px] h-[17px] shrink-0" />
+          {(!collapsed || isMobile) && (
+            <div className="flex items-center justify-between flex-1 min-w-0">
+              <span className="text-[13.5px]">Configuración</span>
+              <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+            </div>
+          )}
+        </button>
+        <div className="border-t border-border my-1" />
+        <button
+          onClick={onLogout}
+          className={`w-full flex items-center gap-3 rounded-lg text-red-500 hover:bg-red-50 transition-all duration-150 ${collapsed && !isMobile ? "px-0 py-3 justify-center" : "px-3 py-2.5"}`}
+          title={collapsed && !isMobile ? "Cerrar sesión" : undefined}
+        >
+          <LogOut className="w-[17px] h-[17px] shrink-0" />
+          {(!collapsed || isMobile) && <span className="text-[13.5px] font-medium">Cerrar sesión</span>}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <aside className={`hidden md:flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out shrink-0 h-screen sticky top-0 relative ${collapsed ? "w-[60px]" : "w-[260px]"}`}>
+        {inner(false)}
+      </aside>
+
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+      )}
+
+      <aside className={`md:hidden fixed left-0 top-0 h-full z-50 w-[260px] bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        {inner(true)}
+      </aside>
+    </>
+  );
+}
 
 // ─────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<TabId>("datos");
+  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const router = useRouter();
+  const {
+    user,
+    logout,
+    isAuthenticated,
+    loading,
+  } = useAuth();
+
+  // Redirigir al login si no está autenticado
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, router]);
+
+  // Mostrar loading mientras se verifica autenticación
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, no renderizar nada (el useEffect redirigirá)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const paciente = pacienteMock;
   const dp = paciente.datosPersonales;
   const nombreCompleto = [dp.nombre, dp.apellidoPaterno, dp.apellidoMaterno].filter(Boolean).join(" ");
   const edad = calcularEdad(dp.fechaNacimiento);
+  const currentTab = tabs.find((t) => t.id === activeTab);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar border-r border-sidebar-border">
-        <div className="flex items-center gap-3 px-5 py-5">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Stethoscope className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <div>
-            <p className="font-semibold text-sidebar-foreground leading-tight">MediRecord</p>
-            <p className="text-xs text-sidebar-foreground/50 leading-tight">Sistema de Expedientes</p>
-          </div>
-        </div>
+    <div className="flex h-screen bg-background font-sans overflow-hidden">
+      <Sidebar
+        activeTab={activeTab} setActiveTab={setActiveTab}
+        collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
+        mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen}
+        onLogout={handleLogout}
+      />
 
-        <nav className="flex-1 px-3 py-2 space-y-1" aria-label="Navegación principal">
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              }`}
-            >
-              <Icon className="w-[18px] h-[18px]" />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="px-5 py-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-2 text-xs text-sidebar-foreground/50">
-            <Shield className="w-3.5 h-3.5" />
-            Datos protegidos
-          </div>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="bg-card border-b border-border px-4 md:px-8 py-4 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-foreground text-balance">{tabTitulos[activeTab]}</h1>
-            <p className="text-sm text-muted-foreground truncate">Expediente de {nombreCompleto}</p>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="sticky top-0 z-30 bg-card border-b border-border px-4 md:px-6 h-14 flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+            aria-label="Abrir menú"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-semibold text-foreground leading-tight">{currentTab?.label}</h1>
+            <p className="text-[11px] text-muted-foreground leading-none">Expediente de {nombreCompleto}</p>
+            {/* Mostrar información del usuario autenticado */}
+            {user && (
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                {user.email && <span className="mr-2">📧 {user.email}</span>}
+                {user.phone && <span>📱 {user.phone}</span>}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <button className="relative p-2 rounded-md hover:bg-muted transition-colors" aria-label="Notificaciones">
-              <Bell className="w-5 h-5 text-muted-foreground" />
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors" aria-label="Notificaciones">
+              <Bell className="w-4 h-4 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-3">
-              <AvatarPaciente edad={edad} sexo={dp.sexo} />
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-foreground leading-tight">{edad} años</p>
-                <p className="text-xs text-emerald-600 leading-tight">Sin alergias</p>
+            <div className="flex items-center gap-2">
+              <AvatarPaciente edad={edad} sexo={dp.sexo} size="sm" />
+              <div className="hidden sm:block min-w-0">
+                <p className="text-xs font-medium text-foreground leading-tight truncate max-w-[120px]">{edad} años</p>
+                <p className="text-[10px] text-emerald-600 font-medium leading-tight">Sin alergias</p>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Mobile nav */}
-        <nav
-          className="md:hidden flex gap-1 overflow-x-auto bg-card border-b border-border px-4 py-2"
-          aria-label="Navegación principal"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                activeTab === id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Content */}
-        <main className="flex-1 px-4 md:px-8 py-6 max-w-6xl w-full mx-auto">
-          {activeTab === "dashboard"     && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
-          {activeTab === "datos"         && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
-          {activeTab === "signos"        && <SignosVitalesTab  signosVitales={paciente.signosVitales} />}
-          {activeTab === "visitas"       && <VisitasTab        visitas={paciente.visitas} />}
-          {activeTab === "medicamentos"  && <MedicamentosTab   medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
+        <main className="flex-1 overflow-y-auto p-5 md:p-7 bg-background">
+          <div className="max-w-5xl mx-auto">
+            {activeTab === "dashboard"    && paciente.dashboard && <DashboardTab dashboard={paciente.dashboard} />}
+            {activeTab === "datos"        && <DatosGeneralesTab datosPersonales={paciente.datosPersonales} direccion={paciente.direccion} contacto={paciente.contacto} datosFiscales={paciente.datosFiscales} />}
+            {activeTab === "signos"       && <SignosVitalesTab signosVitales={paciente.signosVitales} />}
+            {activeTab === "consulta"     && <ConsultaTab />}
+            {activeTab === "visitas"      && <VisitasTab visitas={paciente.visitas} />}
+            {activeTab === "medicamentos" && <MedicamentosTab medicamentos={paciente.medicamentos} recordatorios={paciente.recordatorios} />}
+          </div>
         </main>
       </div>
     </div>

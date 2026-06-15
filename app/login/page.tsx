@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../../hooks/useAuth"
@@ -160,14 +159,17 @@ export default function Login() {
       // Redirecciones por rol
       const userRole = user.roles?.[0] || user.role
       if (userRole === "INSTITUTION_ADMIN") {
-        router.push("/admin")
+        router.push("/Admin")
       } else if (userRole === "DOCTOR") {
-        router.push("/doctor")
+        router.push("/Doctor")
       } else if (userRole === "PATIENT") {
-        router.push("/user")
+        router.push("/Paciente")
+      }else if(userRole === "SECRETARY") {
+        router.push("/asis")
       } else {
-        router.push("/dashboard")
+        router.push("/page")
       }
+
     } catch (error) {
       console.error(error)
       setErrorLogin("Error al conectar con el servidor")

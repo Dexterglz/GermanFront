@@ -39,7 +39,7 @@ export const useAuth = (): UseAuthReturn => {
                 }
 
                 // Validar token con el backend
-                const response = await fetch("http://localhost:3003/api/auth/me", {
+                const response = await fetch("http://localhost:3000/api/auth/me", {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
